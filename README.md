@@ -1,12 +1,9 @@
-
 * Install
 
 ```vim
-NeoBundleLazy 'ynkdir/vim-vimlparser', {
-    \ 'autoload' : {
-    \ 'functions' : 'vimlparser#import'}}
 
 NeoBundleLazy 'syngan/vim-vimlint', {
+    \ 'depends' : 'ynkdir/vim-vimlparser',
     \ 'autoload' : {
     \ 'functions' : 'vimlint#vimlint'}}
 ```
