@@ -860,7 +860,7 @@ function s:VimlLint.compile_call(node, refchk)
         call self.parse_string(rlist[1].val[1:-2])
       endif
     elseif left.val == 'eval'
-      if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[1], 'val')
+      if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'val')
         echo "rlist[0]=" . string(rlist[0])
         call self.parse_string(rlist[0].val[1:-2])
       endif
