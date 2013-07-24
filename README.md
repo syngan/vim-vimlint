@@ -11,9 +11,24 @@ NeoBundleLazy 'syngan/vim-vimlint', {
 # Usage
 
 ```vim
-call vimlint#vimlint('vim-vimlint/autoload/vimlint.vim', {})
+call vimlint#vimlint(filename, param)
+call vimlint#vimlint('vimlint.vim', {})
 ```
 
+- ignore "unused argument" 
+```vim
+call vimlint#vimlint('vimlint.vim', {'unused_argument' : 0})
+```
+
+- output to the file "hoge"
+```vim
+call vimlint#vimlint('vimlint.vim', {'output' : 'hoge'})
+```
+
+- append to the file "hoge"
+```vim
+call vimlint#vimlint('vimlint.vim', {'output' : {'filename': 'hoge', 'append': 1}})
+```
 
 
 # Example
