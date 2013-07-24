@@ -471,8 +471,10 @@ function s:VimlLint.compile_function(node, refchk)
     if self.env.var[v].ref == 0
       " a: は例外とする, オプションが必要 @TODO
 "      echo self.env.var[v]
-      if v ==# '^a:' && self.param['unused_argument']
-        call self.error_mes(self.env.var[v].node, 'unused argument `' . v . '`')
+      if v =~# '^a:'
+        if self.param['unused_argument']
+          call self.error_mes(self.env.var[v].node, 'unused argument `' . v . '`')
+        endif
       else
         call self.error_mes(self.env.var[v].node, 'unused variable `' . v . '`')
       endif
