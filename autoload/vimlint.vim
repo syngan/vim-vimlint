@@ -74,169 +74,172 @@ let s:opprec[s:NODE_REG] = 9
 
 let s:VimlLint = {}
 
-function s:VimlLint.new(...)
+let s:default_param = {
+\ 'unused_argument' : 1,
+\}
+
+
+function s:VimlLint.new(param)
   let obj = copy(self)
-  call call(obj.__init__, a:000, obj)
+  let obj.indent = ['']
+  let obj.lines = []
+  let obj.env = s:env({}, "")
+  let obj.param = extend(a:param, s:default_param, 'keep')
   return obj
 endfunction
 
-function s:VimlLint.__init__()
-  let self.indent = ['']
-  let self.lines = []
-  let self.env = s:env({}, "")
-endfunction
-
+" for debug
 function! s:VimlLint.node2str(node)
-	let a = {}
-	let a[1] = 'TOPLEVEL'
-	let a[2] = 'COMMENT'
-	let a[3] = 'EXCMD'
-	let a[4] = 'FUNCTION'
-	let a[5] = 'ENDFUNCTION'
-	let a[6] = 'DELFUNCTION'
-	let a[7] = 'RETURN'
-	let a[8] = 'EXCALL'
-	let a[9] = 'LET'
-	let a[10] = 'UNLET'
-	let a[11] = 'LOCKVAR'
-	let a[12] = 'UNLOCKVAR'
-	let a[13] = 'IF'
-	let a[14] = 'ELSEIF'
-	let a[15] = 'ELSE'
-	let a[16] = 'ENDIF'
-	let a[17] = 'WHILE'
-	let a[18] = 'ENDWHILE'
-	let a[19] = 'FOR'
-	let a[20] = 'ENDFOR'
-	let a[21] = 'CONTINUE'
-	let a[22] = 'BREAK'
-	let a[23] = 'TRY'
-	let a[24] = 'CATCH'
-	let a[25] = 'FINALLY'
-	let a[26] = 'ENDTRY'
-	let a[27] = 'THROW'
-	let a[28] = 'ECHO'
-	let a[29] = 'ECHON'
-	let a[30] = 'ECHOHL'
-	let a[31] = 'ECHOMSG'
-	let a[32] = 'ECHOERR'
-	let a[33] = 'EXECUTE'
-	let a[34] = 'TERNARY'
-	let a[35] = 'OR'
-	let a[36] = 'AND'
-	let a[37] = 'EQUAL'
-	let a[38] = 'EQUALCI'
-	let a[39] = 'EQUALCS'
-	let a[40] = 'NEQUAL'
-	let a[41] = 'NEQUALCI'
-	let a[42] = 'NEQUALCS'
-	let a[43] = 'GREATER'
-	let a[44] = 'GREATERCI'
-	let a[45] = 'GREATERCS'
-	let a[46] = 'GEQUAL'
-	let a[47] = 'GEQUALCI'
-	let a[48] = 'GEQUALCS'
-	let a[49] = 'SMALLER'
-	let a[50] = 'SMALLERCI'
-	let a[51] = 'SMALLERCS'
-	let a[52] = 'SEQUAL'
-	let a[53] = 'SEQUALCI'
-	let a[54] = 'SEQUALCS'
-	let a[55] = 'MATCH'
-	let a[56] = 'MATCHCI'
-	let a[57] = 'MATCHCS'
-	let a[58] = 'NOMATCH'
-	let a[59] = 'NOMATCHCI'
-	let a[60] = 'NOMATCHCS'
-	let a[61] = 'IS'
-	let a[62] = 'ISCI'
-	let a[63] = 'ISCS'
-	let a[64] = 'ISNOT'
-	let a[65] = 'ISNOTCI'
-	let a[66] = 'ISNOTCS'
-	let a[67] = 'ADD'
-	let a[68] = 'SUBTRACT'
-	let a[69] = 'CONCAT'
-	let a[70] = 'MULTIPLY'
-	let a[71] = 'DIVIDE'
-	let a[72] = 'REMAINDER'
-	let a[73] = 'NOT'
-	let a[74] = 'MINUS'
-	let a[75] = 'PLUS'
-	let a[76] = 'SUBSCRIPT'
-	let a[77] = 'SLICE'
-	let a[78] = 'CALL'
-	let a[79] = 'DOT'
-	let a[80] = 'NUMBER'
-	let a[81] = 'STRING'
-	let a[82] = 'LIST'
-	let a[83] = 'DICT'
-	let a[85] = 'OPTION'
-	let a[86] = 'IDENTIFIER'
-	let a[87] = 'CURLYNAME'
-	let a[88] = 'ENV'
-	let a[89] = 'REG'
-	return a[a:node.type] . "(" . a:node.type . ")"
+    let a = {}
+    let a[1] = 'TOPLEVEL'
+    let a[2] = 'COMMENT'
+    let a[3] = 'EXCMD'
+    let a[4] = 'FUNCTION'
+    let a[5] = 'ENDFUNCTION'
+    let a[6] = 'DELFUNCTION'
+    let a[7] = 'RETURN'
+    let a[8] = 'EXCALL'
+    let a[9] = 'LET'
+    let a[10] = 'UNLET'
+    let a[11] = 'LOCKVAR'
+    let a[12] = 'UNLOCKVAR'
+    let a[13] = 'IF'
+    let a[14] = 'ELSEIF'
+    let a[15] = 'ELSE'
+    let a[16] = 'ENDIF'
+    let a[17] = 'WHILE'
+    let a[18] = 'ENDWHILE'
+    let a[19] = 'FOR'
+    let a[20] = 'ENDFOR'
+    let a[21] = 'CONTINUE'
+    let a[22] = 'BREAK'
+    let a[23] = 'TRY'
+    let a[24] = 'CATCH'
+    let a[25] = 'FINALLY'
+    let a[26] = 'ENDTRY'
+    let a[27] = 'THROW'
+    let a[28] = 'ECHO'
+    let a[29] = 'ECHON'
+    let a[30] = 'ECHOHL'
+    let a[31] = 'ECHOMSG'
+    let a[32] = 'ECHOERR'
+    let a[33] = 'EXECUTE'
+    let a[34] = 'TERNARY'
+    let a[35] = 'OR'
+    let a[36] = 'AND'
+    let a[37] = 'EQUAL'
+    let a[38] = 'EQUALCI'
+    let a[39] = 'EQUALCS'
+    let a[40] = 'NEQUAL'
+    let a[41] = 'NEQUALCI'
+    let a[42] = 'NEQUALCS'
+    let a[43] = 'GREATER'
+    let a[44] = 'GREATERCI'
+    let a[45] = 'GREATERCS'
+    let a[46] = 'GEQUAL'
+    let a[47] = 'GEQUALCI'
+    let a[48] = 'GEQUALCS'
+    let a[49] = 'SMALLER'
+    let a[50] = 'SMALLERCI'
+    let a[51] = 'SMALLERCS'
+    let a[52] = 'SEQUAL'
+    let a[53] = 'SEQUALCI'
+    let a[54] = 'SEQUALCS'
+    let a[55] = 'MATCH'
+    let a[56] = 'MATCHCI'
+    let a[57] = 'MATCHCS'
+    let a[58] = 'NOMATCH'
+    let a[59] = 'NOMATCHCI'
+    let a[60] = 'NOMATCHCS'
+    let a[61] = 'IS'
+    let a[62] = 'ISCI'
+    let a[63] = 'ISCS'
+    let a[64] = 'ISNOT'
+    let a[65] = 'ISNOTCI'
+    let a[66] = 'ISNOTCS'
+    let a[67] = 'ADD'
+    let a[68] = 'SUBTRACT'
+    let a[69] = 'CONCAT'
+    let a[70] = 'MULTIPLY'
+    let a[71] = 'DIVIDE'
+    let a[72] = 'REMAINDER'
+    let a[73] = 'NOT'
+    let a[74] = 'MINUS'
+    let a[75] = 'PLUS'
+    let a[76] = 'SUBSCRIPT'
+    let a[77] = 'SLICE'
+    let a[78] = 'CALL'
+    let a[79] = 'DOT'
+    let a[80] = 'NUMBER'
+    let a[81] = 'STRING'
+    let a[82] = 'LIST'
+    let a[83] = 'DICT'
+    let a[85] = 'OPTION'
+    let a[86] = 'IDENTIFIER'
+    let a[87] = 'CURLYNAME'
+    let a[88] = 'ENV'
+    let a[89] = 'REG'
+    return a[a:node.type] . "(" . a:node.type . ")"
 endfunction
 
 function! s:env(outer, funcname)
-	let env = {}
-	let env.outer = a:outer
-	let env.function = a:funcname
-	let env.var = {}
-	if has_key(a:outer, 'global')
-		let env.global = a:outer.global
-	else
-		let env.global = env
-	endif
-	return env
+    let env = {}
+    let env.outer = a:outer
+    let env.function = a:funcname
+    let env.var = {}
+    if has_key(a:outer, 'global')
+        let env.global = a:outer.global
+    else
+        let env.global = env
+    endif
+    return env
 endfunction
 
 " 変数参照
 " @param var string
 " @param node dict: return value of compile
 function! s:exists_var(env, node)
-	let var = a:node.value
-	if var =~# '^[gbwt]:'
-		" check できない
-		" 型くらいは保存してみる?
-		return 1
-	elseif var =~# '^[s]:'
-		call s:append_var_(a:env.global, var, a:node, 0, -1)
-		return 1
-	elseif var =~# '^v:'
-		" @TODO help
-		" @TODO map 内などか?
-		return 1
-	else
-		let env = a:env
-		while has_key(env, 'var')
-			if has_key(env.var, var)
-				call s:append_var_(env, var, a:node, 0, -1)
-				return 1
-			endif
-			let env = env.outer
-		endwhile
-		return 0
-	endif
+    let var = a:node.value
+    if var =~# '^[gbwt]:'
+        " check できない
+        " 型くらいは保存してみる?
+        return 1
+    elseif var =~# '^[s]:'
+        call s:append_var_(a:env.global, var, a:node, 0, -1)
+        return 1
+    elseif var =~# '^v:'
+        " @TODO :help v:
+        " @TODO map 内などか?
+        return 1
+    else
+        let env = a:env
+        while has_key(env, 'var')
+            if has_key(env.var, var)
+                call s:append_var_(env, var, a:node, 0, -1)
+                return 1
+            endif
+            let env = env.outer
+        endwhile
+        return 0
+    endif
 endfunction
 
 function! s:append_var_(env, var, node, val, cnt)
-	if has_key(a:env.var, a:var)
-		if a:cnt > 0
-			let a:env.var[a:var].subs += 1
-		else
-			let a:env.var[a:var].ref += 1
-		endif
-	else
-		if a:cnt > 0
-			" subs/let
-			let a:env.var[a:var] = {'ref' : 0, 'val' : a:val, 'subs' : 1, 'node' : a:node}
-		else
-			" ref
-			let a:env.var[a:var] = {'ref' : 1, 'subs' : 0, 'node' : a:node}
-		endif
-	endif
+    if has_key(a:env.var, a:var)
+        if a:cnt > 0
+            let a:env.var[a:var].subs += 1
+        else
+            let a:env.var[a:var].ref += 1
+        endif
+    else
+        if a:cnt > 0
+            " subs/let
+            let a:env.var[a:var] = {'ref' : 0, 'val' : a:val, 'subs' : 1, 'node' : a:node}
+        else
+            " ref
+            let a:env.var[a:var] = {'ref' : 1, 'subs' : 0, 'node' : a:node}
+        endif
+    endif
 endfunction
 
 " 変数代入
@@ -245,58 +248,58 @@ endfunction
 " right node = val
 " pos = string
 function! s:append_var(env, var, val, pos)
-	if type(a:var) != type({}) || !has_key(a:var, 'type') || !has_key(a:var, 'node')
-		echo "in append_var: invalid input: type=" . type(a:var) . ",pos=" . a:pos
-		echo a:var
-		throw "stop"
-	endif
-	if a:var.type == 'id'
-		let node = a:var.node
-		if a:pos == 'a:'
-			" 関数引数
-			if a:var.val != '...'
-				call s:append_var_(a:env, 'a:' . a:var.val, node, a:val, 1)
-			endif
-		elseif a:var.val =~# '^[sgbwt]:'
-			call s:append_var_(a:env.global, a:var.val, node, a:val, 1)
-		else
-			call s:append_var_(a:env, a:var.val, node, a:val, 1)
-		endif
-	elseif a:var.type == 'reg'
-		" do nothing
-		return 
-	elseif a:var.type == 'subs'
-		" let f.f = xxxx, let f["a"] = xxxx
-	elseif a:var.type == 'option'
-		" do nothing
-	elseif a:var.type == 'curly'
-		" ???
-	elseif a:var.type == 'env'
-		" $xxxx
-	else
-		call s:VimlLint.error_mes(a:var.node, 'unknown type')
-		echo a:var
-	endif
+    if type(a:var) != type({}) || !has_key(a:var, 'type') || !has_key(a:var, 'node')
+        echo "in append_var: invalid input: type=" . type(a:var) . ",pos=" . a:pos
+        echo a:var
+        throw "stop"
+    endif
+    if a:var.type == 'id'
+        let node = a:var.node
+        if a:pos == 'a:'
+            " 関数引数
+            if a:var.val != '...'
+                call s:append_var_(a:env, 'a:' . a:var.val, node, a:val, 1)
+            endif
+        elseif a:var.val =~# '^[sgbwt]:'
+            call s:append_var_(a:env.global, a:var.val, node, a:val, 1)
+        else
+            call s:append_var_(a:env, a:var.val, node, a:val, 1)
+        endif
+    elseif a:var.type == 'reg'
+        " do nothing
+        return
+    elseif a:var.type == 'subs'
+        " let f.f = xxxx, let f["a"] = xxxx
+    elseif a:var.type == 'option'
+        " do nothing
+    elseif a:var.type == 'curly'
+        " ???
+    elseif a:var.type == 'env'
+        " $xxxx
+    else
+        call s:VimlLint.error_mes(a:var.node, 'unknown type')
+        echo a:var
+    endif
 endfunction
 
 function! s:delete_var(env, var)
-"	unlet a:env.var[a:var]
+"    unlet a:env.var[a:var]
 endfunction
 
 function! s:echonode(node)
-    echo "compile. " . s:VimlLint.node2str(a:node) . ", val=" . 
-	\ (has_key(a:node, "value") ? 
-	\ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%")
+    echo "compile. " . s:VimlLint.node2str(a:node) . ", val=" .
+    \ (has_key(a:node, "value") ?
+    \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%")
 endfunction
 
 function s:VimlLint.compile(node, refchk)
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
-	if a:node.type != 2
-"	  call s:echonode(a:node)
-	endif
+    if a:node.type != 2
+"      call s:echonode(a:node)
+    endif
   else
 "    echo "node=" . type(a:node)
-"	echo a:node
+"    echo a:node
   endif
   if a:node.type == s:NODE_TOPLEVEL
     return self.compile_toplevel(a:node, a:refchk)
@@ -480,8 +483,9 @@ function s:VimlLint.compile_comment(node, refchk)
 endfunction
 
 function s:VimlLint.compile_excmd(node, refchk)
-  " @TODO 
-  " e.g. set cpo&vim
+" @TODO
+" e.g. set cpo&vim
+" e.g. a = 3   (let 漏れ)
 endfunction
 
 function! s:VimlLint.error_mes(node, mes)
@@ -496,19 +500,21 @@ function s:VimlLint.compile_function(node, refchk)
 
   let self.env = s:env(self.env, left)
   for v in rlist
-	" E853 if Duplicate argument
-	call s:append_var(self.env, v, s:NIL, "a:")
-	unlet v
+    " E853 if Duplicate argument
+    call s:append_var(self.env, v, s:NIL, "a:")
+    unlet v
   endfor
   call self.compile_body(a:node.body, 1)
 
   " 未使用変数は?
   for v in keys(self.env.var)
     if self.env.var[v].ref == 0
-	  " a: は例外とする, オプションが必要 @TODO
-"	  echo self.env.var[v]
-	  call s:VimlLint.error_mes(self.env.var[v].node, 'unused variable `' . v . '`')
-	endif
+      " a: は例外とする, オプションが必要 @TODO
+"      echo self.env.var[v]
+      if self.param['unused_argument'] || v ==# '^a:'
+        call s:VimlLint.error_mes(self.env.var[v].node, 'unused variable `' . v . '`')
+      endif
+    endif
   endfor
 
   let self.env = self.env.outer
@@ -532,16 +538,16 @@ endfunction
 function s:VimlLint.compile_let(node, rechk)
 
   if type(a:node.right) != type({})
-	  echo "compile_let. right is invalid"
-	  echo a:node
+      echo "compile_let. right is invalid"
+      echo a:node
   endif
   let right = self.compile(a:node.right, 1)
   if a:node.left isnot s:NIL
-	  let left = self.compile(a:node.left, 0)
-	  call s:append_var(self.env, left, right, "let1")
+      let left = self.compile(a:node.left, 0)
+      call s:append_var(self.env, left, right, "let1")
   else
     let list = map(a:node.list, 'self.compile(v:val, 0)')
-	call map(list, 's:append_var(self.env, v:val, right, "letn")')
+    call map(list, 's:append_var(self.env, v:val, right, "letn")')
   endif
 endfunction
 
@@ -549,14 +555,14 @@ endfunction
 function s:VimlLint.compile_unlet(node, refchk)
   let list = map(a:node.list, 'self.compile(v:val, 1)')
   for v in list
-	" unlet
+    " unlet
     call s:delete_var(self.env, v)
   endfor
 endfunction
 
 function s:VimlLint.compile_lockvar(node, refchk)
   for var in a:node.list
-	if var.type != s:NODE_IDENTIFIER
+    if var.type != s:NODE_IDENTIFIER
       call s:VimlLint.error_mes(a:node, 'lockvar: internal variable is required: ' . var)
     endif
     if !s:exists_var(self.env, var)
@@ -567,7 +573,7 @@ endfunction
 
 function s:VimlLint.compile_unlockvar(node, refchk)
   for var in a:node.list
-	if var.type != s:NODE_IDENTIFIER
+    if var.type != s:NODE_IDENTIFIER
       call s:VimlLint.error_mes(a:node, 'lockvar: internal variable is required: ' . var)
     endif
     if !s:exists_var(self.env, var)
@@ -578,7 +584,7 @@ endfunction
 
 function s:VimlLint.compile_if(node, refchk)
 "  call s:VimlLint.error_mes(a:node, "compile_if")
-  call self.compile(a:node.cond, 1)
+  call self.compile(a:node.cond, 2)
   call self.compile_body(a:node.body, a:refchk)
   for node in a:node.elseif
     call self.compile(node.cond, 1)
@@ -599,14 +605,14 @@ function s:VimlLint.compile_for(node, refchk)
 
   if a:node.left isnot s:NIL
     let left = self.compile(a:node.left, 0)
-	call s:append_var(self.env, left, right, "for")
-	" append
-"	echo "compile for, left is"
-"	echo left
+    call s:append_var(self.env, left, right, "for")
+    " append
+"    echo "compile for, left is"
+"    echo left
   else
     let list = map(a:node.list, 'self.compile(v:val, 0)')
-	call map(list, 's:append_var(self.env, v:val, right, "forn")')
-	" append
+    call map(list, 's:append_var(self.env, v:val, right, "forn")')
+    " append
     if a:node.rest isnot s:NIL
       let rest = self.compile(a:node.rest, a:refchk)
       call add(list, '*' . rest)
@@ -684,11 +690,11 @@ function s:VimlLint.compile_equal(node)
 endfunction
 
 function s:VimlLint.compile_equalci(node)
-  return self.compile_op2(a:node, 'equalci')
+  return self.compile_op2(a:node, '==?')
 endfunction
 
 function s:VimlLint.compile_equalcs(node)
-  return self.compile_op2(a:node, '==')
+  return self.compile_op2(a:node, '==#')
 endfunction
 
 function s:VimlLint.compile_nequal(node)
@@ -696,11 +702,11 @@ function s:VimlLint.compile_nequal(node)
 endfunction
 
 function s:VimlLint.compile_nequalci(node)
-  return self.compile_op2(a:node, 'nequalci')
+  return self.compile_op2(a:node, '!=?')
 endfunction
 
 function s:VimlLint.compile_nequalcs(node)
-  return self.compile_op2(a:node, '!=')
+  return self.compile_op2(a:node, '!=#')
 endfunction
 
 function s:VimlLint.compile_greater(node)
@@ -893,11 +899,11 @@ function! s:reserved_name(name)
     return 1
   endif
   if a:name == 'self'
-	" @TODO if a function is defined with the "dict" attribute
+    " @TODO if a function is defined with the "dict" attribute
     return 1
   endif
   if a:name =~# '^a:\d*$'
-	return 1
+    return 1
   endif
 
   return 0
@@ -943,24 +949,28 @@ endfunction
 function! vimlint#vimlint(filename, param)
   let vimfile = a:filename
   try
-	echo '.... ' . a:filename . ' start'
-    let r = s:StringReader.new(readfile(vimfile))
+    echo '.... ' . a:filename . ' start'
+    if has_key(a:param, 'type') && a:param.type == 'string'
+        let r = s:StringReader.new(vimfile)
+    else
+        let r = s:StringReader.new(readfile(vimfile))
+    endif
     let p = s:VimLParser.new()
-    let c = s:VimlLint.new()
+    let c = s:VimlLint.new(a:param)
     call c.compile(p.parse(r), 1)
 
-	" global 変数のチェック
-	let env = c.env
-	for v in keys(env.var)
+    " global 変数のチェック
+    let env = c.env
+    for v in keys(env.var)
       if env.var[v].subs == 0
-	    call s:VimlLint.error_mes(env.var[v].node, 'undefined variable `' . v . '`')
-	  endif
-	endfor
+        call s:VimlLint.error_mes(env.var[v].node, 'undefined variable `' . v . '`')
+      endif
+    endfor
 
   catch
     echoerr substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
   finally
-	echo '.... ' . a:filename . ' end'
+    echo '.... ' . a:filename . ' end'
   endtry
 endfunction
 
@@ -983,4 +993,4 @@ endfunction
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
-" vim:set foldmethod=marker:
+" vim:set et ts=2 sts=2 sw=2 tw=0 foldmethod=marker:
