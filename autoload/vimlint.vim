@@ -7,7 +7,6 @@ set cpo&vim
 " - let つけずに変数代入
 " - call つけずに関数呼び出し
 " - build-in 関数関連の引数チェック
-" map 内など文字列で使用した変数のチェックができていない
 " @TODO `=` は let 以外で使う場面があるか?
 " }}}
 
@@ -806,28 +805,62 @@ function s:VimlLint.compile_minus(node)
 endfunction
 " }}}
 
+function s:VimlLint.parse_string(str)
+  let p = s:VimLParser.new()
+  let c = s:VimlLint.new(self.param)
+  let c.env = self.env
+  let r = s:StringReader.new('echo ' . a:str)
+  call c.compile(p.parse(r), 1)
+endfunction
+
+let s:builtin_func = {}
+let s:builtin_func.add               = {'min' : 2, 'max' : 2}
+let s:builtin_func.append            = {'min' : 2, 'max' : 2}
+let s:builtin_func.call              = {'min' : 2, 'max' : 3}
+let s:builtin_func.empty             = {'min' : 1, 'max' : 1}
+let s:builtin_func.eval              = {'min' : 1, 'max' : 1}
+let s:builtin_func.exists            = {'min' : 1, 'max' : 1}
+let s:builtin_func.extend            = {'min' : 2, 'max' : 3}
+let s:builtin_func.expand            = {'min' : 1, 'max' : 3}
+let s:builtin_func.filter            = {'min' : 2, 'max' : 2}
+let s:builtin_func.get               = {'min' : 2, 'max' : 3}
+let s:builtin_func.has               = {'min' : 1, 'max' : 1}
+let s:builtin_func.has_key           = {'min' : 2, 'max' : 2}
+let s:builtin_func.keys              = {'min' : 1, 'max' : 1}
+let s:builtin_func.len               = {'min' : 1, 'max' : 1}
+let s:builtin_func.map               = {'min' : 2, 'max' : 2}
+
+
 function s:VimlLint.compile_call(node, refchk)
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let left = self.compile(a:node.left, 0)
 
-  " @TODO check built-in functions
-
-
-
-  " 例外で, map と filter と,
-  " @TODO vital... はどうしよう
-  " command 扱いされてしまう.
-  if has_key(left, 'val') && (left.val == 'map' || left.val == 'filter')
-    if len(rlist) == 2
-      let p = s:VimLParser.new()
-      let c = s:VimlLint.new(self.param)
-      let c.env = self.env
-      let r = s:StringReader.new('echo ' . rlist[1].val[1:-2])
-      call c.compile(p.parse(r), 1)
+  if has_key(left, 'val')
+    " @TODO check built-in functions
+    if has_key(s:builtin_func, left.val)
+      if len(rlist) < s:builtin_func[left.val].min
+      elseif len(rlist) < s:builtin_func[left.val].max
+      else
+        for i in range(len(rlist))
+          " 型チェック
+        endfor
+      endif
     endif
-    " 引数誤りはチェック済, にする.
-  endif
 
+
+    " 例外で, map と filter と,
+    " @TODO vital... はどうしよう
+    " 引数誤りはチェック済, にする.
+    if left.val == 'map' || left.val == 'filter'
+      if len(rlist) == 2
+        call self.parse_string(rlist[1].val[1:-2])
+      endif
+    elseif left.val == 'eval'
+      if len(rlist) == 1
+        call self.parse_string(rlist[0].val[1:-2])
+      endif
+    endif
+  endif
 
   return {'type' : 'call', 'l' : left, 'r' : rlist, 'node' : a:node}
 endfunction
@@ -929,6 +962,8 @@ endfunction
 function s:VimlLint.compile_op2(node, op)
   let left = self.compile(a:node.left, 1)
   let right = self.compile(a:node.right, 1)
+  " @TODO 比較/演算できる型どうしか.
+  " @TODO 演算結果の型を返すようにする
 endfunction
 
 function! vimlint#vimlint(filename, param)
