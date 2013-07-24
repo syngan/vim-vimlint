@@ -4,11 +4,9 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 " 最低限やりたいこと {{{
-"  - 関数引数を a: 付けずに参照
 " - let つけずに変数代入
 " - call つけずに関数呼び出し
-" - build-in 関数関連
-
+" - build-in 関数関連の引数チェック
 " map 内など文字列で使用した変数のチェックができていない
 " @TODO `=` は let 以外で使う場面があるか?
 " }}}
@@ -17,9 +15,11 @@ call extend(s:, vimlparser#import())
 
 let s:VimlLint = {}
 
-let s:default_param = {
-\ 'unused_argument' : 1,
-\}
+let s:default_param = {} " {{{
+let s:default_param.unused_argument = 1
+
+let s:default_param_output = {'append' : 0, 'filename' : ''}
+" }}}
 
 function s:VimlLint.new(param)
   let obj = copy(self)
@@ -27,6 +27,20 @@ function s:VimlLint.new(param)
   let obj.lines = []
   let obj.env = s:env({}, "")
   let obj.param = extend(a:param, s:default_param, 'keep')
+
+  if has_key(obj.param, 'output') " {{{
+    if type(obj.param.output) == type("")
+      let obj.param.output = {'filename' : obj.param.output}
+    elseif type(obj.param.output) != type({})
+      unlet obj.param.output
+    endif
+    let obj.param.output = extend(obj.param.output, s:default_param_output, 'keep')
+    if obj.param.output.filename == ''
+      unlet obj.param.output
+    endif
+  endif " }}}
+
+  let obj.error = []
   return obj
 endfunction
 
@@ -189,7 +203,7 @@ endfunction
 " left node  = var
 " right node = val
 " pos = string
-function! s:append_var(env, var, val, pos)
+function! s:VimlLint.append_var(env, var, val, pos)
     if type(a:var) != type({}) || !has_key(a:var, 'type') || !has_key(a:var, 'node')
         echo "in append_var: invalid input: type=" . type(a:var) . ",pos=" . a:pos
         echo a:var
@@ -219,6 +233,7 @@ function! s:append_var(env, var, val, pos)
     elseif a:var.type == 'env'
         " $xxxx
     else
+      " @TODO
         call s:VimlLint.error_mes(a:var.node, 'unknown type')
         echo a:var
     endif
@@ -433,7 +448,11 @@ endfunction
 function! s:VimlLint.error_mes(node, mes)
 "  echo a:node
   let pos = '[line=' . a:node.pos.lnum . ',col=' . a:node.pos.col . ',i=' . a:node.pos.i . ']: '
-  echo pos . a:mes
+  if has_key(self, 'param') && has_key(self.param, 'output')
+    let self.error += [pos . a:mes]
+  else
+    echo pos . a:mes
+  endif
 endfunction
 
 function s:VimlLint.compile_function(node, refchk)
@@ -443,7 +462,7 @@ function s:VimlLint.compile_function(node, refchk)
   let self.env = s:env(self.env, left)
   for v in rlist
     " E853 if Duplicate argument
-    call s:append_var(self.env, v, s:NIL, "a:")
+    call self.append_var(self.env, v, s:NIL, "a:")
     unlet v
   endfor
   call self.compile_body(a:node.body, 1)
@@ -454,7 +473,7 @@ function s:VimlLint.compile_function(node, refchk)
       " a: は例外とする, オプションが必要 @TODO
 "      echo self.env.var[v]
       if self.param['unused_argument'] || v ==# '^a:'
-        call s:VimlLint.error_mes(self.env.var[v].node, 'unused variable `' . v . '`')
+        call self.error_mes(self.env.var[v].node, 'unused variable `' . v . '`')
       endif
     endif
   endfor
@@ -486,10 +505,10 @@ function s:VimlLint.compile_let(node, rechk)
   let right = self.compile(a:node.right, 1)
   if a:node.left isnot s:NIL
       let left = self.compile(a:node.left, 0)
-      call s:append_var(self.env, left, right, "let1")
+      call self.append_var(self.env, left, right, "let1")
   else
     let list = map(a:node.list, 'self.compile(v:val, 0)')
-    call map(list, 's:append_var(self.env, v:val, right, "letn")')
+    call map(list, 'self.append_var(self.env, v:val, right, "letn")')
   endif
 endfunction
 
@@ -505,10 +524,10 @@ endfunction
 function s:VimlLint.compile_lockvar(node, refchk)
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
-      call s:VimlLint.error_mes(a:node, 'lockvar: internal variable is required: ' . var)
+      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var)
     endif
     if !s:exists_var(self.env, var)
-      call s:VimlLint.error_mes(a:node, 'undefined variable: ' . var)
+      call self.error_mes(a:node, 'undefined variable: ' . var)
     endif
   endfor
 endfunction
@@ -516,10 +535,10 @@ endfunction
 function s:VimlLint.compile_unlockvar(node, refchk)
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
-      call s:VimlLint.error_mes(a:node, 'lockvar: internal variable is required: ' . var)
+      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var)
     endif
     if !s:exists_var(self.env, var)
-      call s:VimlLint.error_mes(a:node, 'undefined variable: ' . var)
+      call self.error_mes(a:node, 'undefined variable: ' . var)
     endif
   endfor
 endfunction
@@ -547,13 +566,13 @@ function s:VimlLint.compile_for(node, refchk)
 
   if a:node.left isnot s:NIL
     let left = self.compile(a:node.left, 0)
-    call s:append_var(self.env, left, right, "for")
+    call self.append_var(self.env, left, right, "for")
     " append
 "    echo "compile for, left is"
 "    echo left
   else
     let list = map(a:node.list, 'self.compile(v:val, 0)')
-    call map(list, 's:append_var(self.env, v:val, right, "forn")')
+    call map(list, 'self.append_var(self.env, v:val, right, "forn")')
     " append
     if a:node.rest isnot s:NIL
       let rest = self.compile(a:node.rest, a:refchk)
@@ -861,7 +880,7 @@ function s:VimlLint.compile_identifier(node, refchk)
 "echo a:node
   if s:reserved_name(name)
   elseif a:refchk && !s:exists_var(self.env, a:node)
-    call s:VimlLint.error_mes(a:node, 'undefined variable: ' . name)
+    call self.error_mes(a:node, 'undefined variable: ' . name)
   endif
   return {'type' : 'id', 'val' : name, 'node' : a:node}
 endfunction
@@ -909,9 +928,18 @@ function! vimlint#vimlint(filename, param)
     let env = c.env
     for v in keys(env.var)
       if env.var[v].subs == 0
-        call s:VimlLint.error_mes(env.var[v].node, 'undefined variable `' . v . '`')
+        call c.error_mes(env.var[v].node, 'undefined variable `' . v . '`')
       endif
     endfor
+
+    if has_key(c.param, 'output')
+      if c.param.output.append
+        let lines = extend(readfile(c.param.output.filename), c.error)
+      else
+        let lines = c.error
+      endif
+      call writefile(lines, c.param.output.filename)
+    endif
 
   catch
     echoerr substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
