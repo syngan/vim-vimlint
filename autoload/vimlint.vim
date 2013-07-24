@@ -1129,6 +1129,11 @@ function s:VimlLint.compile_call(node, refchk)
         echo "rlist[0]=" . string(rlist[0])
         call self.parse_string(rlist[0].val[1:-2])
       endif
+    elseif left.val == 'substitute'
+      if len(rlist) >= 3 && type(rlist[2]) == type({})
+      \ && has_key(rlist[2], 'val') && rlist[2].val[1:] =~# "^\\="
+        call self.parse_string(rlist[2].val[3:-2])
+      endif
     endif
   endif
 
