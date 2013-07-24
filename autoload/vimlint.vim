@@ -809,6 +809,26 @@ endfunction
 function s:VimlLint.compile_call(node, refchk)
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let left = self.compile(a:node.left, 0)
+
+  " @TODO check built-in functions
+
+
+
+  " 例外で, map と filter と,
+  " @TODO vital... はどうしよう
+  " command 扱いされてしまう.
+  if has_key(left, 'val') && (left.val == 'map' || left.val == 'filter')
+    if len(rlist) == 2
+      let p = s:VimLParser.new()
+      let c = s:VimlLint.new(self.param)
+      let c.env = self.env
+      let r = s:StringReader.new('echo ' . rlist[1].val[1:-2])
+      call c.compile(p.parse(r), 1)
+    endif
+    " 引数誤りはチェック済, にする.
+  endif
+
+
   return {'type' : 'call', 'l' : left, 'r' : rlist, 'node' : a:node}
 endfunction
 
@@ -964,8 +984,6 @@ function! s:numtoname(num)
   endfor
   return a:num
 endfunction
-
-"call g:vimlint(g:vimlint_filename)
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
