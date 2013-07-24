@@ -233,7 +233,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
         " $xxxx
     else
       " @TODO
-        call s:VimlLint.error_mes(a:var.node, 'unknown type')
+        call s:VimlLint.error_mes(a:var.node, 'unknown type', 1)
         echo a:var
     endif
 endfunction
@@ -444,13 +444,15 @@ function s:VimlLint.compile_excmd(node, refchk)
 " e.g. a = 3   (let 漏れ)
 endfunction
 
-function! s:VimlLint.error_mes(node, mes)
+function! s:VimlLint.error_mes(node, mes, print)
 "  echo a:node
-  let pos = '[' . self.filename . ',line=' . a:node.pos.lnum . ',col=' . a:node.pos.col . ',i=' . a:node.pos.i . ']: '
-  if has_key(self, 'param') && has_key(self.param, 'output')
-    let self.error += [pos . a:mes]
-  else
-    echo pos . a:mes
+  if a:print
+    let pos = '[' . self.filename . ',line=' . a:node.pos.lnum . ',col=' . a:node.pos.col . ',i=' . a:node.pos.i . ']: '
+    if has_key(self, 'param') && has_key(self.param, 'output')
+      let self.error += [pos . a:mes]
+    else
+      echo pos . a:mes
+    endif
   endif
 endfunction
 
@@ -472,11 +474,9 @@ function s:VimlLint.compile_function(node, refchk)
       " a: は例外とする, オプションが必要 @TODO
 "      echo self.env.var[v]
       if v =~# '^a:'
-        if self.param['unused_argument']
-          call self.error_mes(self.env.var[v].node, 'unused argument `' . v . '`')
-        endif
+        call self.error_mes(self.env.var[v].node, 'unused argument `' . v . '`', self.param['unused_argument'])
       else
-        call self.error_mes(self.env.var[v].node, 'unused variable `' . v . '`')
+        call self.error_mes(self.env.var[v].node, 'unused variable `' . v . '`', 1)
       endif
     endif
   endfor
@@ -527,10 +527,10 @@ endfunction
 function s:VimlLint.compile_lockvar(node, refchk)
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
-      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var)
+      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
     endif
     if !s:exists_var(self.env, var)
-      call self.error_mes(a:node, 'undefined variable: ' . var)
+      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
 endfunction
@@ -538,10 +538,10 @@ endfunction
 function s:VimlLint.compile_unlockvar(node, refchk)
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
-      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var)
+      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
     endif
     if !s:exists_var(self.env, var)
-      call self.error_mes(a:node, 'undefined variable: ' . var)
+      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
 endfunction
@@ -938,7 +938,7 @@ function s:VimlLint.compile_identifier(node, refchk)
 "echo a:node
   if s:reserved_name(name)
   elseif a:refchk && !s:exists_var(self.env, a:node)
-    call self.error_mes(a:node, 'undefined variable: ' . name)
+    call self.error_mes(a:node, 'undefined variable: ' . name, 1)
   endif
   return {'type' : 'id', 'val' : name, 'node' : a:node}
 endfunction
@@ -991,7 +991,7 @@ function! vimlint#vimlint(filename, param)
     let env = c.env
     for v in keys(env.var)
       if env.var[v].subs == 0
-        call c.error_mes(env.var[v].node, 'undefined variable `' . v . '`')
+        call c.error_mes(env.var[v].node, 'undefined variable `' . v . '`', 1)
       endif
     endfor
 
