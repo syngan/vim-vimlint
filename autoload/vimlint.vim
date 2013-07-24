@@ -1,83 +1,25 @@
-"
-" ºÇÄã¸Â¤ä¤ê¤¿¤¤¤³¤È
-" - ´Ø¿ô°ú¿ô¤ò a: ÉÕ¤±¤º¤Ë»²¾È
-" - let ¤Ä¤±¤º¤ËÊÑ¿ôÂåÆş
-" - call ¤Ä¤±¤º¤Ë´Ø¿ô¸Æ¤Ó½Ğ¤·
-" - build-in ´Ø¿ô´ØÏ¢
-
-" map Æâ¤Ê¤ÉÊ¸»úÎó¤Ç»ÈÍÑ¤·¤¿ÊÑ¿ô¤Î¥Á¥§¥Ã¥¯¤¬¤Ç¤­¤Æ¤¤¤Ê¤¤
-" @TODO `=` ¤Ï let °Ê³°¤Ç»È¤¦¾ìÌÌ¤¬¤¢¤ë¤«?
+scriptencoding utf-8
 
 let s:save_cpo = &cpo
 set cpo&vim
 
-scriptencoding utf-8
+" æœ€ä½é™ã‚„ã‚ŠãŸã„ã“ã¨ {{{
+"  - é–¢æ•°å¼•æ•°ã‚’ a: ä»˜ã‘ãšã«å‚ç…§
+" - let ã¤ã‘ãšã«å¤‰æ•°ä»£å…¥
+" - call ã¤ã‘ãšã«é–¢æ•°å‘¼ã³å‡ºã—
+" - build-in é–¢æ•°é–¢é€£
+
+" map å†…ãªã©æ–‡å­—åˆ—ã§ä½¿ç”¨ã—ãŸå¤‰æ•°ã®ãƒã‚§ãƒƒã‚¯ãŒã§ãã¦ã„ãªã„
+" @TODO `=` ã¯ let ä»¥å¤–ã§ä½¿ã†å ´é¢ãŒã‚ã‚‹ã‹?
+" }}}
 
 call extend(s:, vimlparser#import())
-
-let s:opprec = {}
-let s:opprec[s:NODE_TERNARY] = 1
-let s:opprec[s:NODE_OR] = 2
-let s:opprec[s:NODE_AND] = 3
-let s:opprec[s:NODE_EQUAL] = 4
-let s:opprec[s:NODE_EQUALCI] = 4
-let s:opprec[s:NODE_EQUALCS] = 4
-let s:opprec[s:NODE_NEQUAL] = 4
-let s:opprec[s:NODE_NEQUALCI] = 4
-let s:opprec[s:NODE_NEQUALCS] = 4
-let s:opprec[s:NODE_GREATER] = 4
-let s:opprec[s:NODE_GREATERCI] = 4
-let s:opprec[s:NODE_GREATERCS] = 4
-let s:opprec[s:NODE_GEQUAL] = 4
-let s:opprec[s:NODE_GEQUALCI] = 4
-let s:opprec[s:NODE_GEQUALCS] = 4
-let s:opprec[s:NODE_SMALLER] = 4
-let s:opprec[s:NODE_SMALLERCI] = 4
-let s:opprec[s:NODE_SMALLERCS] = 4
-let s:opprec[s:NODE_SEQUAL] = 4
-let s:opprec[s:NODE_SEQUALCI] = 4
-let s:opprec[s:NODE_SEQUALCS] = 4
-let s:opprec[s:NODE_MATCH] = 4
-let s:opprec[s:NODE_MATCHCI] = 4
-let s:opprec[s:NODE_MATCHCS] = 4
-let s:opprec[s:NODE_NOMATCH] = 4
-let s:opprec[s:NODE_NOMATCHCI] = 4
-let s:opprec[s:NODE_NOMATCHCS] = 4
-let s:opprec[s:NODE_IS] = 4
-let s:opprec[s:NODE_ISCI] = 4
-let s:opprec[s:NODE_ISCS] = 4
-let s:opprec[s:NODE_ISNOT] = 4
-let s:opprec[s:NODE_ISNOTCI] = 4
-let s:opprec[s:NODE_ISNOTCS] = 4
-let s:opprec[s:NODE_ADD] = 5
-let s:opprec[s:NODE_SUBTRACT] = 5
-let s:opprec[s:NODE_CONCAT] = 5
-let s:opprec[s:NODE_MULTIPLY] = 6
-let s:opprec[s:NODE_DIVIDE] = 6
-let s:opprec[s:NODE_REMAINDER] = 6
-let s:opprec[s:NODE_NOT] = 7
-let s:opprec[s:NODE_MINUS] = 7
-let s:opprec[s:NODE_PLUS] = 7
-let s:opprec[s:NODE_SUBSCRIPT] = 8
-let s:opprec[s:NODE_SLICE] = 8
-let s:opprec[s:NODE_CALL] = 8
-let s:opprec[s:NODE_DOT] = 8
-let s:opprec[s:NODE_NUMBER] = 9
-let s:opprec[s:NODE_STRING] = 9
-let s:opprec[s:NODE_LIST] = 9
-let s:opprec[s:NODE_DICT] = 9
-let s:opprec[s:NODE_OPTION] = 9
-let s:opprec[s:NODE_IDENTIFIER] = 9
-let s:opprec[s:NODE_CURLYNAME] = 9
-let s:opprec[s:NODE_ENV] = 9
-let s:opprec[s:NODE_REG] = 9
 
 let s:VimlLint = {}
 
 let s:default_param = {
 \ 'unused_argument' : 1,
 \}
-
 
 function s:VimlLint.new(param)
   let obj = copy(self)
@@ -89,7 +31,7 @@ function s:VimlLint.new(param)
 endfunction
 
 " for debug
-function! s:VimlLint.node2str(node)
+function! s:VimlLint.node2str(node) " {{{
     let a = {}
     let a[1] = 'TOPLEVEL'
     let a[2] = 'COMMENT'
@@ -180,7 +122,7 @@ function! s:VimlLint.node2str(node)
     let a[88] = 'ENV'
     let a[89] = 'REG'
     return a[a:node.type] . "(" . a:node.type . ")"
-endfunction
+endfunction " }}}
 
 function! s:env(outer, funcname)
     let env = {}
@@ -195,21 +137,21 @@ function! s:env(outer, funcname)
     return env
 endfunction
 
-" ÊÑ¿ô»²¾È
+" å¤‰æ•°å‚ç…§
 " @param var string
 " @param node dict: return value of compile
 function! s:exists_var(env, node)
     let var = a:node.value
     if var =~# '^[gbwt]:'
-        " check ¤Ç¤­¤Ê¤¤
-        " ·¿¤¯¤é¤¤¤ÏÊİÂ¸¤·¤Æ¤ß¤ë?
+        " check ã§ããªã„
+        " å‹ãã‚‰ã„ã¯ä¿å­˜ã—ã¦ã¿ã‚‹?
         return 1
     elseif var =~# '^[s]:'
         call s:append_var_(a:env.global, var, a:node, 0, -1)
         return 1
     elseif var =~# '^v:'
         " @TODO :help v:
-        " @TODO map Æâ¤Ê¤É¤«?
+        " @TODO map å†…ãªã©ã‹?
         return 1
     else
         let env = a:env
@@ -242,8 +184,8 @@ function! s:append_var_(env, var, node, val, cnt)
     endif
 endfunction
 
-" ÊÑ¿ôÂåÆş
-" let ¤Ç¤¤¤¦¤È¤³¤í¤Î
+" å¤‰æ•°ä»£å…¥
+" let ã§ã„ã†ã¨ã“ã‚ã®
 " left node  = var
 " right node = val
 " pos = string
@@ -256,7 +198,7 @@ function! s:append_var(env, var, val, pos)
     if a:var.type == 'id'
         let node = a:var.node
         if a:pos == 'a:'
-            " ´Ø¿ô°ú¿ô
+            " é–¢æ•°å¼•æ•°
             if a:var.val != '...'
                 call s:append_var_(a:env, 'a:' . a:var.val, node, a:val, 1)
             endif
@@ -292,7 +234,7 @@ function! s:echonode(node)
     \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%")
 endfunction
 
-function s:VimlLint.compile(node, refchk)
+function s:VimlLint.compile(node, refchk) " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
     if a:node.type != 2
 "      call s:echonode(a:node)
@@ -301,7 +243,7 @@ function s:VimlLint.compile(node, refchk)
 "    echo "node=" . type(a:node)
 "    echo a:node
   endif
-  if a:node.type == s:NODE_TOPLEVEL
+  if a:node.type == s:NODE_TOPLEVEL " {{{
     return self.compile_toplevel(a:node, a:refchk)
   elseif a:node.type == s:NODE_COMMENT
     return self.compile_comment(a:node, a:refchk)
@@ -461,8 +403,8 @@ function s:VimlLint.compile(node, refchk)
     return self.compile_reg(a:node)
   else
     throw self.err('Compiler: unknown node: %s', string(a:node))
-  endif
-endfunction
+  endif " }}}
+endfunction " }}}
 
 function s:VimlLint.compile_body(body, refchk)
   let empty = 1
@@ -485,7 +427,7 @@ endfunction
 function s:VimlLint.compile_excmd(node, refchk)
 " @TODO
 " e.g. set cpo&vim
-" e.g. a = 3   (let Ï³¤ì)
+" e.g. a = 3   (let æ¼ã‚Œ)
 endfunction
 
 function! s:VimlLint.error_mes(node, mes)
@@ -506,10 +448,10 @@ function s:VimlLint.compile_function(node, refchk)
   endfor
   call self.compile_body(a:node.body, 1)
 
-  " Ì¤»ÈÍÑÊÑ¿ô¤Ï?
+  " æœªä½¿ç”¨å¤‰æ•°ã¯?
   for v in keys(self.env.var)
     if self.env.var[v].ref == 0
-      " a: ¤ÏÎã³°¤È¤¹¤ë, ¥ª¥×¥·¥ç¥ó¤¬É¬Í× @TODO
+      " a: ã¯ä¾‹å¤–ã¨ã™ã‚‹, ã‚ªãƒ—ã‚·ãƒ§ãƒ³ãŒå¿…è¦ @TODO
 "      echo self.env.var[v]
       if self.param['unused_argument'] || v ==# '^a:'
         call s:VimlLint.error_mes(self.env.var[v].node, 'unused variable `' . v . '`')
@@ -521,7 +463,7 @@ function s:VimlLint.compile_function(node, refchk)
 endfunction
 
 function s:VimlLint.compile_delfunction(node, rechk)
-  " @TODO function ¤ÏÄêµÁºÑ¤«?
+  " @TODO function ã¯å®šç¾©æ¸ˆã‹?
 endfunction
 
 function s:VimlLint.compile_return(node, refchk)
@@ -677,6 +619,7 @@ function s:VimlLint.compile_ternary(node, refchk)
   let right = self.compile(a:node.right, 1)
 endfunction
 
+" op2 {{{
 function s:VimlLint.compile_or(node)
   return self.compile_op2(a:node, 'or')
 endfunction
@@ -828,7 +771,9 @@ endfunction
 function s:VimlLint.compile_remainder(node)
   return self.compile_op2(a:node, '%')
 endfunction
+" }}}
 
+" op1 {{{
 function s:VimlLint.compile_not(node)
   return self.compile_op1(a:node, 'not ')
 endfunction
@@ -840,6 +785,7 @@ endfunction
 function s:VimlLint.compile_minus(node)
   return self.compile_op1(a:node, '-')
 endfunction
+" }}}
 
 function s:VimlLint.compile_call(node, refchk)
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
@@ -855,7 +801,7 @@ function s:VimlLint.compile_slice(node, refchk)
 endfunction
 
 
-" ÃÖ¤­´¹¤¨¤ë°ÕÌ£¤¬¤Ê¤µ¤½¤¦¤Ê´¶¤¸¤Ë¤Ê¤Ã¤Æ¤­¤¿.
+" ç½®ãæ›ãˆã‚‹æ„å‘³ãŒãªã•ãã†ãªæ„Ÿã˜ã«ãªã£ã¦ããŸ.
 function s:VimlLint.compile_subscript(node)
   let left = self.compile(a:node.left, 1)
   let right = self.compile(a:node.right, 0)
@@ -873,7 +819,7 @@ function s:VimlLint.compile_number(node)
   return { 'type' : 'integer', 'val' : a:node.value, 'node' : a:node}
 endfunction
 
-" map ¤Î°ú¿ô¤Ê¤É¤ò¤É¤¦½èÍı¤¹¤ë¤«?
+" map ã®å¼•æ•°ãªã©ã‚’ã©ã†å‡¦ç†ã™ã‚‹ã‹?
 function s:VimlLint.compile_string(node)
   return { 'type' : 'string', 'val' : a:node.value, 'node' : a:node}
 endfunction
@@ -884,7 +830,7 @@ function s:VimlLint.compile_list(node, refchk)
 endfunction
 
 function s:VimlLint.compile_dict(node, refchk)
-  " @TODO Ê¸»úÎó¤Î¤ß
+  " @TODO æ–‡å­—åˆ—ã®ã¿
   call map(copy(a:node.value), 'self.compile(v:val[0], 1)')
   call map(a:node.value, 'self.compile(v:val[1], 1)')
   return { 'type' : 'dict', 'node' : a:node}
@@ -959,7 +905,7 @@ function! vimlint#vimlint(filename, param)
     let c = s:VimlLint.new(a:param)
     call c.compile(p.parse(r), 1)
 
-    " global ÊÑ¿ô¤Î¥Á¥§¥Ã¥¯
+    " global å¤‰æ•°ã®ãƒã‚§ãƒƒã‚¯
     let env = c.env
     for v in keys(env.var)
       if env.var[v].subs == 0
