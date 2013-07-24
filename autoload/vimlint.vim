@@ -881,7 +881,7 @@ endfunction
 " 置き換える意味がなさそうな感じになってきた.
 function s:VimlLint.compile_subscript(node)
   let left = self.compile(a:node.left, 1)
-  let right = self.compile(a:node.right, 0)
+  let right = self.compile(a:node.right, 1)
   " @TODO left is a list or a dictionary
   return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
 endfunction
