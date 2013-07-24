@@ -471,7 +471,9 @@ function s:VimlLint.compile_function(node, refchk)
     if self.env.var[v].ref == 0
       " a: は例外とする, オプションが必要 @TODO
 "      echo self.env.var[v]
-      if self.param['unused_argument'] || v ==# '^a:'
+      if v ==# '^a:' && self.param['unused_argument']
+        call self.error_mes(self.env.var[v].node, 'unused argument `' . v . '`')
+      else
         call self.error_mes(self.env.var[v].node, 'unused variable `' . v . '`')
       endif
     endif
@@ -852,11 +854,12 @@ function s:VimlLint.compile_call(node, refchk)
     " @TODO vital... はどうしよう
     " 引数誤りはチェック済, にする.
     if left.val == 'map' || left.val == 'filter'
-      if len(rlist) == 2
+      if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'val')
         call self.parse_string(rlist[1].val[1:-2])
       endif
     elseif left.val == 'eval'
-      if len(rlist) == 1
+      if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[1], 'val')
+        echo "rlist[0]=" . string(rlist[0])
         call self.parse_string(rlist[0].val[1:-2])
       endif
     endif
@@ -998,9 +1001,20 @@ function! vimlint#vimlint(filename, param)
       endif
       call writefile(lines, c.param.output.filename)
     endif
-
   catch
-    echoerr substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
+
+    let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
+    if has_key(c.param, 'output')
+      if c.param.output.append
+        let lines = extend(readfile(c.param.output.filename), c.error, [msg])
+      else
+        let lines = extend(c.error, [msg])
+      endif
+      call writefile(lines, c.param.output.filename)
+    else
+      echoerr msg
+    endif
+
   finally
     echo '.... ' . a:filename . ' end'
   endtry
