@@ -7,6 +7,7 @@ set cpo&vim
 " - let つけずに変数代入
 " - call つけずに関数呼び出し
 " - build-in 関数関連の引数チェック
+" - scriptencoding 有無
 " @TODO `=` は let 以外で使う場面があるか?
 " }}}
 
@@ -514,19 +515,23 @@ function s:VimlLint.compile_excall(node, refchk)
   call self.compile(a:node.left, a:refchk)
 endfunction
 
-function s:VimlLint.compile_let(node, rechk)
-
+function s:VimlLint.compile_let(node, refchk)
   if type(a:node.right) != type({})
     echo "compile_let. right is invalid"
     echo a:node
   endif
   let right = self.compile(a:node.right, 1)
+
   if a:node.left isnot s:NIL
     let left = self.compile(a:node.left, 0)
     call self.append_var(self.env, left, right, "let1")
   else
     let list = map(a:node.list, 'self.compile(v:val, 0)')
     call map(list, 'self.append_var(self.env, v:val, right, "letn")')
+    if a:node.rest isnot s:NIL
+      let v = self.compile(a:node.rest, 0)
+      call self.append_var(self.env, v, right, "letr")
+    endif
   endif
 endfunction
 
