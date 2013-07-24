@@ -458,6 +458,12 @@ function s:VimlLint.compile_excmd(node, refchk)
 " @TODO
 " e.g. set cpo&vim
 " e.g. a = 3   (let 漏れ)
+"  redir => res
+"  lcd `=cwd`
+  let s = matchstr(a:node.str, "`=.[^`]*`")
+  if s != ''
+    call self.parse_string(s[2:-2])
+  endif
 endfunction
 
 function! s:VimlLint.error_mes(node, mes, print)
