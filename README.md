@@ -33,7 +33,7 @@ endif
 vimlparser: E488: Trailing characters: =: line 4 col 7
 ```
 
-##
+## undefined variable
 
 ```vim
 function! neobundle#is_installed(...)
