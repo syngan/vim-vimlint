@@ -1266,7 +1266,7 @@ function! vimlint#vimlint(filename, param)
     endfor
 
     if has_key(c.param, 'output')
-      if c.param.output.append
+      if c.param.output.append && filewritable(c.param.output.filename)
         let lines = extend(readfile(c.param.output.filename), c.error)
       else
         let lines = c.error
