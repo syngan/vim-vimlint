@@ -155,6 +155,13 @@ endfunction
 " @param node dict: return value of compile
 function! s:exists_var(env, node)
   let var = a:node.value
+  if var !~# '^[gbwtslva]:'
+    if a:env.outer == a:env
+      let var = 'g:' . var
+    else
+      let var = 'l:' . var
+    endif
+  endif
   if var =~# '^[gbwt]:'
     " check できない
     " 型くらいは保存してみる?
@@ -210,15 +217,27 @@ function! s:VimlLint.append_var(env, var, val, pos)
   endif
   if a:var.type == 'id'
     let node = a:var.node
+    let v = a:var.val
     if a:pos == 'a:'
       " 関数引数
-      if a:var.val != '...'
-        call s:append_var_(a:env, 'a:' . a:var.val, node, a:val, 1)
+      if v != '...'
+        call s:append_var_(a:env, 'a:' . v, node, a:val, 1)
       endif
-    elseif a:var.val =~# '^[sgbwt]:'
-      call s:append_var_(a:env.global, a:var.val, node, a:val, 1)
+      return
+    endif
+
+    " 接頭子は必ずつける.
+    if v !~# '^[gbwtslv]:'
+      if a:env.global == a:env
+        let v = 'g:' . v
+      else
+        let v = 'l:' . v
+      endif
+    endif
+    if v =~# '^[sgbwt]:'
+      call s:append_var_(a:env.global, v, node, a:val, 1)
     else
-      call s:append_var_(a:env, a:var.val, node, a:val, 1)
+      call s:append_var_(a:env, v, node, a:val, 1)
     endif
   elseif a:var.type == 'reg'
     " do nothing
@@ -421,12 +440,8 @@ function s:VimlLint.compile(node, refchk) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_body(body, refchk)
-  let empty = 1
   for node in a:body
     call self.compile(node, a:refchk)
-    if node.type != s:NODE_COMMENT
-      let empty = 0
-    endif
   endfor
 endfunction
 
