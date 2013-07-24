@@ -447,7 +447,7 @@ endfunction
 
 function! s:VimlLint.error_mes(node, mes)
 "  echo a:node
-  let pos = '[line=' . a:node.pos.lnum . ',col=' . a:node.pos.col . ',i=' . a:node.pos.i . ']: '
+  let pos = '[' . self.filename . ',line=' . a:node.pos.lnum . ',col=' . a:node.pos.col . ',i=' . a:node.pos.i . ']: '
   if has_key(self, 'param') && has_key(self.param, 'output')
     let self.error += [pos . a:mes]
   else
@@ -915,13 +915,16 @@ function! vimlint#vimlint(filename, param)
   let vimfile = a:filename
   try
     echo '.... ' . a:filename . ' start'
-    if has_key(a:param, 'type') && a:param.type == 'string'
-        let r = s:StringReader.new(vimfile)
-    else
-        let r = s:StringReader.new(readfile(vimfile))
-    endif
     let p = s:VimLParser.new()
     let c = s:VimlLint.new(a:param)
+
+    if has_key(a:param, 'type') && a:param.type == 'string'
+        let r = s:StringReader.new(vimfile)
+        let c.filename = 'string'
+    else
+        let r = s:StringReader.new(readfile(vimfile))
+        let c.filename = vimfile
+    endif
     call c.compile(p.parse(r), 1)
 
     " global 変数のチェック
