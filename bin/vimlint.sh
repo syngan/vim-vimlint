@@ -1,5 +1,5 @@
 #!/bin/sh
-set -x
+#set -x
 ####################################################################
 #
 #
@@ -45,6 +45,7 @@ shift `expr $OPTIND - 1`
 
 check()
 {
+	echo "$1"
 	BASE=`basename "$1"`
 	vim -N -c "call vimlint#vimlint('$1', {'output': {'filename' : '${DIR}/${BASE}', 'append' : 1}})" -c "qall!" > /dev/null 2>&1
 }
