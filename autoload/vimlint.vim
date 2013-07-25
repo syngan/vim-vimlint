@@ -476,7 +476,7 @@ function s:VimlLint.compile_excmd(node, refchk)
 "  lcd `=cwd`
   let s = matchstr(a:node.str, "`=.[^`]*`")
   if s != ''
-    call self.parse_string(s[2:-2])
+    call self.parse_string(s[2:-2], a:node, 'ExCommand')
   endif
 
 "  redir => res
@@ -494,7 +494,12 @@ endfunction
 function! s:VimlLint.error_mes(node, mes, print)
 "  echo a:node
   if a:print
-    let pos = self.filename . ':' . a:node.pos.lnum . ':' . a:node.pos.col . ':' . a:node.pos.i
+    if has_key(a:node, 'pos')
+      let node = a:node
+    else
+      let node = a:node.node
+    endif
+    let pos = self.filename . ':' . node.pos.lnum . ':' . node.pos.col . ':' . node.pos.i
     call self.param.outfunc(pos, a:mes, self)
   endif
 endfunction
@@ -856,12 +861,16 @@ function s:VimlLint.compile_minus(node)
 endfunction
 " }}}
 
-function s:VimlLint.parse_string(str)
-  let p = s:VimLParser.new()
-  let c = s:VimlLint.new(self.param)
-  let c.env = self.env
-  let r = s:StringReader.new('echo ' . a:str)
-  call c.compile(p.parse(r), 1)
+function s:VimlLint.parse_string(str, node, cmd)
+  try
+    let p = s:VimLParser.new()
+    let c = s:VimlLint.new(self.param)
+    let c.env = self.env
+    let r = s:StringReader.new('echo ' . a:str)
+    call c.compile(p.parse(r), 1)
+  catch
+    call self.error_mes(a:node, 'parse error in `' . a:cmd . '`', 1)
+  endtry
 endfunction
 
 let s:builtin_func = {} " {{{
@@ -1141,17 +1150,17 @@ function s:VimlLint.compile_call(node, refchk)
     " 引数誤りはチェック済, にする.
     if left.val == 'map' || left.val == 'filter'
       if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'val')
-        call self.parse_string(rlist[1].val[1:-2])
+        call self.parse_string(rlist[1].val[1:-2], left, left.val)
       endif
     elseif left.val == 'eval'
       if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'val')
         echo "rlist[0]=" . string(rlist[0])
-        call self.parse_string(rlist[0].val[1:-2])
+        call self.parse_string(rlist[0].val[1:-2], left, left.val)
       endif
     elseif left.val == 'substitute'
       if len(rlist) >= 3 && type(rlist[2]) == type({})
-      \ && has_key(rlist[2], 'val') && rlist[2].val[1:] =~# "^\\="
-        call self.parse_string(rlist[2].val[3:-2])
+      \ && has_key(rlist[2], 'val') && rlist[2].val[1:] =~# '^\\='
+        call self.parse_string(rlist[2].val[3:-2], left, left.val)
       endif
     endif
   endif
@@ -1284,7 +1293,6 @@ function! vimlint#vimlint(filename, param)
       endif
     endfor
   catch
-
     let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
     if !has_key(c.param, 'output')
       echoerr msg
@@ -1304,6 +1312,7 @@ function! vimlint#vimlint(filename, param)
 
     echo '.... ' . a:filename . ' end'
   endtry
+
 endfunction
 
 function! s:numtoname(num)
