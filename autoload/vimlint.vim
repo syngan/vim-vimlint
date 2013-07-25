@@ -11,6 +11,10 @@ set cpo&vim
 " @TODO `=` は let 以外で使う場面があるか?
 " }}}
 
+" global variables {{{
+let g:vimlint#debug = get(g:, 'vimlint#debug', 0)
+" }}}
+
 call extend(s:, vimlparser#import())
 
 let s:VimlLint = {}
@@ -270,8 +274,8 @@ endfunction
 
 function s:VimlLint.compile(node, refchk) " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
-    if a:node.type != 2
-"      call s:echonode(a:node)
+    if a:node.type != 2 && g:vimlint#debug > 2
+      call s:echonode(a:node)
     endif
   else
 "    echo "node=" . type(a:node)
