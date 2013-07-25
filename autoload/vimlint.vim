@@ -22,7 +22,9 @@ let s:VimlLint = {}
 let s:default_param = {} " {{{
 let s:default_param.unused_argument = 1
 
-let s:default_param_output = {'append' : 0, 'filename' : ''}
+let s:default_param_output = {
+\   'append' : 0,
+\   'filename' : ''}
 " }}}
 
 function s:VimlLint.new(param)
@@ -42,7 +44,16 @@ function s:VimlLint.new(param)
     if obj.param.output.filename == ''
       unlet obj.param.output
     endif
+  endif
+
+  if has_key(obj.param, 'output')
+    " file
+    let obj.param.outfunc = s:output_file
+  else
+    " echo
+    let obj.param.outfunc = s:output_echo
   endif " }}}
+
 
   let obj.error = []
   return obj
@@ -472,15 +483,19 @@ function s:VimlLint.compile_excmd(node, refchk)
 "  echo a:node.str
 endfunction
 
+function! s:output_echo(pos, mes, obj)
+  echo a:pos . ': ' . a:mes
+endfunction
+
+function! s:output_file(pos, mes, obj)
+  let a:obj.error += [a:pos . ': ' . a:mes]
+endfunction
+
 function! s:VimlLint.error_mes(node, mes, print)
 "  echo a:node
   if a:print
-    let pos = self.filename . ':' . a:node.pos.lnum . ':' . a:node.pos.col . ':' . a:node.pos.i . ': '
-    if has_key(self, 'param') && has_key(self.param, 'output')
-      let self.error += [pos . a:mes]
-    else
-      echo pos . a:mes
-    endif
+    let pos = self.filename . ':' . a:node.pos.lnum . ':' . a:node.pos.col . ':' . a:node.pos.i
+    call self.param.outfunc(pos, mes, self)
   endif
 endfunction
 
