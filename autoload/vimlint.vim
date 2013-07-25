@@ -48,10 +48,10 @@ function s:VimlLint.new(param)
 
   if has_key(obj.param, 'output')
     " file
-    let obj.param.outfunc = s:output_file
+    let obj.param.outfunc = function('s:output_file')
   else
     " echo
-    let obj.param.outfunc = s:output_echo
+    let obj.param.outfunc = function('s:output_echo')
   endif " }}}
 
 
@@ -480,7 +480,7 @@ function s:VimlLint.compile_excmd(node, refchk)
   endif
 
 "  redir => res
-"  echo a:node.str
+  echo a:node.str
 endfunction
 
 function! s:output_echo(pos, mes, obj)
@@ -495,7 +495,7 @@ function! s:VimlLint.error_mes(node, mes, print)
 "  echo a:node
   if a:print
     let pos = self.filename . ':' . a:node.pos.lnum . ':' . a:node.pos.col . ':' . a:node.pos.i
-    call self.param.outfunc(pos, mes, self)
+    call self.param.outfunc(pos, a:mes, self)
   endif
 endfunction
 
@@ -1262,10 +1262,10 @@ endfunction
 
 function! vimlint#vimlint(filename, param)
   let vimfile = a:filename
+  let p = s:VimLParser.new()
+  let c = s:VimlLint.new(a:param)
   try
     echo '.... ' . a:filename . ' start'
-    let p = s:VimLParser.new()
-    let c = s:VimlLint.new(a:param)
 
     if has_key(a:param, 'type') && a:param.type == 'string'
         let r = s:StringReader.new(vimfile)
