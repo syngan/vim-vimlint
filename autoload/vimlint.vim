@@ -471,7 +471,7 @@ endfunction
 function! s:VimlLint.error_mes(node, mes, print)
 "  echo a:node
   if a:print
-    let pos = '[' . self.filename . ',line=' . a:node.pos.lnum . ',col=' . a:node.pos.col . ',i=' . a:node.pos.i . ']: '
+    let pos = self.filename . ':' . a:node.pos.lnum . ':' . a:node.pos.col . ':' . a:node.pos.i . ': '
     if has_key(self, 'param') && has_key(self.param, 'output')
       let self.error += [pos . a:mes]
     else
