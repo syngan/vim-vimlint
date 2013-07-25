@@ -480,7 +480,7 @@ function s:VimlLint.compile_excmd(node, refchk)
   endif
 
 "  redir => res
-  echo a:node.str
+"  echo a:node.str
 endfunction
 
 function! s:output_echo(pos, mes, obj)
