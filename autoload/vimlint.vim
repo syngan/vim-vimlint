@@ -258,7 +258,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
     endif
     if v =~# '^[sgbwt]:'
       call s:append_var_(a:env.global, v, node, a:val, 1)
-    elseif v =~# '#'
+    elseif v !~# '#'
       call s:append_var_(a:env, v, node, a:val, 1)
     endif
   elseif a:var.type == 'reg'
@@ -479,14 +479,22 @@ function s:VimlLint.compile_excmd(node, refchk)
 " @TODO
 " e.g. set cpo&vim
 " e.g. a = 3   (let 漏れ)
-"  lcd `=cwd`
+
+  "  lcd `=cwd`
   let s = matchstr(a:node.str, "`=.[^`]*`")
-  if s != ''
+  if '' != s
     call self.parse_string(s[2:-2], a:node, 'ExCommand')
+    return
   endif
 
-"  redir => res
-"  echo a:node.str
+  "  redir => res, redir =>> res
+  let s = matchstr(a:node.str, '\s*redi[r]\?\s\+=>[>]\?\s*\zs.*\ze\s*')
+  if s != '' && s != 'END'
+    let node = {'type' : 'id', 'val' : s, 'node' : a:node}
+    call self.append_var(self.env, node, s:NIL, 'redir')
+    return
+  endif
+
 endfunction
 
 function! s:output_echo(pos, mes, obj)
