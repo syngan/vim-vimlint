@@ -1268,6 +1268,14 @@ function! vimlint#vimlint(filename, param)
         call c.error_mes(env.var[v].node, 'undefined variable `' . v . '`', 1)
       endif
     endfor
+  catch
+
+    let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
+    if !has_key(c.param, 'output')
+      echoerr msg
+    endif
+
+  finally
 
     if has_key(c.param, 'output')
       if c.param.output.append && filewritable(c.param.output.filename)
@@ -1275,23 +1283,10 @@ function! vimlint#vimlint(filename, param)
       else
         let lines = c.error
       endif
+      let lines = extend([a:filename . ' start'], lines)
       call writefile(lines, c.param.output.filename)
     endif
-  catch
 
-    let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
-    if has_key(c.param, 'output')
-      if c.param.output.append
-        let lines = extend(readfile(c.param.output.filename), c.error, [msg])
-      else
-        let lines = extend(c.error, [msg])
-      endif
-      call writefile(lines, c.param.output.filename)
-    else
-      echoerr msg
-    endif
-
-  finally
     echo '.... ' . a:filename . ' end'
   endtry
 endfunction
