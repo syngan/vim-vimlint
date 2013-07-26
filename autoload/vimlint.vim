@@ -1296,11 +1296,9 @@ function! s:vimlint_file(filename, param)
   catch
     let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
     if !has_key(c.param, 'output')
-      echoerr msg
+      echo msg
     endif
-
   finally
-
     if has_key(c.param, 'output')
       if filewritable(c.param.output.filename)
         let lines = extend(readfile(c.param.output.filename), c.error)
@@ -1315,6 +1313,20 @@ function! s:vimlint_file(filename, param)
   endtry
 
 endfunction
+
+function! s:vimlint_dir(dir, param)
+  if a:param.recursive
+    let filess = expand(a:dir . "/**/*.vim")
+  else
+    let filess = expand(a:dir . "/*/*.vim")
+  endif
+  for f in split(filess, "\n")
+    if filereadable(f)
+      call s:vimlint_file(f, a:param)
+    endif
+  endfor
+endfunction
+
 
 function! vimlint#vimlint(file, ...)
 
@@ -1351,7 +1363,9 @@ function! vimlint#vimlint(file, ...)
 
   let files = (type(a:file) == type([])) ? a:file : [a:file]
   for f in files
-    if filereadable(f)
+    if isdirectory(f)
+      call s:vimlint_dir(f, param)
+    elseif filereadable(f)
       call s:vimlint_file(f, param)
     else
       echoerr "vimlint: cannot readfile: " . f
