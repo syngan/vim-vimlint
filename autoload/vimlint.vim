@@ -21,6 +21,7 @@ let s:VimlLint = {}
 
 let s:default_param = {} " {{{
 let s:default_param.unused_argument = 1
+let s:default_param.recursive = 1
 
 let s:default_param_output = {
 \   'append' : 0,
@@ -32,29 +33,8 @@ function s:VimlLint.new(param)
   let obj.indent = ['']
   let obj.lines = []
   let obj.env = s:env({}, "")
-  let obj.param = extend(a:param, s:default_param, 'keep')
 
-  if has_key(obj.param, 'output') " {{{
-    if type(obj.param.output) == type("")
-      let obj.param.output = {'filename' : obj.param.output}
-    elseif type(obj.param.output) != type({})
-      unlet obj.param.output
-    endif
-    let obj.param.output = extend(obj.param.output, s:default_param_output, 'keep')
-    if obj.param.output.filename == ''
-      unlet obj.param.output
-    endif
-  endif
-
-  if has_key(obj.param, 'output')
-    " file
-    let obj.param.outfunc = function('s:output_file')
-  else
-    " echo
-    let obj.param.outfunc = function('s:output_echo')
-  endif " }}}
-
-
+  let obj.param = a:param
   let obj.error = []
   return obj
 endfunction
@@ -1290,7 +1270,7 @@ function s:VimlLint.compile_op2(node, op)
   " @TODO 演算結果の型を返すようにする
 endfunction
 
-function! vimlint#vimlint(filename, param)
+function! s:vimlint_file(filename, param)
   let vimfile = a:filename
   let p = s:VimLParser.new()
   let c = s:VimlLint.new(a:param)
@@ -1322,7 +1302,7 @@ function! vimlint#vimlint(filename, param)
   finally
 
     if has_key(c.param, 'output')
-      if c.param.output.append && filewritable(c.param.output.filename)
+      if filewritable(c.param.output.filename)
         let lines = extend(readfile(c.param.output.filename), c.error)
       else
         let lines = c.error
@@ -1335,6 +1315,50 @@ function! vimlint#vimlint(filename, param)
   endtry
 
 endfunction
+
+function! vimlint#vimlint(file, ...)
+
+  " param {{{
+  let param = a:0 ? copy(a:1) : {}
+  let param = extend(param, s:default_param, 'keep')
+
+  if has_key(param, 'output') " {{{
+    if type(param.output) == type("")
+      let param.output = {'filename' : param.output}
+    elseif type(param.output) != type({})
+      unlet param.output
+    endif
+
+    if has_key(param, 'output')
+      let param.output = extend(param.output, s:default_param_output, 'keep')
+      if param.output.filename == ''
+        unlet param.output
+      endif
+    endif
+  endif
+
+  if has_key(param, 'output')
+    " file
+    let param.outfunc = function('s:output_file')
+    if !param.output.append
+      call writefile([], param.output.filename)
+    endif
+  else
+    " echo
+    let param.outfunc = function('s:output_echo')
+  endif " }}}
+  " }}}
+
+  let files = (type(a:file) == type([])) ? a:file : [a:file]
+  for f in files
+    if filereadable(f)
+      call s:vimlint_file(f, param)
+    else
+      echoerr "vimlint: cannot readfile: " . f
+    endif
+  endfor
+endfunction
+
 
 function! s:numtoname(num)
   let sig = printf("function('%s')", a:num)
