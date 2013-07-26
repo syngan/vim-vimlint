@@ -11,8 +11,9 @@ NeoBundleLazy 'syngan/vim-vimlint', {
 # Usage
 
 ```vim
-call vimlint#vimlint(filename, param)
-call vimlint#vimlint('vimlint.vim', {})
+call vimlint#vimlint(filename [, param])
+call vimlint#vimlint('vimlint.vim')
+call vimlint#vimlint(directory)
 ```
 
 - ignore "unused argument" 
@@ -30,7 +31,6 @@ call vimlint#vimlint('vimlint.vim', {'output' : 'hoge'})
 call vimlint#vimlint('vimlint.vim', {'output' : {'filename': 'hoge', 'append': 1}})
 ```
 
-
 # Example
 
 ## undefined variable
@@ -45,7 +45,7 @@ endfunction
 ```
 
 ```vim
-[line=202,col=51,i=6693]: undefined variable: bundle_names
+./neobundle.vim/autoload/neobundle.vim:210:51:6882: undefined variable: bundle_names
 ```
 
 ## unused variable
@@ -75,7 +75,7 @@ endfunction
 ```
 
 ```vim
-[neocomplcache/autoload/unite/sources/neocomplcache.vim,line=50,col=7,i=2006]: unused variable `completefunc_save`
+./neocomplcache/autoload/unite/sources/neocomplcache.vim:50:7:2006: unused variable `l:completefunc_save`
 ```
 
 ## E488
@@ -107,7 +107,7 @@ vimlparser: E488: Trailing characters: =: line 4 col 7
 
 ```vim
 function vimlint#vimlint..VimLParser.parse..VimLParser.parse_one_cmd..VimLParser
-.parse_command..VimLParser.parse_cmd_elseif, $B9T(B 2^@vimlparser: E582: :elseif wit
+.parse_command..VimLParser.parse_cmd_elseif, นิ 2^@vimlparser: E582: :elseif wit
 hout :if: line 429 col 5
 ```
 
