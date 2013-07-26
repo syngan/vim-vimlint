@@ -475,6 +475,13 @@ function s:VimlLint.compile_excmd(node, refchk)
     return
   endif
 
+  let s = substitute(a:node.str, '\s', '', 'g')
+  " call つけて parse しなおしたほうが良いだろうけど.
+  if a:node.str !~# '^\s*\w\+\s\+\w' &&
+  \  s =~# '^\([gbwtsl]:\)\?[#A-Za-z0-9_]\+\(\.\w\+\|\[.*\]\)*(.*)$'
+    call self.error_mes(a:node, 'missing call `' . s . '`', 1)
+  endif
+
 endfunction
 
 function! s:output_echo(pos, mes, obj)
