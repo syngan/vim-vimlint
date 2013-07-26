@@ -494,6 +494,7 @@ function! s:VimlLint.error_mes(node, mes, print)
       let node = a:node.node
     endif
     let pos = self.filename . ':' . node.pos.lnum . ':' . node.pos.col . ':' . node.pos.i
+
     call self.param.outfunc(pos, a:mes, self)
   endif
 endfunction
@@ -1144,17 +1145,13 @@ function s:VimlLint.compile_call(node, refchk)
     " 引数誤りはチェック済, にする.
     if left.val == 'map' || left.val == 'filter'
       if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'val')
-        if rlist[1].type == 'id'
-          call self.parse_string(rlist[1].val, left, left.val)
-        elseif rlist[1].type == 'string'
+        if rlist[1].type == 'string'
           call self.parse_string(rlist[1].val[1:-2], left, left.val)
         endif
       endif
     elseif left.val == 'eval'
       if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'val')
-        if rlist[0].type == 'id'
-          call self.parse_string(rlist[0].val, left, left.val)
-        elseif rlist[0].type == 'string'
+        if rlist[0].type == 'string'
           call self.parse_string(rlist[0].val[1:-2], left, left.val)
       endif
       endif
@@ -1243,9 +1240,7 @@ function s:VimlLint.compile_identifier(node, refchk)
 endfunction
 
 function s:VimlLint.compile_curlyname(node, refchk)
-  echo "culy"
-  echo a:node
-  return {'type' : 'culy', 'node' : a:node}
+  return {'type' : 'curly', 'node' : a:node}
 endfunction
 
 function s:VimlLint.compile_env(node, refchk)
