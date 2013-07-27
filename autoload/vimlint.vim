@@ -509,6 +509,8 @@ endfunction
 
 function s:VimlLint.compile_function(node, refchk)
   let left = self.compile(a:node.left, 0) " name of function
+echo a:node.left
+
   let rlist = map(a:node.rlist, 'self.compile(v:val, 0)')  " list of argument string
 
   let self.env = s:env(self.env, left)
@@ -1310,10 +1312,13 @@ function! s:vimlint_file(filename, param)
       endif
     endfor
   catch
-    let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
-    if !has_key(c.param, 'output')
-      echo msg
-    endif
+"    let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
+
+
+    let line = matchstr(v:exception, '.*line \zs\d\+\ze col \d\+$')
+    let col  = matchstr(v:exception, '.*line \d\+ col \zs\d\+\ze$')
+    let msg  = matchstr(v:exception, '^\zs.*\ze: line \d\+ col \d\+$')
+    call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : 0}}, msg, 1)
   finally
     if has_key(c.param, 'output')
       if filewritable(c.param.output.filename)
