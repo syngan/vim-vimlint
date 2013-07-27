@@ -863,6 +863,14 @@ function s:VimlLint.compile_minus(node)
 endfunction
 " }}}
 
+function! s:escape_string(str)
+  if a:str[0] == "'"
+      return substitute(a:str, "''", "'", 'g')
+  endif
+
+  return a:str
+endfunction
+
 function s:VimlLint.parse_string(str, node, cmd)
   try
     let p = s:VimLParser.new()
@@ -1153,19 +1161,22 @@ function s:VimlLint.compile_call(node, refchk)
     if left.val == 'map' || left.val == 'filter'
       if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'val')
         if rlist[1].type == 'string'
-          call self.parse_string(rlist[1].val[1:-2], left, left.val)
+          let s = s:escape_string(rlist[1].val)
+          call self.parse_string(s[1:-2], left, left.val)
         endif
       endif
     elseif left.val == 'eval'
       if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'val')
         if rlist[0].type == 'string'
-          call self.parse_string(rlist[0].val[1:-2], left, left.val)
+          let s = s:escape_string(rlist[1].val)
+          call self.parse_string(s[1:-2], left, left.val)
       endif
       endif
     elseif left.val == 'substitute'
       if len(rlist) >= 3 && type(rlist[2]) == type({})
       \ && has_key(rlist[2], 'val') && rlist[2].val[1:] =~# '^\\='
-        call self.parse_string(rlist[2].val[3:-2], left, left.val)
+        let s = s:escape_string(rlist[2].val)
+        call self.parse_string(s[3:-2], left, left.val)
       endif
     endif
   endif
