@@ -22,6 +22,7 @@ let s:VimlLint = {}
 let s:default_param = {} " {{{
 let s:default_param.unused_argument = 1
 let s:default_param.recursive = 1
+let s:default_param.quiet = 0
 
 let s:default_param_output = {
 \   'append' : 0,
@@ -1288,7 +1289,9 @@ function! s:vimlint_file(filename, param)
   let p = s:VimLParser.new()
   let c = s:VimlLint.new(a:param)
   try
-    echo '.... ' . a:filename . ' start'
+    if !a:param.quiet
+      echo '.... ' . a:filename . ' start'
+    endif
 
     if has_key(a:param, 'type') && a:param.type == 'string'
         let r = s:StringReader.new(vimfile)
@@ -1322,7 +1325,9 @@ function! s:vimlint_file(filename, param)
       call writefile(lines, c.param.output.filename)
     endif
 
-    echo '.... ' . a:filename . ' end'
+    if !a:param.quiet
+      echo '.... ' . a:filename . ' end'
+    endif
   endtry
 
 endfunction
