@@ -9,6 +9,11 @@ set cpo&vim
 " - built-in 関数関連の引数チェック
 " - scriptencoding 有無
 " @TODO `=` は let 以外で使う場面があるか?
+"
+" Variable i used before definition
+" An rvalue is used that may not be initialized to a value on some execution
+" path. (Use -usedef to inhibit warning)
+"
 " }}}
 
 " global variables {{{
@@ -131,7 +136,12 @@ function! s:node2str(node) " {{{
   let a[87] = 'CURLYNAME'
   let a[88] = 'ENV'
   let a[89] = 'REG'
-  return a[a:node.type] . "(" . a:node.type . ")"
+  if type(a:node) == type({}) &&
+  \  has_key(a:node, 'type') && has_key(a, a:node.type)
+    return a[a:node.type]
+  else
+    return "unknown"
+  endif
 endfunction " }}}
 
 function! s:env(outer, funcname)
@@ -159,11 +169,11 @@ function! s:VimlLint.error_mes(node, mes, print) " {{{
 "  echo a:node
   if a:print
     if has_key(a:node, 'pos')
-      let node = a:node
+      let p = a:node.pos
+      let pos = self.filename . ':' . p.lnum . ':' . p.col . ':' . p.i
     else
-      let node = a:node.node
+      let pos = string(a:node)
     endif
-    let pos = self.filename . ':' . node.pos.lnum . ':' . node.pos.col . ':' . node.pos.i
 
     call self.param.outfunc(pos, a:mes, self)
   endif
@@ -173,6 +183,7 @@ endfunction " }}}
 " 変数参照 s:exists_var(env, node) {{{
 " @param var string
 " @param node dict: return value of compile
+"  return {'type' : 'id', 'val' : name, 'node' : a:node}
 function! s:exists_var(env, node)
   let var = a:node.value
   if var =~# '#'
@@ -236,14 +247,15 @@ endfunction " }}}
 " right node = val
 " pos = string
 function! s:VimlLint.append_var(env, var, val, pos)
-  if type(a:var) != type({}) || !has_key(a:var, 'type') || !has_key(a:var, 'node')
+  if type(a:var) != type({})
     echo "in append_var: invalid input: type=" . type(a:var) . ",pos=" . a:pos
     echo a:var
     throw "stop"
   endif
-  if a:var.type == 'id'
-    let node = a:var.node
-    let v = a:var.val
+
+  if a:var.type == s:NODE_IDENTIFIER
+    let node = a:var
+    let v = a:var.value
     if a:pos == 'a:'
       " 関数引数
       if v != '...'
@@ -265,21 +277,21 @@ function! s:VimlLint.append_var(env, var, val, pos)
     elseif v !~# '#'
       call s:append_var_(a:env, v, node, a:val, 1)
     endif
-  elseif a:var.type == 'reg'
+  elseif a:var.type == s:NODE_REG
     " do nothing
     return
-  elseif a:var.type == 'subs'
+  elseif a:var.type == s:NODE_SUBSCRIPT
+  elseif a:var.type == s:NODE_DOT
     " let f.f = xxxx, let f["a"] = xxxx
-  elseif a:var.type == 'option'
+  elseif a:var.type == s:NODE_OPTION
     " do nothing
-  elseif a:var.type == 'curly'
+  elseif a:var.type == s:NODE_CURLYNAME
     " ???
-  elseif a:var.type == 'env'
+  elseif a:var.type == s:NODE_ENV
     " $xxxx
   else
     " @TODO
-    call s:VimlLint.error_mes(a:var.node, 'unknown type', 1)
-    echo a:var
+    call self.error_mes(a:var, 'unknown type: ' . a:var.type, 1)
   endif
 endfunction " }}}
 
@@ -288,7 +300,7 @@ function! s:delete_var(env, var)
 endfunction
 
 function! s:echonode(node)
-  echo "compile. " . s:node2str(a:node) . ", val=" .
+  echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
     \ (has_key(a:node, "value") ?
     \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%")
 endfunction
@@ -298,13 +310,18 @@ function s:VimlLint.compile(node, refchk) " {{{
     if a:node.type != 2 && g:vimlint#debug > 2
       call s:echonode(a:node)
     endif
-  else
+"  else
 "    echo "node=" . type(a:node)
 "    echo a:node
   endif
 
-  let a:node._type_str = s:node2str(a:node)
-
+  try
+    let a:node.sg_type_str = s:node2str(a:node)
+  catch
+    echo v:exception
+    echo a:node
+    throw "stop"
+  endtry
 
   if a:node.type == s:NODE_TOPLEVEL " {{{
     return self.compile_toplevel(a:node, a:refchk)
@@ -498,8 +515,9 @@ function s:VimlLint.compile_excmd(node, refchk)
   "  redir => res, redir =>> res
   let s = matchstr(a:node.str, '\s*redi[r]\?\s\+=>[>]\?\s*\zs.*\ze\s*')
   if s != '' && s != 'END'
-    let node = {'type' : 'id', 'val' : s, 'node' : a:node}
-    call self.append_var(self.env, node, s:NIL, 'redir')
+    let a:node.type = s:NODE_IDENTIFIER
+    let a:node.value = s
+    call self.append_var(self.env, a:node, s:NIL, 'redir')
     return
   endif
 
@@ -553,7 +571,7 @@ function s:VimlLint.compile_return(node, refchk)
 endfunction
 
 function s:VimlLint.compile_excall(node, refchk)
-  call self.compile(a:node.left, a:refchk)
+  return self.compile(a:node.left, a:refchk)
 endfunction
 
 function s:VimlLint.compile_let(node, refchk)
@@ -588,9 +606,8 @@ endfunction
 function s:VimlLint.compile_lockvar(node, refchk)
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
-      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
-    endif
-    if !s:exists_var(self.env, var)
+"      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
+    elseif !s:exists_var(self.env, var)
       call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
@@ -599,9 +616,8 @@ endfunction
 function s:VimlLint.compile_unlockvar(node, refchk)
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
-      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
-    endif
-    if !s:exists_var(self.env, var)
+"      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
+    elseif !s:exists_var(self.env, var)
       call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
@@ -640,9 +656,7 @@ function s:VimlLint.compile_for(node, refchk)
     " append
     if a:node.rest isnot s:NIL
       let rest = self.compile(a:node.rest, a:refchk)
-      call add(list, '*' . rest)
     endif
-    let left = join(list, ', ')
   endif
   call self.compile_body(a:node.body, 1)
 endfunction
@@ -697,9 +711,10 @@ endfunction
 
 " expr1: expr2 ? expr1 : expr1
 function s:VimlLint.compile_ternary(node, refchk)
-  let cond = self.compile(a:node.cond, 1)
-  let left = self.compile(a:node.left, 1)
-  let right = self.compile(a:node.right, 1)
+  let a:node.cond = self.compile(a:node.cond, 1)
+  let a:node.left = self.compile(a:node.left, 1)
+  let a:node.right = self.compile(a:node.right, 1)
+  return a:node
 endfunction
 
 " op2 {{{
@@ -1188,54 +1203,80 @@ function s:VimlLint.compile_call(node, refchk)
     endif
   endif
 
-  return {'type' : 'call', 'l' : left, 'r' : rlist, 'node' : a:node}
+  let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
+  let left = self.compile(a:node.left, 0)
+
+  let a:node.rlist = rlist
+  let a:node.left = left
+
+  return a:node
+"  return {'type' : 'call', 'l' : left, 'r' : rlist, 'node' : a:node}
 endfunction
 
+" subst slice
+" :let l = mylist[:3]             " first four items
+" :let l = mylist[4:4]            " List with one item
+" :let l = mylist[:]              " shallow copy of a List
 function s:VimlLint.compile_slice(node, refchk)
-  let r0 = a:node.rlist[0] is s:NIL ? 'nil' : self.compile(a:node.rlist[0], 1)
-  let r1 = a:node.rlist[1] is s:NIL ? 'nil' : self.compile(a:node.rlist[1], 1)
-  let left = self.compile(a:node.left, 1)
-  return {'type' : 'slice', 'l' : left, 'r' : [r0,r1], 'node' : a:node}
+  for i in range(len(a:node.rlist))
+    let r = a:node.rlist[i] is s:NIL ? s:NIL : self.compile(a:node.rlist[i], 1)
+    let a:node.rlist[i] = r
+    unlet r
+  endfor
+  let a:node.left = self.compile(a:node.left, 1)
+  return a:node
+"  return {'type' : 'slice', 'l' : left, 'r' : [r0,r1], 'node' : a:node}
 endfunction
 
 
-" 置き換える意味がなさそうな感じになってきた.
 function s:VimlLint.compile_subscript(node)
-  let left = self.compile(a:node.left, 1)
-  let right = self.compile(a:node.right, 1)
+  let a:node.left = self.compile(a:node.left, 1)
+  let a:node.right = self.compile(a:node.right, 1)
+  return a:node
+
   " @TODO left is a list or a dictionary
-  return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
+"  return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
 endfunction
 
 function s:VimlLint.compile_dot(node, refchk)
-  let left = self.compile(a:node.left, 1)
-  let right = self.compile(a:node.right, 0)
-  return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
+  let a:node.left = self.compile(a:node.left, 1)
+  let a:node.right = self.compile(a:node.right, 0)
+
+  return a:node
+"  return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
 endfunction
 
 function s:VimlLint.compile_number(node)
-  return { 'type' : 'integer', 'val' : a:node.value, 'node' : a:node}
+  return a:node
+"  return { 'type' : 'integer', 'val' : a:node.value, 'node' : a:node}
 endfunction
 
 " map の引数などをどう処理するか?
 function s:VimlLint.compile_string(node)
-  return { 'type' : 'string', 'val' : a:node.value, 'node' : a:node}
+  return a:node
+"  return { 'type' : 'string', 'val' : a:node.value, 'node' : a:node}
 endfunction
 
 function s:VimlLint.compile_list(node, refchk)
-  let value = map(a:node.value, 'self.compile(v:val, 1)')
-  return { 'type' : 'list', 'node' : a:node}
+  let a:node.value = map(a:node.value, 'self.compile(v:val, 1)')
+  return a:node
+"  return { 'type' : 'list', 'node' : a:node}
 endfunction
 
 function s:VimlLint.compile_dict(node, refchk)
   " @TODO 文字列のみ
-  call map(copy(a:node.value), 'self.compile(v:val[0], 1)')
-  call map(a:node.value, 'self.compile(v:val[1], 1)')
-  return { 'type' : 'dict', 'node' : a:node}
+  for i in range(len(a:node.value))
+    let v = a:node.value[i]
+    let v[0] = self.compile(v[0], 1)
+    let v[1] = self.compile(v[1], 1)
+  endfor
+  return a:node
+"  return { 'type' : 'dict', 'node' : a:node}
 endfunction
 
 function s:VimlLint.compile_option(node)
-  return { 'type' : 'option', 'node' : a:node}
+  return a:node
+"  return { 'type' : 'option', 'node' : a:node}
 endfunction
 
 function! s:reserved_name(name)
@@ -1261,31 +1302,40 @@ function s:VimlLint.compile_identifier(node, refchk)
   elseif a:refchk && !s:exists_var(self.env, a:node)
     call self.error_mes(a:node, 'undefined variable: ' . name, 1)
   endif
-  return {'type' : 'id', 'val' : name, 'node' : a:node}
+  return a:node
+"  return {'type' : 'id', 'val' : name, 'node' : a:node}
 endfunction
 
 function s:VimlLint.compile_curlyname(node, refchk)
-  return {'type' : 'curly', 'node' : a:node}
+  return a:node
+"  return {'type' : 'curly', 'node' : a:node}
 endfunction
 
 function s:VimlLint.compile_env(node, refchk)
-  return {'type' : 'env', 'node' : a:node}
+  return a:node
+"  return {'type' : 'env', 'node' : a:node}
 endfunction
 
 " register
 function s:VimlLint.compile_reg(node)
-  return {'type' : 'reg', 'val' : a:node.value, 'node' : a:node}
+  return a:node
+"  return {'type' : 'reg', 'val' : a:node.value, 'node' : a:node}
 "  echo a:node
 "  throw 'NotImplemented: reg'
 endfunction
 
 function s:VimlLint.compile_op1(node, op)
-  let left = self.compile(a:node.left, 1)
+  let a:node.left = self.compile(a:node.left, 1)
+
+  return a:node
 endfunction
 
 function s:VimlLint.compile_op2(node, op)
-  let left = self.compile(a:node.left, 1)
-  let right = self.compile(a:node.right, 1)
+
+  let a:node.right = self.compile(a:node.right, 1)
+
+  return a:node
+ 
   " @TODO 比較/演算できる型どうしか.
   " @TODO 演算結果の型を返すようにする
 endfunction
@@ -1316,12 +1366,15 @@ function! s:vimlint_file(filename, param)
       endif
     endfor
   catch
-"    let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
 
 
     let line = matchstr(v:exception, '.*line \zs\d\+\ze col \d\+$')
     let col  = matchstr(v:exception, '.*line \d\+ col \zs\d\+\ze$')
     let msg  = matchstr(v:exception, '^\zs.*\ze: line \d\+ col \d\+$')
+    if line == ""
+      let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
+    endif
+
     call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : 0}}, msg, 1)
   finally
     if has_key(c.param, 'output')
