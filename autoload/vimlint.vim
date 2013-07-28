@@ -1370,12 +1370,18 @@ function! s:vimlint_file(filename, param)
 
     let line = matchstr(v:exception, '.*line \zs\d\+\ze col \d\+$')
     let col  = matchstr(v:exception, '.*line \d\+ col \zs\d\+\ze$')
-    let msg  = matchstr(v:exception, '^\zs.*\ze: line \d\+ col \d\+$')
+    let i = 'EVP_0'
     if line == ""
       let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
+    elseif matchstr(v:exception, 'vimlparser: E\d\+:') != ''
+      let i = 'EVP_' . matchstr(v:exception, 'vimlparser: \zsE\d\+\ze:')
+      let msg = matchstr(v:exception, '.*vimlparser: E\d\+: \zs.*\ze: line \d\+ col \d\+$')
+    else
+      let msg  = matchstr(v:exception, '.*vimlparser: \zs.*\ze: line \d\+ col \d\+$')
+
     endif
 
-    call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : 0}}, msg, 1)
+    call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : i}}, msg, 1)
   finally
     if has_key(c.param, 'output')
       if filewritable(c.param.output.filename)
@@ -1408,7 +1414,7 @@ function! s:vimlint_dir(dir, param)
 endfunction
 
 
-function! vimlint#vimlint(file, ...)
+function! vimlint#vimlint(file, ...) " {{{
 
   " param {{{
   let param = a:0 ? copy(a:1) : {}
@@ -1451,7 +1457,7 @@ function! vimlint#vimlint(file, ...)
       echoerr "vimlint: cannot readfile: " . f
     endif
   endfor
-endfunction
+endfunction " }}}
 
 
 function! s:numtoname(num)
