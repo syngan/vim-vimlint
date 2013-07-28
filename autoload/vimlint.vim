@@ -41,7 +41,7 @@ function s:VimlLint.new(param)
 endfunction
 
 " for debug
-function! s:VimlLint.node2str(node) " {{{
+function! s:node2str(node) " {{{
   let a = {}
   let a[1] = 'TOPLEVEL'
   let a[2] = 'COMMENT'
@@ -147,7 +147,30 @@ function! s:env(outer, funcname)
   return env
 endfunction
 
-" 変数参照
+function! s:output_echo(pos, mes, obj)
+  echo a:pos . ': ' . a:mes
+endfunction
+
+function! s:output_file(pos, mes, obj)
+  let a:obj.error += [a:pos . ': ' . a:mes]
+endfunction
+
+function! s:VimlLint.error_mes(node, mes, print) " {{{
+"  echo a:node
+  if a:print
+    if has_key(a:node, 'pos')
+      let node = a:node
+    else
+      let node = a:node.node
+    endif
+    let pos = self.filename . ':' . node.pos.lnum . ':' . node.pos.col . ':' . node.pos.i
+
+    call self.param.outfunc(pos, a:mes, self)
+  endif
+endfunction " }}}
+
+
+" 変数参照 s:exists_var(env, node) {{{
 " @param var string
 " @param node dict: return value of compile
 function! s:exists_var(env, node)
@@ -187,9 +210,9 @@ function! s:exists_var(env, node)
     endwhile
     return 0
   endif
-endfunction
+endfunction " }}}
 
-function! s:append_var_(env, var, node, val, cnt)
+function! s:append_var_(env, var, node, val, cnt) " {{{
   if has_key(a:env.var, a:var)
     if a:cnt > 0
       let a:env.var[a:var].subs += 1
@@ -205,9 +228,9 @@ function! s:append_var_(env, var, node, val, cnt)
       let a:env.var[a:var] = {'ref' : 1, 'subs' : 0, 'node' : a:node}
     endif
   endif
-endfunction
+endfunction " }}}
 
-" 変数代入
+" 変数代入s:VimlLint.append_var(env, var, val, pos) " {{{
 " let でいうところの
 " left node  = var
 " right node = val
@@ -258,14 +281,14 @@ function! s:VimlLint.append_var(env, var, val, pos)
     call s:VimlLint.error_mes(a:var.node, 'unknown type', 1)
     echo a:var
   endif
-endfunction
+endfunction " }}}
 
 function! s:delete_var(env, var)
 "    unlet a:env.var[a:var]
 endfunction
 
 function! s:echonode(node)
-  echo "compile. " . s:VimlLint.node2str(a:node) . ", val=" .
+  echo "compile. " . s:node2str(a:node) . ", val=" .
     \ (has_key(a:node, "value") ?
     \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%")
 endfunction
@@ -279,6 +302,10 @@ function s:VimlLint.compile(node, refchk) " {{{
 "    echo "node=" . type(a:node)
 "    echo a:node
   endif
+
+  let a:node._type_str = s:node2str(a:node)
+
+
   if a:node.type == s:NODE_TOPLEVEL " {{{
     return self.compile_toplevel(a:node, a:refchk)
   elseif a:node.type == s:NODE_COMMENT
@@ -485,32 +512,9 @@ function s:VimlLint.compile_excmd(node, refchk)
 
 endfunction
 
-function! s:output_echo(pos, mes, obj)
-  echo a:pos . ': ' . a:mes
-endfunction
-
-function! s:output_file(pos, mes, obj)
-  let a:obj.error += [a:pos . ': ' . a:mes]
-endfunction
-
-function! s:VimlLint.error_mes(node, mes, print)
-"  echo a:node
-  if a:print
-    if has_key(a:node, 'pos')
-      let node = a:node
-    else
-      let node = a:node.node
-    endif
-    let pos = self.filename . ':' . node.pos.lnum . ':' . node.pos.col . ':' . node.pos.i
-
-    call self.param.outfunc(pos, a:mes, self)
-  endif
-endfunction
-
 function s:VimlLint.compile_function(node, refchk)
+  " @TODO left が dot/subs だった場合にのみ self は予約語とする #5
   let left = self.compile(a:node.left, 0) " name of function
-echo a:node.left
-
   let rlist = map(a:node.rlist, 'self.compile(v:val, 0)')  " list of argument string
 
   let self.env = s:env(self.env, left)
