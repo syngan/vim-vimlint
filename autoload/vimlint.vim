@@ -1164,11 +1164,13 @@ function s:VimlLint.compile_call(node, refchk)
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let left = self.compile(a:node.left, 0)
 
-  if has_key(left, 'val')
+  if has_key(left, 'value')
     " @TODO check built-in functions
-    if has_key(s:builtin_func, left.val)
-      if len(rlist) < s:builtin_func[left.val].min
-      elseif len(rlist) < s:builtin_func[left.val].max
+    if has_key(s:builtin_func, left.value)
+      if len(rlist) < s:builtin_func[left.value].min
+        call self.error_mes(left, 'E119: Not enough arguments for function: ' . left.value, 1)
+      elseif len(rlist) > s:builtin_func[left.value].max
+        call self.error_mes(left, 'E118: Too many arguments for function: ' . left.value, 1)
       else
 "        for i in range(len(rlist))
           " 型チェック
@@ -1180,25 +1182,25 @@ function s:VimlLint.compile_call(node, refchk)
     " 例外で, map と filter と,
     " @TODO vital... はどうしよう
     " 引数誤りはチェック済, にする.
-    if left.val == 'map' || left.val == 'filter'
-      if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'val')
+    if left.value == 'map' || left.value == 'filter'
+      if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'value')
         if rlist[1].type == 'string'
-          let s = s:escape_string(rlist[1].val)
-          call self.parse_string(s[1:-2], left, left.val)
+          let s = s:escape_string(rlist[1].value)
+          call self.parse_string(s[1:-2], left, left.value)
         endif
       endif
-    elseif left.val == 'eval'
-      if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'val')
+    elseif left.value == 'eval'
+      if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'value')
         if rlist[0].type == 'string'
-          let s = s:escape_string(rlist[1].val)
-          call self.parse_string(s[1:-2], left, left.val)
+          let s = s:escape_string(rlist[1].value)
+          call self.parse_string(s[1:-2], left, left.value)
       endif
       endif
-    elseif left.val == 'substitute'
+    elseif left.value == 'substitute'
       if len(rlist) >= 3 && type(rlist[2]) == type({})
-      \ && has_key(rlist[2], 'val') && rlist[2].val[1:] =~# '^\\='
-        let s = s:escape_string(rlist[2].val)
-        call self.parse_string(s[3:-2], left, left.val)
+      \ && has_key(rlist[2], 'value') && rlist[2].value[1:] =~# '^\\='
+        let s = s:escape_string(rlist[2].value)
+        call self.parse_string(s[3:-2], left, left.value)
       endif
     endif
   endif
