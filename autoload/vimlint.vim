@@ -170,7 +170,11 @@ function! s:VimlLint.error_mes(node, mes, print) " {{{
   if a:print
     if has_key(a:node, 'pos')
       let p = a:node.pos
-      let pos = self.filename . ':' . p.lnum . ':' . p.col . ':' . p.i
+      if has_key(self, 'filename')
+        let pos = self.filename . ':' . p.lnum . ':' . p.col . ':' . p.i
+      else
+        let pos = '...:' . p.lnum . ':' . p.col . ':' . p.i
+      endif
     else
       let pos = string(a:node)
     endif
@@ -1159,7 +1163,7 @@ function s:VimlLint.compile_call(node, refchk)
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let left = self.compile(a:node.left, 0)
 
-  if has_key(left, 'value')
+  if has_key(left, 'value') && type(left.value) == type("")
     " @TODO check built-in functions
     if has_key(s:builtin_func, left.value)
       if len(rlist) < s:builtin_func[left.value].min
@@ -1343,6 +1347,9 @@ function! s:vimlint_file(filename, param)
   let c = s:VimlLint.new(a:param)
   try
     if !a:param.quiet
+      if has_key(a:param, 'output')
+        redraw!
+      endif
       echo '.... ' . a:filename . ' start'
     endif
 
@@ -1391,6 +1398,9 @@ function! s:vimlint_file(filename, param)
     endif
 
     if !a:param.quiet
+      if has_key(c.param, 'output')
+        redraw!
+      endif
       echo '.... ' . a:filename . ' end'
     endif
   endtry
