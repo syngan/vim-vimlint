@@ -303,16 +303,17 @@ function! s:delete_var(env, var)
 "    unlet a:env.var[a:var]
 endfunction
 
-function! s:echonode(node)
+function! s:echonode(node, refchk)
   echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
     \ (has_key(a:node, "value") ?
-    \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%")
+    \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%") .
+    \  ", ref=" . a:refchk
 endfunction
 
 function s:VimlLint.compile(node, refchk) " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
     if a:node.type != 2 && g:vimlint#debug > 2
-      call s:echonode(a:node)
+      call s:echonode(a:node, a:refchk)
     endif
 "  else
 "    echo "node=" . type(a:node)
@@ -1007,7 +1008,8 @@ let s:builtin_func.gettabwinvar = {'min' : 3, 'max': 3}
 let s:builtin_func.getwinposx = {'min' : 0, 'max': 0}
 let s:builtin_func.getwinposy = {'min' : 0, 'max': 0}
 let s:builtin_func.getwinvar = {'min' : 2, 'max': 2}
-let s:builtin_func.glob = {'min' : 1, 'max': 2}
+"let s:builtin_func.glob = {'min' : 1, 'max': 2} less than vim7.3.465
+let s:builtin_func.glob = {'min' : 1, 'max': 3}
 let s:builtin_func.globpath = {'min' : 2, 'max': 3}
 let s:builtin_func.has = {'min' : 1, 'max': 1}
 let s:builtin_func.has_key = {'min' : 2, 'max': 2}
@@ -1162,7 +1164,6 @@ let s:builtin_func.writefile = {'min' : 2, 'max': 3}
 function s:VimlLint.compile_call(node, refchk)
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let left = self.compile(a:node.left, 0)
-
   if has_key(left, 'value') && type(left.value) == type("")
     " @TODO check built-in functions
     if has_key(s:builtin_func, left.value)
@@ -1298,7 +1299,6 @@ endfunction
 
 function s:VimlLint.compile_identifier(node, refchk)
   let name = a:node.value
-"echo a:node
   if s:reserved_name(name)
   elseif a:refchk && !s:exists_var(self.env, a:node)
     call self.error_mes(a:node, 'undefined variable: ' . name, 1)
