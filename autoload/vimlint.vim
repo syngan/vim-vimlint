@@ -183,7 +183,6 @@ function! s:VimlLint.error_mes(node, mes, print) " {{{
   endif
 endfunction " }}}
 
-
 " 変数参照 s:exists_var(env, node) {{{
 " @param var string
 " @param node dict: return value of compile
@@ -252,6 +251,7 @@ endfunction " }}}
 " pos = string
 function! s:VimlLint.append_var(env, var, val, pos)
   if type(a:var) != type({})
+    " @debug
     echo "in append_var: invalid input: type=" . type(a:var) . ",pos=" . a:pos
     echo a:var
     throw "stop"
@@ -588,19 +588,29 @@ function s:VimlLint.compile_let(node, refchk)
 
   if a:node.left isnot s:NIL
     let left = self.compile(a:node.left, 0)
-    call self.append_var(self.env, left, right, "let1")
+    if s:readonly_var(self.env, left)
+      call self.error_mes(left, 'E46: Cannot change read-only variable ' . left.value, 1)
+    else
+      call self.append_var(self.env, left, right, "let1")
+    endif
   else
     let list = map(a:node.list, 'self.compile(v:val, 0)')
     call map(list, 'self.append_var(self.env, v:val, right, "letn")')
     if a:node.rest isnot s:NIL
       let v = self.compile(a:node.rest, 0)
-      call self.append_var(self.env, v, right, "letr")
+      if s:readonly_var(self.env, v)
+        call self.error_mes(left, 'E46: Cannot change read-only variable ' . left.value, 1)
+      else
+        call self.append_var(self.env, v, right, "letr")
+      endif
     endif
   endif
 endfunction
 
 
 function s:VimlLint.compile_unlet(node, refchk)
+  " @TODO unlet! の場合には存在チェック不要
+  call vimconsole#log(a:node.ea)
   let list = map(a:node.list, 'self.compile(v:val, 1)')
   for v in list
     " unlet
@@ -633,7 +643,7 @@ function s:VimlLint.compile_if(node, refchk)
   call self.compile(a:node.cond, 2)
   call self.compile_body(a:node.body, a:refchk)
   for node in a:node.elseif
-    call self.compile(node.cond, 1)
+    call self.compile(node.cond, 2)
     call self.compile_body(node.body, a:refchk)
   endfor
   if a:node.else isnot s:NIL
@@ -1279,6 +1289,10 @@ endfunction
 function s:VimlLint.compile_option(node)
   return a:node
 "  return { 'type' : 'option', 'node' : a:node}
+endfunction
+
+function! s:readonly_var(env, var)
+  return a:var.type == s:NODE_IDENTIFIER && a:var.value =~# 'a:.*'
 endfunction
 
 function! s:reserved_name(name)
