@@ -679,8 +679,15 @@ function s:VimlLint.compile(node, refchk) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_body(body, refchk)
+  let ret = 0
   for node in a:body
     call self.compile(node, a:refchk)
+    if ret == 1
+      call self.error_mes(node, "unreachable code", 1)
+      break
+    elseif node.type == s:NODE_RETURN
+      let ret = 1
+    endif
   endfor
 endfunction
 
@@ -758,7 +765,7 @@ endfunction
 function s:VimlLint.compile_return(node, refchk)
 
   if self.env == self.env.global
-    call self.error_mes(a:node, 'E133: :return not inside a function')
+    call self.error_mes(a:node, 'E133: :return not inside a function', 1)
   elseif a:node.left is s:NIL
   else
     call self.compile(a:node.left, 1)
