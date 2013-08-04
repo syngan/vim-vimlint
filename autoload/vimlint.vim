@@ -149,6 +149,7 @@ function! s:env(outer, funcname)
   let env.outer = a:outer
   let env.function = a:funcname
   let env.var = {}
+  let env.varstack = []
   if has_key(a:outer, 'global')
     let env.global = a:outer.global
   else
@@ -187,7 +188,7 @@ endfunction " }}}
 " @param var string
 " @param node dict: return value of compile
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
-function! s:exists_var(env, node)
+function! s:exists_var(self, env, node)
   let var = a:node.value
   if var =~# '#'
     " チェックできない
@@ -207,6 +208,8 @@ function! s:exists_var(env, node)
     " 型くらいは保存してみる?
     return 1
   elseif var =~# '^[s]:'
+    " 存在していることにして先にすすむ.
+    " どこで定義されるかわからない
     call s:append_var_(a:env.global, var, a:node, 0, -1)
     return 1
   elseif var =~# '^v:'
@@ -214,33 +217,84 @@ function! s:exists_var(env, node)
     " @TODO map 内などか?
     return 1
   else
+    " ローカル変数
     let env = a:env
     while has_key(env, 'var')
       if has_key(env.var, var)
+        " カウンタをアップデード
+        let stat = env.var[var].stat
         call s:append_var_(env, var, a:node, 0, -1)
-        return 1
+
+        if stat == 0
+          return 1
+        endif
+
+        " 警告
+        call a:self.error_mes(a:node, 'variable may not be initialized on some execution path: ' . var, 1)
+        return 0
       endif
       let env = env.outer
     endwhile
+
+    " 存在しなかった
+    call a:self.error_mes(a:node, 'undefined variable: ' . var, 1)
     return 0
   endif
 endfunction " }}}
 
 function! s:append_var_(env, var, node, val, cnt) " {{{
   if has_key(a:env.var, a:var)
+    let v = a:env.var[a:var]
     if a:cnt > 0
-      let a:env.var[a:var].subs += 1
+      let v.subs += 1
+      if v.stat != 0
+        " どこかのルートでは未定義だった可能性があるものを
+        " ちゃんと定義した.
+        "
+        " if 1
+        "   let a = 1
+        "   ....
+        " else
+        "   " does not define a
+        " endif
+        " ...
+        " let a = 2 " <= ここ
+        let a:env.varstack += [{
+          \ 'type' : 'update',
+          \ 'var' : a:var,
+          \ 'node' : a:node,
+          \ 'val' : a:val,
+          \ 'env' : a:env,
+          \ 'stat' : v.stat
+          \}]
+        let v.stat = 0
+
+      endif
     else
-      let a:env.var[a:var].ref += 1
+      let v.ref += 1
     endif
+    return v
   else
     if a:cnt > 0
       " subs/let
-      let a:env.var[a:var] = {'ref' : 0, 'val' : a:val, 'subs' : 1, 'node' : a:node}
+      let v = {'ref' : 0, 'val' : a:val, 'subs' : 1, 'node' : a:node, 'stat' : 0}
+      let a:env.var[a:var] = v
+      if a:env.global != a:env
+        let a:env.varstack += [{
+          \ 'type' : 'append',
+          \ 'var' : a:var,
+          \ 'node' : a:node,
+          \ 'val' : a:val,
+          \ 'env' : a:env
+          \}]
+      endif
     else
       " ref
-      let a:env.var[a:var] = {'ref' : 1, 'subs' : 0, 'node' : a:node}
+      let v = {'ref' : 1, 'subs' : 0, 'node' : a:node, 'stat' : 0}
+      let a:env.var[a:var] = v
     endif
+
+    return v
   endif
 endfunction " }}}
 
@@ -300,8 +354,141 @@ function! s:VimlLint.append_var(env, var, val, pos)
 endfunction " }}}
 
 function! s:delete_var(env, var)
-"    unlet a:env.var[a:var]
+  if a:var.type == s:NODE_IDENTIFIER
+    let name = a:var.value
+    if has_key(a:env.var, name)
+      let e = a:env
+      let v = e.var[name]
+      unlet a:env.var[name]
+    elseif has_key(a:env.global.var, name)
+      let e = a:env.global
+      let v = e.var[name]
+      unlet a:env.global.var[name]
+    else
+      return
+    endif
+  else
+    return
+  endif
+
+  let a:env.varstack += [{
+    \ 'type' : 'delete',
+    \ 'var' : a:var,
+    \ 'env' : e,
+    \ 'node' : v,
+    \}]
+
 endfunction
+
+function! s:restore_varstack(env, pos) " {{{
+  let i = len(a:env.varstack)
+  while i > a:pos
+    let i = i - 1
+    let v = a:env.varstack[i]
+    if v.type == 'delete'
+      let v.env.var[v.var] = v.node
+    elseif v.type == 'append'
+      unlet v.env.var[v.var]
+    elseif v.type == 'update'
+      let v.env.var[v.var].stat = v.stat
+    elseif v.type != 'nop'
+      throw "system error"
+    endif
+  endwhile
+endfunction " }}}
+
+function! s:simpl_varstack(env, pos) " {{{
+  let d = {}
+  let nop = {'type' : 'nop'}
+  for i in range(a:pos, len(a:env.varstack) - 1)
+    let v = a:env.varstack[i]
+    if v.type == 'nop'
+      " do nothing
+    elseif has_key(d, v.var)
+      let j = d[v.var]
+      let u = a:env.varstack[j]
+      if u.type != v.type
+        " let して unlet
+        " unlet して let
+        let a:env.varstack[i] = nop
+        let a:env.varstack[j] = nop
+        unlet d[v.var]
+      else
+        let a:env.varstack[i] = nop
+      endif
+    else
+      let d[v.var] = i
+    endif
+  endfor
+endfunction " }}}
+
+function! s:reconstruct_varstack(self, env, pos) " {{{
+  " すべてのルートをみて変数定義まわりの情報を再構築する
+  let vardict = {}
+  let N = len(a:pos) - 1
+  for i in range(N)
+    let vi = {}
+    for j in range(a:pos[i], a:pos[i+1] - 1)
+      let v = a:env.varstack[j]
+      if v.type == 'nop'
+        continue
+      endif
+      if has_key(vi, v.var)
+        " if 文内で定義したものを削除した など
+        " simplify によりありえない
+        throw "err: simpl_varstack()"
+      endif
+
+      if v.type == 'delete'
+        " if 文前に定義したものを削除した
+        let vi[v.var] = [v, 0, 1]
+      elseif v.type == 'append' || v.type == 'update'
+        let vi[v.var] = [v, 1, 0]
+      elseif v.type != 'nop'
+        throw 'system error: unknown type'
+      endif
+    endfor
+
+    " 情報をマージ
+    for k in keys(vi)
+      if vi[k][1] != vi[k][2]
+        if has_key(vardict, k)
+          let vardict[k][1] += vi[k][1]
+          let vardict[k][2] += vi[k][2]
+        else
+          let vardict[k] = vi[k]
+        endif
+      endif
+    endfor
+  endfor
+
+  " vardict に登録してある変数について
+  " すべてのルートでチェックする
+  for k in keys(vardict)
+    let z = vardict[k]
+    if z[2] == N
+      " delete
+      call s:delete_var(a:env, z[0].var)
+    else
+      try
+       call a:self.append_var(z[0].env, z[0].node, z[0].val, 'reconstruct')
+      catch
+        echo v:exception
+        echo v:errmsg
+        echo v:throwpoint
+        throw "stop"
+      endtry
+
+
+      if z[1] != N
+        " 中途半端に定義されている状態
+        let var = z[0].env.var[z[0].var]
+        let var.stat = 1
+      endif
+    endif
+  endfor
+
+endfunction " }}}
 
 function! s:echonode(node, refchk)
   echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
@@ -610,7 +797,6 @@ endfunction
 
 function s:VimlLint.compile_unlet(node, refchk)
   " @TODO unlet! の場合には存在チェック不要
-  call vimconsole#log(a:node.ea)
   let list = map(a:node.list, 'self.compile(v:val, 1)')
   for v in list
     " unlet
@@ -622,8 +808,9 @@ function s:VimlLint.compile_lockvar(node, refchk)
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
 "      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
-    elseif !s:exists_var(self.env, var)
-      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
+    else
+      call s:exists_var(self, self.env, var)
+"      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
 endfunction
@@ -632,8 +819,9 @@ function s:VimlLint.compile_unlockvar(node, refchk)
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
 "      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
-    elseif !s:exists_var(self.env, var)
-      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
+    else
+      call s:exists_var(self, self.env, var)
+"      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
 endfunction
@@ -641,14 +829,31 @@ endfunction
 function s:VimlLint.compile_if(node, refchk)
 "  call s:VimlLint.error_mes(a:node, "compile_if")
   call self.compile(a:node.cond, 2)
+
+  let pos = [len(self.env.varstack)]
   call self.compile_body(a:node.body, a:refchk)
+  call s:simpl_varstack(self.env, pos[-1])
+  call s:restore_varstack(self.env, pos[-1])
+
   for node in a:node.elseif
+    let pos += [len(self.env.varstack)]
     call self.compile(node.cond, 2)
     call self.compile_body(node.body, a:refchk)
+    call s:simpl_varstack(self.env, pos[-1])
+    call s:restore_varstack(self.env, pos[-1])
   endfor
+
+  let pos += [len(self.env.varstack)]
   if a:node.else isnot s:NIL
     call self.compile_body(a:node.else.body, a:refchk)
+    call s:simpl_varstack(self.env, pos[-1])
+    call s:restore_varstack(self.env, pos[-1])
   endif
+
+  " reconstruct
+  let pos += [len(self.env.varstack)]
+  call s:reconstruct_varstack(self, self.env, pos)
+
 endfunction
 
 function s:VimlLint.compile_while(node, refchk)
@@ -1314,8 +1519,9 @@ endfunction
 function s:VimlLint.compile_identifier(node, refchk)
   let name = a:node.value
   if s:reserved_name(name)
-  elseif a:refchk && !s:exists_var(self.env, a:node)
-    call self.error_mes(a:node, 'undefined variable: ' . name, 1)
+  elseif a:refchk
+    call s:exists_var(self, self.env, a:node)
+"    call self.error_mes(a:node, 'undefined variable: ' . name, 1)
   endif
   return a:node
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
@@ -1351,7 +1557,7 @@ function s:VimlLint.compile_op2(node, op)
   let a:node.right = self.compile(a:node.right, 1)
 
   return a:node
- 
+
   " @TODO 比較/演算できる型どうしか.
   " @TODO 演算結果の型を返すようにする
 endfunction
