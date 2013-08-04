@@ -756,7 +756,10 @@ function s:VimlLint.compile_delfunction(node, rechk)
 endfunction
 
 function s:VimlLint.compile_return(node, refchk)
-  if a:node.left is s:NIL
+
+  if self.env == self.env.global
+    call self.error_mes(a:node, 'E133: :return not inside a function')
+  elseif a:node.left is s:NIL
   else
     call self.compile(a:node.left, 1)
   endif
