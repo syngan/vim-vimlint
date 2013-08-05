@@ -150,6 +150,7 @@ function! s:env(outer, funcname)
   let env.function = a:funcname
   let env.var = {}
   let env.varstack = []
+  let env.ret = 0
   if has_key(a:outer, 'global')
     let env.global = a:outer.global
   else
@@ -380,7 +381,7 @@ function! s:delete_var(env, var)
 
 endfunction
 
-function! s:restore_varstack(env, pos) " {{{
+function! s:restore_varstack(env, pos, pp) " {{{
   let i = len(a:env.varstack)
   while i > a:pos
     let i = i - 1
@@ -400,6 +401,7 @@ endfunction " }}}
 function! s:simpl_varstack(env, pos) " {{{
   let d = {}
   let nop = {'type' : 'nop'}
+
   for i in range(a:pos, len(a:env.varstack) - 1)
     let v = a:env.varstack[i]
     if v.type == 'nop'
@@ -425,10 +427,19 @@ endfunction " }}}
 function! s:reconstruct_varstack(self, env, pos) " {{{
   " すべてのルートをみて変数定義まわりの情報を再構築する
   let vardict = {}
-  let N = len(a:pos) - 1
-  for i in range(N)
+  let N = 0
+  let nop = {'type' : 'nop'}
+  for p in a:pos
+    if p[2]
+      " イベントをなかったことにする
+      for j in range(p[0], p[1] - 1)
+        let a:env.varstack[j] = nop
+      endfor
+      continue
+    endif
+    let N += 1
     let vi = {}
-    for j in range(a:pos[i], a:pos[i+1] - 1)
+    for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
       if v.type == 'nop'
         continue
@@ -462,6 +473,13 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
     endfor
   endfor
 
+  if N == 0
+    " すべての route で return
+    let a:self.env.ret = 1
+    return
+  endif
+
+
   " vardict に登録してある変数について
   " すべてのルートでチェックする
   for k in keys(vardict)
@@ -479,7 +497,6 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
         throw "stop"
       endtry
 
-
       if z[1] != N
         " 中途半端に定義されている状態
         let var = z[0].env.var[z[0].var]
@@ -487,7 +504,6 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
       endif
     endif
   endfor
-
 endfunction " }}}
 
 function! s:echonode(node, refchk)
@@ -679,15 +695,12 @@ function s:VimlLint.compile(node, refchk) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_body(body, refchk)
-  let ret = 0
   for node in a:body
-    call self.compile(node, a:refchk)
-    if ret == 1
+    if self.env.ret == 1
       call self.error_mes(node, "unreachable code", 1)
       break
-    elseif node.type == s:NODE_RETURN
-      let ret = 1
     endif
+    call self.compile(node, a:refchk)
   endfor
 endfunction
 
@@ -767,8 +780,10 @@ function s:VimlLint.compile_return(node, refchk)
   if self.env == self.env.global
     call self.error_mes(a:node, 'E133: :return not inside a function', 1)
   elseif a:node.left is s:NIL
+    let self.env.ret = 1
   else
     call self.compile(a:node.left, 1)
+    let self.env.ret = 1
   endif
 endfunction
 
@@ -838,30 +853,42 @@ endfunction
 
 function s:VimlLint.compile_if(node, refchk)
 "  call s:VimlLint.error_mes(a:node, "compile_if")
-  call self.compile(a:node.cond, 2)
+  call self.compile(a:node.cond, 2) " if ()
+  let done_ret = self.env.ret
 
-  let pos = [len(self.env.varstack)]
-  call self.compile_body(a:node.body, a:refchk)
-  call s:simpl_varstack(self.env, pos[-1])
-  call s:restore_varstack(self.env, pos[-1])
+  let p = len(self.env.varstack)
+  call self.compile_body(a:node.body, a:refchk) 
+
+  call s:simpl_varstack(self.env, p)
+  call s:restore_varstack(self.env, p, 1)
+
+  let pos = [[p, len(self.env.varstack), self.env.ret]]
+  let self.env.ret = 0
 
   for node in a:node.elseif
-    let pos += [len(self.env.varstack)]
     call self.compile(node.cond, 2)
+    let p = len(self.env.varstack)
     call self.compile_body(node.body, a:refchk)
-    call s:simpl_varstack(self.env, pos[-1])
-    call s:restore_varstack(self.env, pos[-1])
+    call s:simpl_varstack(self.env, p)
+    call s:restore_varstack(self.env, p, 2)
+
+    let pos += [[p, len(self.env.varstack), self.env.ret]]
+    let self.env.ret = 0
   endfor
 
-  let pos += [len(self.env.varstack)]
+  let p = len(self.env.varstack)
+
   if a:node.else isnot s:NIL
     call self.compile_body(a:node.else.body, a:refchk)
-    call s:simpl_varstack(self.env, pos[-1])
-    call s:restore_varstack(self.env, pos[-1])
+    call s:simpl_varstack(self.env, p)
+    call s:restore_varstack(self.env, p, 3)
   endif
 
+  let pos += [[p, len(self.env.varstack), self.env.ret]]
+  let self.env.ret = 0
+
   " reconstruct
-  let pos += [len(self.env.varstack)]
+  " let して return した、は let していないにする
   call s:reconstruct_varstack(self, self.env, pos)
 
 endfunction
