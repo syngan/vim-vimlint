@@ -394,14 +394,13 @@ endfunction
 
 function! s:restore_varstack(env, pos, pp) " {{{
   let i = len(a:env.varstack)
-  echo "restore:::: " . i . " / " . a:pos
   while i > a:pos
     let i = i - 1
     let v = a:env.varstack[i]
     if has_key(v, "v")
-      echo "restore " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type  . ",var=" . get(v, 'var', '')
+"      echo "restore " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type  . ",var=" . get(v, 'var', '')
     else
-      echo "restore " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=?,sub=?,type=" . v.type  . ",var=" . get(v, 'var', '')
+"      echo "restore " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=?,sub=?,type=" . v.type  . ",var=" . get(v, 'var', '')
     endif
     if v.type == 'delete'
       let v.env.var[v.var] = v.node
@@ -419,7 +418,10 @@ function! s:simpl_varstack(env, pos) " {{{
   let d = {}
   let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0}}
 
-  echo "simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1)
+"  echo "simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1)
+  for i in range(a:pos, len(a:env.varstack) - 1)
+    let v = a:env.varstack[i]
+  endfor
   for i in range(a:pos, len(a:env.varstack) - 1)
     let v = a:env.varstack[i]
     if v.type == 'nop'
@@ -434,7 +436,8 @@ function! s:simpl_varstack(env, pos) " {{{
         let a:env.varstack[j] = nop
         unlet d[v.var]
       else
-        let a:env.varstack[i] = nop
+        let a:env.varstack[j] = nop
+        let d[v.var] = i
       endif
     else
       let d[v.var] = i
@@ -447,7 +450,6 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
   let vardict = {}
   let N = 0
   let nop = {'type' : 'nop', 'ref' : 0, 'subs' : 0}
-  echo "reconstruct: " . string(a:pos)
   for p in a:pos
     if p[2] " return した.
       " イベントをなかったことにする
@@ -467,7 +469,7 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
       if v.type == 'nop'
         continue
       endif
-      echo "reconstruct" . j . "/" . (p[1]-1) . ": ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type . ",pos=" . string(p) . ",var=" . get(v, 'var', '')
+"      echo "reconstruct" . j . "/" . (p[1]-1) . ": ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type . ",pos=" . string(p) . ",var=" . get(v, 'var', '')
       if has_key(vi, v.var)
         " if 文内で定義したものを削除した など
         " simplify によりありえない
@@ -520,7 +522,6 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
         " すべてのルートで append された
         let z[0].v.v = a:self.append_var(z[0].env, z[0].node, z[0].var, 'reconstruct')
         " ref 情報を追加しないと.
-        echo "ref=" . z[3] . ",sub=" . z[4]
         if z[3] > 0
           call s:exists_var(a:self, a:self.env, z[0].node)
         endif
@@ -925,7 +926,7 @@ function s:VimlLint.compile_if(node, refchk)
 
   " reconstruct
   " let して return した、は let していないにする
-  echo "call reconstruct: " . string(a:node.pos)
+"  echo "call reconstruct: " . string(a:node.pos)
   call s:reconstruct_varstack(self, self.env, pos)
 
 endfunction
