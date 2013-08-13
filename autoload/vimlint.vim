@@ -244,6 +244,7 @@ function! s:exists_var(self, env, node)
 endfunction " }}}
 
 function! s:append_var_(env, var, node, val, cnt) " {{{
+
   if has_key(a:env.var, a:var)
     let v = a:env.var[a:var]
     if a:cnt > 0
@@ -262,6 +263,7 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
         " let a = 2 " <= ここ
         let a:env.varstack += [{
           \ 'type' : 'update',
+          \ 'v' : v,
           \ 'var' : a:var,
           \ 'node' : a:node,
           \ 'val' : a:val,
@@ -283,6 +285,7 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
       if a:env.global != a:env
         let a:env.varstack += [{
           \ 'type' : 'append',
+          \ 'v' : v,
           \ 'var' : a:var,
           \ 'node' : a:node,
           \ 'val' : a:val,
@@ -311,16 +314,22 @@ function! s:VimlLint.append_var(env, var, val, pos)
     echo a:var
     throw "stop"
   endif
+  let ret = {}
 
   if a:var.type == s:NODE_IDENTIFIER
     let node = a:var
     let v = a:var.value
+    if v =~# "^[0-9]*$"
+      echo "in append_var: invalid input: type=" . type(a:var) . ",pos=" . a:pos
+      echo a:var
+      throw "stop"
+    endif
     if a:pos == 'a:'
       " 関数引数
       if v != '...'
-        call s:append_var_(a:env, 'a:' . v, node, a:val, 1)
+        let ret = s:append_var_(a:env, 'a:' . v, node, a:val, 1)
       endif
-      return
+      return ret
     endif
 
     " 接頭子は必ずつける.
@@ -332,13 +341,13 @@ function! s:VimlLint.append_var(env, var, val, pos)
       endif
     endif
     if v =~# '^[sgbwt]:'
-      call s:append_var_(a:env.global, v, node, a:val, 1)
+      let ret = s:append_var_(a:env.global, v, node, a:val, 1)
     elseif v !~# '#'
-      call s:append_var_(a:env, v, node, a:val, 1)
+      let ret = s:append_var_(a:env, v, node, a:val, 1)
     endif
   elseif a:var.type == s:NODE_REG
     " do nothing
-    return
+    return ret
   elseif a:var.type == s:NODE_SUBSCRIPT
   elseif a:var.type == s:NODE_DOT
     " let f.f = xxxx, let f["a"] = xxxx
@@ -352,6 +361,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
     " @TODO
     call self.error_mes(a:var, 'unknown type: ' . a:var.type, 1)
   endif
+  return ret
 endfunction " }}}
 
 function! s:delete_var(env, var)
@@ -377,15 +387,22 @@ function! s:delete_var(env, var)
     \ 'var' : a:var,
     \ 'env' : e,
     \ 'node' : v,
+    \ 'v' : v,
     \}]
 
 endfunction
 
 function! s:restore_varstack(env, pos, pp) " {{{
   let i = len(a:env.varstack)
+  echo "restore:::: " . i . " / " . a:pos
   while i > a:pos
     let i = i - 1
     let v = a:env.varstack[i]
+    if has_key(v, "v")
+      echo "restore " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type  . ",var=" . get(v, 'var', '')
+    else
+      echo "restore " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=?,sub=?,type=" . v.type  . ",var=" . get(v, 'var', '')
+    endif
     if v.type == 'delete'
       let v.env.var[v.var] = v.node
     elseif v.type == 'append'
@@ -400,8 +417,9 @@ endfunction " }}}
 
 function! s:simpl_varstack(env, pos) " {{{
   let d = {}
-  let nop = {'type' : 'nop'}
+  let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0}}
 
+  echo "simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1)
   for i in range(a:pos, len(a:env.varstack) - 1)
     let v = a:env.varstack[i]
     if v.type == 'nop'
@@ -428,11 +446,16 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
   " すべてのルートをみて変数定義まわりの情報を再構築する
   let vardict = {}
   let N = 0
-  let nop = {'type' : 'nop'}
+  let nop = {'type' : 'nop', 'ref' : 0, 'subs' : 0}
+  echo "reconstruct: " . string(a:pos)
   for p in a:pos
-    if p[2]
+    if p[2] " return した.
       " イベントをなかったことにする
       for j in range(p[0], p[1] - 1)
+        let v = a:env.varstack[j]
+        if v.type == 'append' && v.v.ref == 0
+          call a:self.error_mes(v.node, 'unused variable2 `' . v.var. '`', 1)
+        endif
         let a:env.varstack[j] = nop
       endfor
       continue
@@ -444,6 +467,7 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
       if v.type == 'nop'
         continue
       endif
+      echo "reconstruct" . j . "/" . (p[1]-1) . ": ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type . ",pos=" . string(p) . ",var=" . get(v, 'var', '')
       if has_key(vi, v.var)
         " if 文内で定義したものを削除した など
         " simplify によりありえない
@@ -452,9 +476,9 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
 
       if v.type == 'delete'
         " if 文前に定義したものを削除した
-        let vi[v.var] = [v, 0, 1]
+        let vi[v.var] = [v, 0, 1, 0, 0]
       elseif v.type == 'append' || v.type == 'update'
-        let vi[v.var] = [v, 1, 0]
+        let vi[v.var] = [v, 1, 0, 0, 0]
       elseif v.type != 'nop'
         throw 'system error: unknown type'
       endif
@@ -462,13 +486,15 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
 
     " 情報をマージ
     for k in keys(vi)
-      if vi[k][1] != vi[k][2]
+      if vi[k][1] != vi[k][2] " nop 以外? わかめ
         if has_key(vardict, k)
           let vardict[k][1] += vi[k][1]
           let vardict[k][2] += vi[k][2]
         else
           let vardict[k] = vi[k]
         endif
+        let vardict[k][3] += vi[k][0].v.ref
+        let vardict[k][4] += vi[k][0].v.subs
       endif
     endfor
   endfor
@@ -485,11 +511,20 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
   for k in keys(vardict)
     let z = vardict[k]
     if z[2] == N
-      " delete
+      " すべてのルートで delete
       call s:delete_var(a:env, z[0].var)
     else
       try
-       call a:self.append_var(z[0].env, z[0].node, z[0].val, 'reconstruct')
+        " あるルートでは delete されなかった.
+        " あるルートで append された
+        " すべてのルートで append された
+        let z[0].v.v = a:self.append_var(z[0].env, z[0].node, z[0].var, 'reconstruct')
+        " ref 情報を追加しないと.
+        echo "ref=" . z[3] . ",sub=" . z[4]
+        if z[3] > 0
+          call s:exists_var(a:self, a:self.env, z[0].node)
+        endif
+
       catch
         echo v:exception
         echo v:errmsg
@@ -498,6 +533,7 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
       endtry
 
       if z[1] != N
+        " すべての route で append されていない
         " 中途半端に定義されている状態
         let var = z[0].env.var[z[0].var]
         let var.stat = 1
@@ -889,6 +925,7 @@ function s:VimlLint.compile_if(node, refchk)
 
   " reconstruct
   " let して return した、は let していないにする
+  echo "call reconstruct: " . string(a:node.pos)
   call s:reconstruct_varstack(self, self.env, pos)
 
 endfunction
