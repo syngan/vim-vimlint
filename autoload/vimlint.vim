@@ -1094,9 +1094,18 @@ function s:VimlLint.compile_try(node, refchk)
 
   call s:reconstruct_varstack(self, self.env, pos)
 
+  " backup env
+  let ret = self.env.ret
+  let loopb = self.env.loopb
+
+  call s:reset_env_cntl(self.env)
+
   if a:node.finally isnot s:NIL
     call self.compile_body(a:node.finally.body, a:refchk)
   endif
+
+  let self.env.ret += ret
+  let self.env.loopb += loopb
 
 endfunction
 
