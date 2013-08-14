@@ -155,6 +155,7 @@ function! s:env(outer, funcname)
     let env.global = a:outer.global
   else
     let env.global = env
+    let env.loop = 0
   endif
   return env
 endfunction
@@ -932,20 +933,25 @@ function s:VimlLint.compile_if(node, refchk)
 endfunction
 
 function s:VimlLint.compile_while(node, refchk)
+  let self.env.global.loop += 1
   call self.compile(a:node.cond, 1)
   call self.compile_body(a:node.body, a:refchk)
+  let self.env.global.loop -= 1
 endfunction
 
 function s:VimlLint.compile_for(node, refchk)
+  let self.env.global.loop += 1
   let right = self.compile(a:node.right, 1)
 
   if a:node.left isnot s:NIL
+    " for {var} in {list}
     let left = self.compile(a:node.left, 0)
     call self.append_var(self.env, left, right, "for")
     " append
 "    echo "compile for, left is"
 "    echo left
   else
+    " for [{var1},...] in {listlist}
     let list = map(a:node.list, 'self.compile(v:val, 0)')
     call map(list, 'self.append_var(self.env, v:val, right, "forn")')
     " append
@@ -953,13 +959,22 @@ function s:VimlLint.compile_for(node, refchk)
       let rest = self.compile(a:node.rest, a:refchk)
     endif
   endif
+
   call self.compile_body(a:node.body, 1)
+  let self.env.global.loop -= 1
 endfunction
 
 function s:VimlLint.compile_continue(node, refchk)
+  if self.env.global.loop <= 0
+    " vimlparser....
+    call self.error_mes(a:node, 'E586: :continue without :while or :for: continue', 1)
+  endif
 endfunction
 
 function s:VimlLint.compile_break(node, refchk)
+  if self.env.global.loop <= 0
+    call self.error_mes(a:node, 'E587: :break without :while or :for: break', 1)
+  endif
 endfunction
 
 function s:VimlLint.compile_try(node, refchk)
