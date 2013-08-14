@@ -424,14 +424,15 @@ endfunction
 
 function! s:restore_varstack(env, pos, pp) " {{{
   " @param pp は debug 用
+  call s:simpl_varstack(a:env, a:pos)
   let i = len(a:env.varstack)
   while i > a:pos
     let i = i - 1
     let v = a:env.varstack[i]
     if has_key(v, "v")
-"      echo "restore " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type  . ",var=" . get(v, 'var', '')
+"      echo "restore[" . a:pp . "] " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type  . ",var=" . get(v, 'var', '')
     else
-"      echo "restore " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=?,sub=?,type=" . v.type  . ",var=" . get(v, 'var', '')
+"      echo "restore[" . a:pp . "]  " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=?,sub=?,type=" . v.type  . ",var=" . get(v, 'var', '')
     endif
     if v.type == 'delete'
       let v.env.var[v.var] = v.v
@@ -937,8 +938,7 @@ function s:VimlLint.compile_if(node, refchk)
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
-  call s:simpl_varstack(self.env, p)
-  call s:restore_varstack(self.env, p, 1)
+  call s:restore_varstack(self.env, p, "if1")
 
   let pos = [s:gen_pos_cntl(self.env, p)]
   call s:reset_env_cntl(self.env)
@@ -947,8 +947,7 @@ function s:VimlLint.compile_if(node, refchk)
     call self.compile(node.cond, 2)
     let p = len(self.env.varstack)
     call self.compile_body(node.body, a:refchk)
-    call s:simpl_varstack(self.env, p)
-    call s:restore_varstack(self.env, p, 2)
+    call s:restore_varstack(self.env, p, "if2")
 
     let pos += [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
@@ -958,8 +957,7 @@ function s:VimlLint.compile_if(node, refchk)
 
   if a:node.else isnot s:NIL
     call self.compile_body(a:node.else.body, a:refchk)
-    call s:simpl_varstack(self.env, p)
-    call s:restore_varstack(self.env, p, 3)
+    call s:restore_varstack(self.env, p, "if3")
   endif
 
   let pos += [s:gen_pos_cntl(self.env, p)]
@@ -967,7 +965,7 @@ function s:VimlLint.compile_if(node, refchk)
 
   " reconstruct
   " let して return した、は let していないにする
-"  echo "call reconstruct: " . string(a:node.pos)
+"  echo "call reconstruct if: " . string(a:node.pos)
   call s:reconstruct_varstack(self, self.env, pos)
 
 endfunction
@@ -981,8 +979,7 @@ function s:VimlLint.compile_while(node, refchk)
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
-  call s:simpl_varstack(self.env, p)
-  call s:restore_varstack(self.env, p, 2)
+  call s:restore_varstack(self.env, p, "while1")
 
   let pos = [s:gen_pos_cntl(self.env, p)]
   call s:reset_env_cntl(self.env)
@@ -1027,8 +1024,7 @@ function s:VimlLint.compile_for(node, refchk)
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, 1)
 
-  call s:simpl_varstack(self.env, p)
-  call s:restore_varstack(self.env, p, 2)
+  call s:restore_varstack(self.env, p, "for1")
 
   let pos = [s:gen_pos_cntl(self.env, p)]
   call s:reset_env_cntl(self.env)
@@ -1038,6 +1034,7 @@ function s:VimlLint.compile_for(node, refchk)
   let pos += [s:gen_pos_cntl(self.env, p)]
   call s:reset_env_cntl(self.env)
 
+"  echo "call reconstruct for"
   call s:reconstruct_varstack(self, self.env, pos)
 
   let self.env.global.loop -= 1
@@ -1065,8 +1062,7 @@ function s:VimlLint.compile_try(node, refchk)
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
-  call s:simpl_varstack(self.env, p)
-  call s:restore_varstack(self.env, p, 41)
+  call s:restore_varstack(self.env, p, "try1")
 
   let pos = [s:gen_pos_cntl(self.env, p)]
   call s:reset_env_cntl(self.env)
@@ -1081,8 +1077,7 @@ function s:VimlLint.compile_try(node, refchk)
       call self.compile_body(node.body, a:refchk)
     endif
 
-    call s:simpl_varstack(self.env, p)
-    call s:restore_varstack(self.env, p, 42)
+    call s:restore_varstack(self.env, p, "catch1")
 
     let pos = [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
@@ -1094,8 +1089,7 @@ function s:VimlLint.compile_try(node, refchk)
     let p = len(self.env.varstack)
     call self.compile_body(a:node.finally.body, a:refchk)
 
-    call s:simpl_varstack(self.env, p)
-    call s:restore_varstack(self.env, p, 43)
+    call s:restore_varstack(self.env, p, "finally")
 
     let pos += [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
