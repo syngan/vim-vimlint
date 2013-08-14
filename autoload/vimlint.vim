@@ -1092,28 +1092,10 @@ function s:VimlLint.compile_try(node, refchk)
 
   endfor
 
-  if a:node.finally isnot s:NIL
-
-    let p = len(self.env.varstack)
-    call self.compile_body(a:node.finally.body, a:refchk)
-
-    call s:restore_varstack(self.env, p, "fin")
-
-    let pos += [s:gen_pos_cntl(self.env, p)]
-    call s:reset_env_cntl(self.env)
-  endif
-
   call s:reconstruct_varstack(self, self.env, pos)
 
   if a:node.finally isnot s:NIL
-    " finally で return/break などがあったら必ずやることになる.
-    unlet p
-    let p = pos[-1]
-    if p[2]
-      let self.env.ret = 1
-    elseif p[3]
-      let self.env.loopb = 1
-    endif
+    call self.compile_body(a:node.finally.body, a:refchk)
   endif
 
 endfunction
