@@ -245,6 +245,22 @@ function! s:exists_var(self, env, node)
   endif
 endfunction " }}}
 
+function! s:push_varstack(env, dict)
+  let a:env.varstack += [a:dict]
+
+  if !has_key(a:dict, "type") || type(a:dict.type) != type("")
+    throw "varstack() invalid type: " . string(a:dict)
+  endif
+  if !has_key(a:dict, "v") || type(a:dict.v) != type({}) ||
+  \ !has_key(a:dict.v, "ref") || !has_key(a:dict.v, "subs") ||
+  \ !has_key(a:dict.v, "stat")
+  \ || type(a:dict.v.ref) != type(1)
+  \ || type(a:dict.v.subs) != type(1)
+    throw "varstack() invalid v: " . string(a:dict)
+  endif
+
+endfunction
+
 function! s:append_var_(env, var, node, val, cnt) " {{{
 
   if has_key(a:env.var, a:var)
@@ -263,7 +279,7 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
         " endif
         " ...
         " let a = 2 " <= ここ
-        let a:env.varstack += [{
+        call s:push_varstack(a:env, {
           \ 'type' : 'update',
           \ 'v' : v,
           \ 'var' : a:var,
@@ -271,7 +287,7 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
           \ 'val' : a:val,
           \ 'env' : a:env,
           \ 'stat' : v.stat
-          \}]
+          \})
         let v.stat = 0
 
       endif
@@ -285,14 +301,14 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
       let v = {'ref' : 0, 'val' : a:val, 'subs' : 1, 'node' : a:node, 'stat' : 0}
       let a:env.var[a:var] = v
       if a:env.global != a:env
-        let a:env.varstack += [{
+        call s:push_varstack(a:env, {
           \ 'type' : 'append',
           \ 'v' : v,
           \ 'var' : a:var,
           \ 'node' : a:node,
           \ 'val' : a:val,
           \ 'env' : a:env
-          \}]
+          \})
       endif
     else
       " ref
@@ -384,13 +400,13 @@ function! s:delete_var(env, var)
     return
   endif
 
-  let a:env.varstack += [{
+  call s:push_varstack(a:env, {
     \ 'type' : 'delete',
-    \ 'var' : a:var,
+    \ 'var' : a:var.value,
     \ 'env' : e,
-    \ 'node' : v,
+    \ 'node' : a:var,
     \ 'v' : v,
-    \}]
+    \})
 
 endfunction
 
@@ -919,7 +935,7 @@ function s:VimlLint.compile_if(node, refchk)
   call self.compile(a:node.cond, 2) " if ()
 
   let p = len(self.env.varstack)
-  call self.compile_body(a:node.body, a:refchk) 
+  call self.compile_body(a:node.body, a:refchk)
 
   call s:simpl_varstack(self.env, p)
   call s:restore_varstack(self.env, p, 1)
