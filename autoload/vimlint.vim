@@ -407,6 +407,7 @@ endfunction
 
 
 function! s:restore_varstack(env, pos, pp) " {{{
+  " @param pp は debug 用
   let i = len(a:env.varstack)
   while i > a:pos
     let i = i - 1
@@ -1044,21 +1045,65 @@ function s:VimlLint.compile_break(node, refchk)
 endfunction
 
 function s:VimlLint.compile_try(node, refchk)
+
+  let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
+
+  call s:simpl_varstack(self.env, p)
+  call s:restore_varstack(self.env, p, 41)
+
+  let pos = [s:gen_pos_cntl(self.env, p)]
+  call s:reset_env_cntl(self.env)
+
   for node in a:node.catch
+    " catch 部. error が起こるのは try 部の最初と仮定してしまって良いか?
+    let p = len(self.env.varstack)
+
     if node.pattern isnot s:NIL
       call self.compile_body(node.body, a:refchk)
     else
       call self.compile_body(node.body, a:refchk)
     endif
+
+    call s:simpl_varstack(self.env, p)
+    call s:restore_varstack(self.env, p, 42)
+
+    let pos = [s:gen_pos_cntl(self.env, p)]
+    call s:reset_env_cntl(self.env)
+
   endfor
+
   if a:node.finally isnot s:NIL
+
+    let p = len(self.env.varstack)
     call self.compile_body(a:node.finally.body, a:refchk)
+
+    call s:simpl_varstack(self.env, p)
+    call s:restore_varstack(self.env, p, 43)
+
+    let pos += [s:gen_pos_cntl(self.env, p)]
+    call s:reset_env_cntl(self.env)
   endif
+
+  call s:reconstruct_varstack(self, self.env, pos)
+
+  if a:node.finally isnot s:NIL
+    " finally で return/break などがあったら必ずやることになる.
+    unlet p
+    let p = pos[-1]
+    if p[2]
+      let self.env.ret = 1
+    elseif p[3]
+      let self.env.loopb = 1
+    endif
+  endif
+
 endfunction
 
 function s:VimlLint.compile_throw(node, refchk)
   call self.compile(a:node.left, 1)
+  " return みたいなものでしょう.
+  let self.env.ret = 1
 endfunction
 
 function s:VimlLint.compile_echo(node, refchk)
