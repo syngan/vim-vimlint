@@ -438,7 +438,12 @@ function! s:restore_varstack(env, pos, pp) " {{{
     if v.type == 'delete'
       let v.env.var[v.var] = v.v
     elseif v.type == 'append'
-      unlet v.env.var[v.var]
+      " break されたりするときの restore では
+      " let されているとは限らない
+      " @TODO
+      if has_key(v.env.var, v.var)
+        unlet v.env.var[v.var]
+      endif
     elseif v.type == 'update'
       let v.env.var[v.var].stat = v.stat
     elseif v.type != 'nop'
