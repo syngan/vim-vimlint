@@ -434,7 +434,7 @@ function! s:restore_varstack(env, pos, pp) " {{{
 "      echo "restore " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=?,sub=?,type=" . v.type  . ",var=" . get(v, 'var', '')
     endif
     if v.type == 'delete'
-      let v.env.var[v.var] = v.node
+      let v.env.var[v.var] = v.v
     elseif v.type == 'append'
       unlet v.env.var[v.var]
     elseif v.type == 'update'
