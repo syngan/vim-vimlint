@@ -157,6 +157,7 @@ function! s:env(outer, funcname)
   else
     let env.global = env
     let env.loop = 0
+    let env.fins = 0
   endif
   return env
 endfunction
@@ -496,7 +497,8 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
       " イベントをなかったことにする
       for j in range(p[0], p[1] - 1)
         let v = a:env.varstack[j]
-        if v.type == 'append' && v.v.ref == 0
+        if v.type == 'append' && v.v.ref == 0 && a:env.global.fins == 0
+          " finally 区があるかもしれないのです......
           call a:self.error_mes(v.node, 'unused variable2 `' . v.var. '`', 1)
         endif
         let a:env.varstack[j] = nop
@@ -590,6 +592,18 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
     " すべてのルートで break/continue
     let a:self.env.loopb = 1
   endif
+
+endfunction " }}}
+
+function! s:reconstruct_varstack_st(self, env, p) " {{{
+  " @param p(list) reconstruct_varstack() の pos(listlist) と同じではない
+  "
+  for j in range(a:p, len(a:env.varstack) - 1)
+    let v = a:env.varstack[j]
+    if v.type == 'append'
+      let v.stat = 1
+    endif
+  endfor
 
 endfunction " }}}
 
@@ -1070,11 +1084,22 @@ function s:VimlLint.compile_try(node, refchk)
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
-  call s:restore_varstack(self.env, p, "try")
+  if a:node.finally isnot s:NIL
+    let self.env.global.fins += 1
+  endif
 
-  let pos = [s:gen_pos_cntl(self.env, p)]
+  let pos_try = s:gen_pos_cntl(self.env, p)
+
+  let ret = self.env.ret
+  let loopb = self.env.loopb
   call s:reset_env_cntl(self.env)
 
+  " try 句はどこで抜けるかわからないため
+  " 定義したすべての変数は定義されているかも状態,
+  " つまり stat=1 にする.
+  call s:reconstruct_varstack_st(self, self.env, p)
+
+  let pos = []
   for node in a:node.catch
     " catch 部. error が起こるのは try 部の最初と仮定してしまって良いか?
     let p = len(self.env.varstack)
@@ -1095,17 +1120,18 @@ function s:VimlLint.compile_try(node, refchk)
   call s:reconstruct_varstack(self, self.env, pos)
 
   " backup env
-  let ret = self.env.ret
-  let loopb = self.env.loopb
+  let retc = self.env.ret
+  let loopbc = self.env.loopb
 
   call s:reset_env_cntl(self.env)
 
   if a:node.finally isnot s:NIL
+    let self.env.global.fins -= 1
     call self.compile_body(a:node.finally.body, a:refchk)
   endif
 
-  let self.env.ret += ret
-  let self.env.loopb += loopb
+  let self.env.ret = (ret && retc)
+  let self.env.loopb = (loopb && loopbc)
 
 endfunction
 
