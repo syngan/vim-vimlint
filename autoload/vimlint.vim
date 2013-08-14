@@ -1087,7 +1087,7 @@ function s:VimlLint.compile_try(node, refchk)
 
     call s:restore_varstack(self.env, p, "cth")
 
-    let pos = [s:gen_pos_cntl(self.env, p)]
+    let pos += [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
 
   endfor
