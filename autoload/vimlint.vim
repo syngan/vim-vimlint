@@ -783,8 +783,9 @@ endfunction " }}}
 
 function s:VimlLint.compile_body(body, refchk)
   for node in a:body
-    if self.env.ret + self.env.loopb > 0
-      call self.error_mes(node, "unreachable code", 1)
+    if self.env.ret + self.env.loopb > 0 && node.type != s:NODE_COMMENT
+      call self.error_mes(node, "unreachable code: " .
+      \ (self.env.ret > 0 ? "return" : "continue/break"), 1)
       break
     endif
     call self.compile(node, a:refchk)
