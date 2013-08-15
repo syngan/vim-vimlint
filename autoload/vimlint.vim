@@ -162,29 +162,21 @@ function! s:env(outer, funcname) " {{{
   return env
 endfunction " }}}
 
-function! s:output_echo(pos, mes, obj) " {{{
-  echo a:pos . ': ' . a:mes
+function! s:output_echo(filename, pos, eid, mes, obj) " {{{
+  echo a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:eid . ': ' . a:mes
 endfunction " }}}
 
-function! s:output_file(pos, mes, obj) " {{{
-  let a:obj.error += [a:pos . ': ' . a:mes]
+function! s:output_file(filename, pos, eid, mes, obj) " {{{
+  let a:obj.error += [a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:eid . ': ' . a:mes]
 endfunction " }}}
 
 function! s:VimlLint.error_mes(node, eid, mes, print) " {{{
 "  echo a:node
   if a:print
-    if has_key(a:node, 'pos')
-      let p = a:node.pos
-      if has_key(self, 'filename')
-        let pos = self.filename . ':' . p.lnum . ':' . p.col . ':' . a:eid
-      else
-        let pos = '...:' . p.lnum . ':' . p.col . ':' . a:eid
-      endif
-    else
-      let pos = string(a:node)
-    endif
+    let filename = get(self, 'filename', '...')
+    let pos = get(a:node, 'pos', {'lnum': '', 'col' : ''})
 
-    call self.param.outfunc(pos, a:mes, self)
+    call self.param.outfunc(filename, pos, a:eid, a:mes, self)
   endif
 endfunction " }}}
 
