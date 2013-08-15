@@ -843,6 +843,10 @@ function s:VimlLint.compile_function(node, refchk)
   let rlist = map(a:node.rlist, 'self.compile(v:val, 0)')  " list of argument string
 
   let self.env = s:env(self.env, left)
+  if a:node.attr.range
+    call s:append_var_(self.env, "a:firstline", a:node, a:node, 1)
+    call s:append_var_(self.env, "a:lastline", a:node, a:node, 1)
+  endif
   for v in rlist
     " E853 if Duplicate argument
     call self.append_var(self.env, v, s:NIL, "a:")
