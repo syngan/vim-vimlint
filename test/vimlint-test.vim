@@ -44,7 +44,11 @@ endfunction
 
 
 function! g:vimlint_test(dir)
-  let files = expand(a:dir . "/*.vim")
+  if isdirectory(a:dir)
+    let files = expand(a:dir . "/*.vim")
+  else
+    let files = a:dir
+  endif
   let ret = 0
   for f in split(files, '\n')
     let t = s:test(f)
