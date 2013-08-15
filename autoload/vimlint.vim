@@ -170,15 +170,15 @@ function! s:output_file(pos, mes, obj) " {{{
   let a:obj.error += [a:pos . ': ' . a:mes]
 endfunction " }}}
 
-function! s:VimlLint.error_mes(node, mes, print) " {{{
+function! s:VimlLint.error_mes(node, eid, mes, print) " {{{
 "  echo a:node
   if a:print
     if has_key(a:node, 'pos')
       let p = a:node.pos
       if has_key(self, 'filename')
-        let pos = self.filename . ':' . p.lnum . ':' . p.col . ':' . p.i
+        let pos = self.filename . ':' . p.lnum . ':' . p.col . ':' . a:eid
       else
-        let pos = '...:' . p.lnum . ':' . p.col . ':' . p.i
+        let pos = '...:' . p.lnum . ':' . p.col . ':' . a:eid
       endif
     else
       let pos = string(a:node)
@@ -234,14 +234,14 @@ function! s:exists_var(self, env, node)
         endif
 
         " 警告
-        call a:self.error_mes(a:node, 'variable may not be initialized on some execution path: ' . var, 1)
+        call a:self.error_mes(a:node, 'ELV104', 'variable may not be initialized on some execution path: `' . var . '`', 1)
         return 0
       endif
       let env = env.outer
     endwhile
 
     " 存在しなかった
-    call a:self.error_mes(a:node, 'undefined variable: ' . var, 1)
+    call a:self.error_mes(a:node, 'ELV101', 'undefined variable `' . var . '`', 1)
     return 0
   endif
 endfunction " }}}
@@ -378,7 +378,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
     " $xxxx
   else
     " @TODO
-    call self.error_mes(a:var, 'unknown type: ' . a:var.type, 1)
+    call self.error_mes(a:var, 'ELV901', 'unknown type `' . a:var.type . '`', 1)
   endif
   return ret
 endfunction " }}}
@@ -496,7 +496,7 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
         let v = a:env.varstack[j]
         if v.type == 'append' && v.v.ref == 0 && a:env.global.fins == 0
           " finally 区があるかもしれないのです......
-          call a:self.error_mes(v.node, 'unused variable2 `' . v.var. '`', 1)
+          call a:self.error_mes(v.node, 'ELV102', 'unused variable2 `' . v.var. '`', 1)
         endif
         let a:env.varstack[j] = nop
       endfor
@@ -795,8 +795,8 @@ endfunction " }}}
 function s:VimlLint.compile_body(body, refchk) " {{{
   for node in a:body
     if self.env.ret + self.env.loopb > 0 && node.type != s:NODE_COMMENT
-      call self.error_mes(node, "unreachable code: " .
-      \ (self.env.ret > 0 ? "return" : "continue/break"), 1)
+      call self.error_mes(node, 'ELV201', "unreachable code: " .
+      \ (self.env.ret > 0 ? "return/throw" : "continue/break"), 1)
       break
     endif
     call self.compile(node, a:refchk)
@@ -836,7 +836,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   " call つけて parse しなおしたほうが良いだろうけど.
   if a:node.str !~# '^\s*\w\+\s\+\w' &&
   \  s =~# '^\([gbwtsl]:\)\?[#A-Za-z0-9_]\+\(\.\w\+\|\[.*\]\)*(.*)$'
-    call self.error_mes(a:node, 'missing call `' . s . '`', 1)
+    call self.error_mes(a:node, 'ELV202', 'missing call `' . s . '`', 1)
   endif
 
 endfunction
@@ -860,9 +860,9 @@ function s:VimlLint.compile_function(node, refchk)
       " a: は例外とする, オプションが必要 @TODO
 "      echo self.env.var[v]
       if v =~# '^a:'
-        call self.error_mes(self.env.var[v].node, 'unused argument `' . v . '`', self.param['unused_argument'])
+        call self.error_mes(self.env.var[v].node, 'ELV103', 'unused argument `' . v . '`', self.param['unused_argument'])
       else
-        call self.error_mes(self.env.var[v].node, 'unused variable `' . v . '`', 1)
+        call self.error_mes(self.env.var[v].node, 'ELV102', 'unused variable `' . v . '`', 1)
       endif
     endif
   endfor
@@ -877,7 +877,7 @@ endfunction " }}}
 function s:VimlLint.compile_return(node, refchk) " {{{
 
   if self.env == self.env.global
-    call self.error_mes(a:node, 'E133: :return not inside a function', 1)
+    call self.error_mes(a:node, 'E133', ':return not inside a function', 1)
   elseif a:node.left is s:NIL
     let self.env.ret = 1
   else
@@ -900,7 +900,7 @@ function s:VimlLint.compile_let(node, refchk) " {{{
   if a:node.left isnot s:NIL
     let left = self.compile(a:node.left, 0)
     if s:readonly_var(self.env, left)
-      call self.error_mes(left, 'E46: Cannot change read-only variable ' . left.value, 1)
+      call self.error_mes(left, 'E46', 'Cannot change read-only variable ' . left.value, 1)
     else
       call self.append_var(self.env, left, right, "let1")
     endif
@@ -910,7 +910,7 @@ function s:VimlLint.compile_let(node, refchk) " {{{
     if a:node.rest isnot s:NIL
       let v = self.compile(a:node.rest, 0)
       if s:readonly_var(self.env, v)
-        call self.error_mes(left, 'E46: Cannot change read-only variable ' . left.value, 1)
+        call self.error_mes(left, 'E46', 'Cannot change read-only variable ' . left.value, 1)
       else
         call self.append_var(self.env, v, right, "letr")
       endif
@@ -931,10 +931,10 @@ endfunction "}}}
 function s:VimlLint.compile_lockvar(node, refchk) "{{{
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
-"      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
+"      call self.error_mes(a:node, "Ex#, 'lockvar: internal variable is required: ' . var, 1)
     else
       call s:exists_var(self, self.env, var)
-"      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
+"      call self.error_mes(a:node, "Ex#, 'undefined variable: ' . var, 1)
     endif
   endfor
 endfunction "}}}
@@ -1062,7 +1062,7 @@ endfunction "}}}
 function s:VimlLint.compile_continue(node, refchk) "{{{
   if self.env.global.loop <= 0
     " vimlparser....
-    call self.error_mes(a:node, 'E586: :continue without :while or :for: continue', 1)
+    call self.error_mes(a:node, 'E586', ':continue without :while or :for: continue', 1)
   else
     let self.env.loopb = 1
   endif
@@ -1070,7 +1070,7 @@ endfunction "}}}
 
 function s:VimlLint.compile_break(node, refchk) "{{{
   if self.env.global.loop <= 0
-    call self.error_mes(a:node, 'E587: :break without :while or :for: break', 1)
+    call self.error_mes(a:node, 'E587', ':break without :while or :for: break', 1)
   else
     let self.env.loopb = 1
   endif
@@ -1354,7 +1354,7 @@ function s:VimlLint.parse_string(str, node, cmd) "{{{
     let r = s:StringReader.new('echo ' . a:str)
     call c.compile(p.parse(r), 1)
   catch
-    call self.error_mes(a:node, 'parse error in `' . a:cmd . '`', 1)
+    call self.error_mes(a:node, 'EVL203', 'parse error in `' . a:cmd . '`', 1)
   endtry
 endfunction "}}}
 
@@ -1616,9 +1616,9 @@ function s:VimlLint.compile_call(node, refchk) "{{{
     " @TODO check built-in functions
     if has_key(s:builtin_func, left.value)
       if len(rlist) < s:builtin_func[left.value].min
-        call self.error_mes(left, 'E119: Not enough arguments for function: ' . left.value, 1)
+        call self.error_mes(left, 'E119', 'Not enough arguments for function: ' . left.value, 1)
       elseif len(rlist) > s:builtin_func[left.value].max
-        call self.error_mes(left, 'E118: Too many arguments for function: ' . left.value, 1)
+        call self.error_mes(left, 'E118', 'Too many arguments for function: ' . left.value, 1)
       else
 "        for i in range(len(rlist))
           " 型チェック
@@ -1752,7 +1752,7 @@ function s:VimlLint.compile_identifier(node, refchk) " {{{
   if s:reserved_name(name)
   elseif a:refchk
     call s:exists_var(self, self.env, a:node)
-"    call self.error_mes(a:node, 'undefined variable: ' . name, 1)
+"    call self.error_mes(a:node, 'ELVx', 'undefined variable: ' . name, 1)
   endif
   return a:node
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
@@ -1818,7 +1818,7 @@ function! s:vimlint_file(filename, param) " {{{
     let env = c.env
     for v in keys(env.var)
       if env.var[v].subs == 0
-        call c.error_mes(env.var[v].node, 'undefined variable `' . v . '`', 1)
+        call c.error_mes(env.var[v].node, 'ELV101', 'undefined variable `' . v . '`', 1)
       endif
     endfor
   catch
@@ -1837,7 +1837,7 @@ function! s:vimlint_file(filename, param) " {{{
 
     endif
 
-    call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : i}}, msg, 1)
+    call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : i}}, i, msg, 1)
   finally
     if has_key(c.param, 'output')
       if filewritable(c.param.output.filename)
