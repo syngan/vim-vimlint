@@ -1,4 +1,4 @@
-" @ERR ["ELV104"]
+" @ERR ["EVL104"]
 function! g:hoge()
   for a in [1,2,3]
     if 0

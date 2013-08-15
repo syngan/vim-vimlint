@@ -230,14 +230,14 @@ function! s:exists_var(self, env, node)
         endif
 
         " 警告
-        call a:self.error_mes(a:node, 'ELV104', 'variable may not be initialized on some execution path: `' . var . '`', 1)
+        call a:self.error_mes(a:node, 'EVL104', 'variable may not be initialized on some execution path: `' . var . '`', 1)
         return 0
       endif
       let env = env.outer
     endwhile
 
     " 存在しなかった
-    call a:self.error_mes(a:node, 'ELV101', 'undefined variable `' . var . '`', 1)
+    call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', 1)
     return 0
   endif
 endfunction " }}}
@@ -374,7 +374,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
     " $xxxx
   else
     " @TODO
-    call self.error_mes(a:var, 'ELV901', 'unknown type `' . a:var.type . '`', 1)
+    call self.error_mes(a:var, 'EVL901', 'unknown type `' . a:var.type . '`', 1)
   endif
   return ret
 endfunction " }}}
@@ -492,7 +492,7 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
         let v = a:env.varstack[j]
         if v.type == 'append' && v.v.ref == 0 && a:env.global.fins == 0
           " finally 区があるかもしれないのです......
-          call a:self.error_mes(v.node, 'ELV102', 'unused variable2 `' . v.var. '`', 1)
+          call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var. '`', 1)
         endif
         let a:env.varstack[j] = nop
       endfor
@@ -791,7 +791,7 @@ endfunction " }}}
 function s:VimlLint.compile_body(body, refchk) " {{{
   for node in a:body
     if self.env.ret + self.env.loopb > 0 && node.type != s:NODE_COMMENT
-      call self.error_mes(node, 'ELV201', "unreachable code: " .
+      call self.error_mes(node, 'EVL201', "unreachable code: " .
       \ (self.env.ret > 0 ? "return/throw" : "continue/break"), 1)
       break
     endif
@@ -832,7 +832,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   " call つけて parse しなおしたほうが良いだろうけど.
   if a:node.str !~# '^\s*\w\+\s\+\w' &&
   \  s =~# '^\([gbwtsl]:\)\?[#A-Za-z0-9_]\+\(\.\w\+\|\[.*\]\)*(.*)$'
-    call self.error_mes(a:node, 'ELV202', 'missing call `' . s . '`', 1)
+    call self.error_mes(a:node, 'EVL202', 'missing call `' . s . '`', 1)
   endif
 
 endfunction
@@ -856,9 +856,9 @@ function s:VimlLint.compile_function(node, refchk)
       " a: は例外とする, オプションが必要 @TODO
 "      echo self.env.var[v]
       if v =~# '^a:'
-        call self.error_mes(self.env.var[v].node, 'ELV103', 'unused argument `' . v . '`', self.param['unused_argument'])
+        call self.error_mes(self.env.var[v].node, 'EVL103', 'unused argument `' . v . '`', self.param['unused_argument'])
       else
-        call self.error_mes(self.env.var[v].node, 'ELV102', 'unused variable `' . v . '`', 1)
+        call self.error_mes(self.env.var[v].node, 'EVL102', 'unused variable `' . v . '`', 1)
       endif
     endif
   endfor
@@ -1748,7 +1748,7 @@ function s:VimlLint.compile_identifier(node, refchk) " {{{
   if s:reserved_name(name)
   elseif a:refchk
     call s:exists_var(self, self.env, a:node)
-"    call self.error_mes(a:node, 'ELVx', 'undefined variable: ' . name, 1)
+"    call self.error_mes(a:node, 'EVLx', 'undefined variable: ' . name, 1)
   endif
   return a:node
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
@@ -1814,7 +1814,7 @@ function! s:vimlint_file(filename, param) " {{{
     let env = c.env
     for v in keys(env.var)
       if env.var[v].subs == 0
-        call c.error_mes(env.var[v].node, 'ELV101', 'undefined variable `' . v . '`', 1)
+        call c.error_mes(env.var[v].node, 'EVL101', 'undefined variable `' . v . '`', 1)
       endif
     endfor
   catch

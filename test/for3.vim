@@ -1,4 +1,4 @@
-" @ERR ["ELV104"]
+" @ERR ["EVL104"]
 function! g:hoge()
   for b in []
     let a = 1
