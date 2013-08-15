@@ -34,7 +34,7 @@ let s:default_param_output = {
 \   'filename' : ''}
 " }}}
 
-function s:VimlLint.new(param)
+function s:VimlLint.new(param) " {{{
   let obj = copy(self)
   let obj.indent = ['']
   let obj.lines = []
@@ -43,7 +43,7 @@ function s:VimlLint.new(param)
   let obj.param = a:param
   let obj.error = []
   return obj
-endfunction
+endfunction " }}}
 
 " for debug
 function! s:node2str(node) " {{{
@@ -144,7 +144,7 @@ function! s:node2str(node) " {{{
   endif
 endfunction " }}}
 
-function! s:env(outer, funcname)
+function! s:env(outer, funcname) " {{{
   let env = {}
   let env.outer = a:outer
   let env.function = a:funcname
@@ -160,15 +160,15 @@ function! s:env(outer, funcname)
     let env.fins = 0
   endif
   return env
-endfunction
+endfunction " }}}
 
-function! s:output_echo(pos, mes, obj)
+function! s:output_echo(pos, mes, obj) " {{{
   echo a:pos . ': ' . a:mes
-endfunction
+endfunction " }}}
 
-function! s:output_file(pos, mes, obj)
+function! s:output_file(pos, mes, obj) " {{{
   let a:obj.error += [a:pos . ': ' . a:mes]
-endfunction
+endfunction " }}}
 
 function! s:VimlLint.error_mes(node, mes, print) " {{{
 "  echo a:node
@@ -246,7 +246,7 @@ function! s:exists_var(self, env, node)
   endif
 endfunction " }}}
 
-function! s:push_varstack(env, dict)
+function! s:push_varstack(env, dict) " {{{
   let a:env.varstack += [a:dict]
 
   if !has_key(a:dict, "type") || type(a:dict.type) != type("")
@@ -260,7 +260,7 @@ function! s:push_varstack(env, dict)
     throw "varstack() invalid v: " . string(a:dict)
   endif
 
-endfunction
+endfunction " }}}
 
 function! s:append_var_(env, var, node, val, cnt) " {{{
 
@@ -383,7 +383,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
   return ret
 endfunction " }}}
 
-function! s:delete_var(env, var)
+function! s:delete_var(env, var) " {{{
   if a:var.type == s:NODE_IDENTIFIER
     let name = a:var.value
     if has_key(a:env.var, name)
@@ -409,19 +409,16 @@ function! s:delete_var(env, var)
     \ 'v' : v,
     \})
 
-endfunction
+endfunction " }}}
 
-function! s:reset_env_cntl(env)
+function! s:reset_env_cntl(env) " {{{
   let a:env.ret = 0
   let a:env.loopb = 0
-endfunction
+endfunction " }}}
 
-function! s:gen_pos_cntl(env, p)
+function! s:gen_pos_cntl(env, p) " {{{
   return [a:p, len(a:env.varstack), a:env.ret, a:env.loopb]
-endfunction
-
-
-
+endfunction " }}}
 
 function! s:restore_varstack(env, pos, pp) " {{{
   " @param pp は debug 用
@@ -607,12 +604,12 @@ function! s:reconstruct_varstack_st(self, env, p) " {{{
 
 endfunction " }}}
 
-function! s:echonode(node, refchk)
+function! s:echonode(node, refchk) " {{{
   echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
     \ (has_key(a:node, "value") ?
     \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%") .
     \  ", ref=" . a:refchk
-endfunction
+endfunction " }}}
 
 function s:VimlLint.compile(node, refchk) " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
@@ -795,7 +792,7 @@ function s:VimlLint.compile(node, refchk) " {{{
   endif " }}}
 endfunction " }}}
 
-function s:VimlLint.compile_body(body, refchk)
+function s:VimlLint.compile_body(body, refchk) " {{{
   for node in a:body
     if self.env.ret + self.env.loopb > 0 && node.type != s:NODE_COMMENT
       call self.error_mes(node, "unreachable code: " .
@@ -804,17 +801,17 @@ function s:VimlLint.compile_body(body, refchk)
     endif
     call self.compile(node, a:refchk)
   endfor
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_toplevel(node, refchk)
+function s:VimlLint.compile_toplevel(node, refchk) " {{{
   call self.compile_body(a:node.body, a:refchk)
   return self.lines
-endfunction
+endfunction " }}}
 
 function s:VimlLint.compile_comment(node, refchk)
 endfunction
 
-function s:VimlLint.compile_excmd(node, refchk)
+function s:VimlLint.compile_excmd(node, refchk) " {{{
 " @TODO
 " e.g. set cpo&vim
 " e.g. a = 3   (let 漏れ)
@@ -871,13 +868,13 @@ function s:VimlLint.compile_function(node, refchk)
   endfor
 
   let self.env = self.env.outer
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_delfunction(node, rechk)
+function s:VimlLint.compile_delfunction(node, rechk) " {{{
   " @TODO function は定義済か?
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_return(node, refchk)
+function s:VimlLint.compile_return(node, refchk) " {{{
 
   if self.env == self.env.global
     call self.error_mes(a:node, 'E133: :return not inside a function', 1)
@@ -887,13 +884,13 @@ function s:VimlLint.compile_return(node, refchk)
     call self.compile(a:node.left, 1)
     let self.env.ret = 1
   endif
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_excall(node, refchk)
+function s:VimlLint.compile_excall(node, refchk) " {{{
   return self.compile(a:node.left, a:refchk)
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_let(node, refchk)
+function s:VimlLint.compile_let(node, refchk) " {{{
   if type(a:node.right) != type({})
     echo "compile_let. right is invalid"
     echo a:node
@@ -919,19 +916,19 @@ function s:VimlLint.compile_let(node, refchk)
       endif
     endif
   endif
-endfunction
+endfunction " }}}
 
 
-function s:VimlLint.compile_unlet(node, refchk)
+function s:VimlLint.compile_unlet(node, refchk) "{{{
   " @TODO unlet! の場合には存在チェック不要
   let list = map(a:node.list, 'self.compile(v:val, 1)')
   for v in list
     " unlet
     call s:delete_var(self.env, v)
   endfor
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_lockvar(node, refchk)
+function s:VimlLint.compile_lockvar(node, refchk) "{{{
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
 "      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
@@ -940,9 +937,9 @@ function s:VimlLint.compile_lockvar(node, refchk)
 "      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_unlockvar(node, refchk)
+function s:VimlLint.compile_unlockvar(node, refchk) "{{{
   for var in a:node.list
     if var.type != s:NODE_IDENTIFIER
 "      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
@@ -951,9 +948,9 @@ function s:VimlLint.compile_unlockvar(node, refchk)
 "      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_if(node, refchk)
+function s:VimlLint.compile_if(node, refchk) "{{{
 "  call s:VimlLint.error_mes(a:node, "compile_if")
   call self.compile(a:node.cond, 2) " if ()
 
@@ -990,9 +987,9 @@ function s:VimlLint.compile_if(node, refchk)
 "  echo "call reconstruct if: " . string(a:node.pos)
   call s:reconstruct_varstack(self, self.env, pos)
 
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_while(node, refchk)
+function s:VimlLint.compile_while(node, refchk) "{{{
   call self.compile(a:node.cond, 1)
 
   let self.env.global.loop += 1
@@ -1015,12 +1012,12 @@ function s:VimlLint.compile_while(node, refchk)
 
   let self.env.global.loop -= 1
 
-endfunction
+endfunction "}}}
 
 " for VAR in LIST
 "   BODy
 " endfor
-function s:VimlLint.compile_for(node, refchk)
+function s:VimlLint.compile_for(node, refchk) "{{{
   let right = self.compile(a:node.right, 1) " LIST
 
   if a:node.left isnot s:NIL
@@ -1060,26 +1057,26 @@ function s:VimlLint.compile_for(node, refchk)
   call s:reconstruct_varstack(self, self.env, pos)
 
   let self.env.global.loop -= 1
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_continue(node, refchk)
+function s:VimlLint.compile_continue(node, refchk) "{{{
   if self.env.global.loop <= 0
     " vimlparser....
     call self.error_mes(a:node, 'E586: :continue without :while or :for: continue', 1)
   else
     let self.env.loopb = 1
   endif
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_break(node, refchk)
+function s:VimlLint.compile_break(node, refchk) "{{{
   if self.env.global.loop <= 0
     call self.error_mes(a:node, 'E587: :break without :while or :for: break', 1)
   else
     let self.env.loopb = 1
   endif
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_try(node, refchk)
+function s:VimlLint.compile_try(node, refchk) "{{{
 
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
@@ -1133,45 +1130,45 @@ function s:VimlLint.compile_try(node, refchk)
   let self.env.ret = (ret && retc)
   let self.env.loopb = (loopb && loopbc)
 
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_throw(node, refchk)
+function s:VimlLint.compile_throw(node, refchk) "{{{
   call self.compile(a:node.left, 1)
   " return みたいなものでしょう.
   let self.env.ret = 1
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_echo(node, refchk)
+function s:VimlLint.compile_echo(node, refchk) "{{{
   let list = map(a:node.list, 'self.compile(v:val, 1)')
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_echon(node, refchk)
+function s:VimlLint.compile_echon(node, refchk) "{{{
   let list = map(a:node.list, 'self.compile(v:val, 1)')
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_echohl(node, refchk)
+function s:VimlLint.compile_echohl(node, refchk) "{{{
   " @TODO
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_echomsg(node, refchk)
+function s:VimlLint.compile_echomsg(node, refchk) "{{{
   let list = map(a:node.list, 'self.compile(v:val, 1)')
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_echoerr(node, refchk)
+function s:VimlLint.compile_echoerr(node, refchk) "{{{
   let list = map(a:node.list, 'self.compile(v:val, 1)')
-endfunction
+endfunction "}}}
 
-function s:VimlLint.compile_execute(node, refchk)
+function s:VimlLint.compile_execute(node, refchk) "{{{
   let list = map(a:node.list, 'self.compile(v:val, 1)')
-endfunction
+endfunction "}}}
 
 " expr1: expr2 ? expr1 : expr1
-function s:VimlLint.compile_ternary(node, refchk)
+function s:VimlLint.compile_ternary(node, refchk) "{{{
   let a:node.cond = self.compile(a:node.cond, 1)
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
   return a:node
-endfunction
+endfunction "}}}
 
 " op2 {{{
 function s:VimlLint.compile_or(node)
@@ -1341,15 +1338,15 @@ function s:VimlLint.compile_minus(node)
 endfunction
 " }}}
 
-function! s:escape_string(str)
+function! s:escape_string(str) "{{{
   if a:str[0] == "'"
       return substitute(a:str, "''", "'", 'g')
   endif
 
   return a:str
-endfunction
+endfunction "}}}
 
-function s:VimlLint.parse_string(str, node, cmd)
+function s:VimlLint.parse_string(str, node, cmd) "{{{
   try
     let p = s:VimLParser.new()
     let c = s:VimlLint.new(self.param)
@@ -1359,7 +1356,7 @@ function s:VimlLint.parse_string(str, node, cmd)
   catch
     call self.error_mes(a:node, 'parse error in `' . a:cmd . '`', 1)
   endtry
-endfunction
+endfunction "}}}
 
 let s:builtin_func = {} " {{{
 let s:builtin_func.abs = {'min' : 1, 'max': 1}
@@ -1612,7 +1609,7 @@ let s:builtin_func.winwidth = {'min' : 1, 'max': 1}
 let s:builtin_func.writefile = {'min' : 2, 'max': 3}
 " }}}
 
-function s:VimlLint.compile_call(node, refchk)
+function s:VimlLint.compile_call(node, refchk) "{{{
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let left = self.compile(a:node.left, 0)
   if has_key(left, 'value') && type(left.value) == type("")
@@ -1664,13 +1661,13 @@ function s:VimlLint.compile_call(node, refchk)
 
   return a:node
 "  return {'type' : 'call', 'l' : left, 'r' : rlist, 'node' : a:node}
-endfunction
+endfunction "}}}
 
 " subst slice
 " :let l = mylist[:3]             " first four items
 " :let l = mylist[4:4]            " List with one item
 " :let l = mylist[:]              " shallow copy of a List
-function s:VimlLint.compile_slice(node, refchk)
+function s:VimlLint.compile_slice(node, refchk) " {{{
   for i in range(len(a:node.rlist))
     let r = a:node.rlist[i] is s:NIL ? s:NIL : self.compile(a:node.rlist[i], 1)
     let a:node.rlist[i] = r
@@ -1679,44 +1676,43 @@ function s:VimlLint.compile_slice(node, refchk)
   let a:node.left = self.compile(a:node.left, 1)
   return a:node
 "  return {'type' : 'slice', 'l' : left, 'r' : [r0,r1], 'node' : a:node}
-endfunction
+endfunction " }}}
 
-
-function s:VimlLint.compile_subscript(node)
+function s:VimlLint.compile_subscript(node) " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
   return a:node
 
   " @TODO left is a list or a dictionary
 "  return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_dot(node, refchk)
+function s:VimlLint.compile_dot(node, refchk) " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 0)
 
   return a:node
 "  return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_number(node)
+function s:VimlLint.compile_number(node) " {{{
   return a:node
 "  return { 'type' : 'integer', 'val' : a:node.value, 'node' : a:node}
-endfunction
+endfunction " }}}
 
 " map の引数などをどう処理するか?
-function s:VimlLint.compile_string(node)
+function s:VimlLint.compile_string(node) " {{{
   return a:node
 "  return { 'type' : 'string', 'val' : a:node.value, 'node' : a:node}
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_list(node, refchk)
+function s:VimlLint.compile_list(node, refchk) " {{{
   let a:node.value = map(a:node.value, 'self.compile(v:val, 1)')
   return a:node
 "  return { 'type' : 'list', 'node' : a:node}
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_dict(node, refchk)
+function s:VimlLint.compile_dict(node, refchk) " {{{
   " @TODO 文字列のみ
   for i in range(len(a:node.value))
     let v = a:node.value[i]
@@ -1725,18 +1721,18 @@ function s:VimlLint.compile_dict(node, refchk)
   endfor
   return a:node
 "  return { 'type' : 'dict', 'node' : a:node}
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_option(node)
+function s:VimlLint.compile_option(node) " {{{
   return a:node
 "  return { 'type' : 'option', 'node' : a:node}
-endfunction
+endfunction " }}}
 
-function! s:readonly_var(env, var)
+function! s:readonly_var(env, var) " {{{
   return a:var.type == s:NODE_IDENTIFIER && a:var.value =~# 'a:.*'
-endfunction
+endfunction " }}}
 
-function! s:reserved_name(name)
+function! s:reserved_name(name) " {{{
   if a:name == 'a:000' || a:name == 'v:val' || a:name == 's:'
     return 1
   endif
@@ -1749,10 +1745,9 @@ function! s:reserved_name(name)
   endif
 
   return 0
-endfunction
+endfunction " }}}
 
-
-function s:VimlLint.compile_identifier(node, refchk)
+function s:VimlLint.compile_identifier(node, refchk) " {{{
   let name = a:node.value
   if s:reserved_name(name)
   elseif a:refchk
@@ -1761,33 +1756,33 @@ function s:VimlLint.compile_identifier(node, refchk)
   endif
   return a:node
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_curlyname(node, refchk)
+function s:VimlLint.compile_curlyname(node, refchk) " {{{
   return a:node
 "  return {'type' : 'curly', 'node' : a:node}
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_env(node, refchk)
+function s:VimlLint.compile_env(node, refchk) " {{{
   return a:node
 "  return {'type' : 'env', 'node' : a:node}
-endfunction
+endfunction " }}}
 
 " register
-function s:VimlLint.compile_reg(node)
+function s:VimlLint.compile_reg(node) " {{{
   return a:node
 "  return {'type' : 'reg', 'val' : a:node.value, 'node' : a:node}
 "  echo a:node
 "  throw 'NotImplemented: reg'
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_op1(node, op)
+function s:VimlLint.compile_op1(node, op) " {{{
   let a:node.left = self.compile(a:node.left, 1)
 
   return a:node
-endfunction
+endfunction " }}}
 
-function s:VimlLint.compile_op2(node, op)
+function s:VimlLint.compile_op2(node, op) " {{{
 
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
@@ -1796,9 +1791,9 @@ function s:VimlLint.compile_op2(node, op)
 
   " @TODO 比較/演算できる型どうしか.
   " @TODO 演算結果の型を返すようにする
-endfunction
+endfunction " }}}
 
-function! s:vimlint_file(filename, param)
+function! s:vimlint_file(filename, param) " {{{
   let vimfile = a:filename
   let p = s:VimLParser.new()
   let c = s:VimlLint.new(a:param)
@@ -1862,9 +1857,9 @@ function! s:vimlint_file(filename, param)
     endif
   endtry
 
-endfunction
+endfunction " }}}
 
-function! s:vimlint_dir(dir, param)
+function! s:vimlint_dir(dir, param) " {{{
   if a:param.recursive
     let filess = expand(a:dir . "/**/*.vim")
   else
@@ -1875,8 +1870,7 @@ function! s:vimlint_dir(dir, param)
       call s:vimlint_file(f, a:param)
     endif
   endfor
-endfunction
-
+endfunction " }}}
 
 function! vimlint#vimlint(file, ...) " {{{
 
@@ -1923,8 +1917,7 @@ function! vimlint#vimlint(file, ...) " {{{
   endfor
 endfunction " }}}
 
-
-function! s:numtoname(num)
+function! s:numtoname(num) " {{{
   let sig = printf("function('%s')", a:num)
   for k in keys(s:)
     if type(s:[k]) == type({})
@@ -1936,7 +1929,7 @@ function! s:numtoname(num)
     endif
   endfor
   return a:num
-endfunction
+endfunction " }}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
