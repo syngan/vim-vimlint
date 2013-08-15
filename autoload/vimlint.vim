@@ -170,6 +170,10 @@ function! s:output_file(filename, pos, eid, mes, obj) " {{{
   let a:obj.error += [a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:eid . ': ' . a:mes]
 endfunction " }}}
 
+function! s:output_list(filename, pos, eid, mes, obj) " {{{
+  let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:eid, a:mes]]
+endfunction " }}}
+
 function! s:VimlLint.error_mes(node, eid, mes, print) " {{{
 "  echo a:node
   if a:print
@@ -1831,7 +1835,8 @@ function! s:vimlint_file(filename, param) " {{{
 
     call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : i}}, i, msg, 1)
   finally
-    if has_key(c.param, 'output')
+
+    if a:param.outfunc == function('s:output_file')
       if filewritable(c.param.output.filename)
         let lines = extend(readfile(c.param.output.filename), c.error)
       else
@@ -1847,6 +1852,12 @@ function! s:vimlint_file(filename, param) " {{{
       endif
       echo '.... ' . a:filename . ' end'
     endif
+
+    if a:param.outfunc == function('s:output_list')
+      return c.error
+    else
+      return []
+    endif
   endtry
 
 endfunction " }}}
@@ -1857,11 +1868,15 @@ function! s:vimlint_dir(dir, param) " {{{
   else
     let filess = expand(a:dir . "/*/*.vim")
   endif
+  let ret = []
   for f in split(filess, "\n")
     if filereadable(f)
-      call s:vimlint_file(f, a:param)
+      let p = s:vimlint_file(f, a:param)
+      let ret += p
     endif
   endfor
+
+  return ret
 endfunction " }}}
 
 function! vimlint#vimlint(file, ...) " {{{
@@ -1870,9 +1885,14 @@ function! vimlint#vimlint(file, ...) " {{{
   let param = a:0 ? copy(a:1) : {}
   let param = extend(param, s:default_param, 'keep')
 
+
+  let out_type = "echo"
   if has_key(param, 'output') " {{{
     if type(param.output) == type("")
       let param.output = {'filename' : param.output}
+    elseif type(param.output) == type([])
+      let out_type = "list"
+      unlet param.output
     elseif type(param.output) != type({})
       unlet param.output
     endif
@@ -1881,16 +1901,20 @@ function! vimlint#vimlint(file, ...) " {{{
       let param.output = extend(param.output, s:default_param_output, 'keep')
       if param.output.filename == ''
         unlet param.output
+      else
+        let out_type = "file"
       endif
     endif
   endif
 
-  if has_key(param, 'output')
+  if out_type == "file"
     " file
     let param.outfunc = function('s:output_file')
     if !param.output.append
       call writefile([], param.output.filename)
     endif
+  elseif out_type == "list"
+    let param.outfunc = function('s:output_list')
   else
     " echo
     let param.outfunc = function('s:output_echo')
@@ -1898,15 +1922,17 @@ function! vimlint#vimlint(file, ...) " {{{
   " }}}
 
   let files = (type(a:file) == type([])) ? a:file : [a:file]
+  let ret = []
   for f in files
     if isdirectory(f)
-      call s:vimlint_dir(f, param)
+      let ret += s:vimlint_dir(f, param)
     elseif filereadable(f)
-      call s:vimlint_file(f, param)
+      let ret += s:vimlint_file(f, param)
     else
       echoerr "vimlint: cannot readfile: " . f
     endif
   endfor
+  return ret
 endfunction " }}}
 
 function! s:numtoname(num) " {{{
