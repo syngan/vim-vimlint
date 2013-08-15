@@ -1628,14 +1628,14 @@ function s:VimlLint.compile_call(node, refchk) "{{{
     " 引数誤りはチェック済, にする.
     if left.value == 'map' || left.value == 'filter'
       if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'value')
-        if rlist[1].type == 'string'
+        if rlist[1].type == s:NODE_STRING
           let s = s:escape_string(rlist[1].value)
           call self.parse_string(s[1:-2], left, left.value)
         endif
       endif
     elseif left.value == 'eval'
       if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'value')
-        if rlist[0].type == 'string'
+        if rlist[0].type == s:NODE_STRING
           let s = s:escape_string(rlist[1].value)
           call self.parse_string(s[1:-2], left, left.value)
       endif
