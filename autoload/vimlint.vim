@@ -1640,9 +1640,9 @@ function s:VimlLint.compile_call(node, refchk) "{{{
     elseif left.value == 'eval'
       if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'value')
         if rlist[0].type == s:NODE_STRING
-          let s = s:escape_string(rlist[1].value)
+          let s = s:escape_string(rlist[0].value)
           call self.parse_string(s[1:-2], left, left.value)
-      endif
+        endif
       endif
     elseif left.value == 'substitute'
       if len(rlist) >= 3 && type(rlist[2]) == type({})
