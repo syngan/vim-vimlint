@@ -1,4 +1,8 @@
-" @TYPE ignore
+"
+
+
+" source %
+" echo g:vimlint_test("test")
 
 function! s:test(file)
   " @return 
@@ -49,17 +53,26 @@ function! g:vimlint_test(dir)
   else
     let files = a:dir
   endif
+  let ok = 0
+  let ng = 0
+  let sk = 0
   let ret = 0
   for f in split(files, '\n')
     let t = s:test(f)
     if t == 0
       echo "invalid: " . f
       let ret = 1
+	  let ng += 1
     elseif t < 0
       echo "skip: " . f
+	  let sk += 1
+	else
+	  let ok += 1
     endif
   endfor
 
+  " echo ( だとハイライトされない
+  echo "" . (ok + ng) . " test: ok=" . ok . ", ng=" . ng . ", skip=" . sk
   return ret
 endfunction
 
