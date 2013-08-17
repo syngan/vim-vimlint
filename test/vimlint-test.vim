@@ -8,12 +8,12 @@ function! s:test(file)
   " @return 
 
   let has_err = 0
+  let err = []
   for line in readfile(a:file)
     if line[0] != '"'
       break
     endif
 
-    let err = []
     if line =~ '" @ERR'
       let err = eval(line[6:])
       if type(err) != type([])

@@ -804,8 +804,8 @@ function s:VimlLint.compile_toplevel(node, refchk) " {{{
   return self.lines
 endfunction " }}}
 
-function s:VimlLint.compile_comment(node, refchk)
-endfunction
+function s:VimlLint.compile_comment(node, refchk) " {{{
+endfunction " }}}
 
 function s:VimlLint.compile_excmd(node, refchk) " {{{
 " @TODO
@@ -917,7 +917,6 @@ function s:VimlLint.compile_let(node, refchk) " {{{
     endif
   endif
 endfunction " }}}
-
 
 function s:VimlLint.compile_unlet(node, refchk) "{{{
   " @TODO unlet! の場合には存在チェック不要
@@ -1729,11 +1728,22 @@ function s:VimlLint.compile_option(node) " {{{
 endfunction " }}}
 
 function! s:readonly_var(env, var) " {{{
-  return a:var.type == s:NODE_IDENTIFIER && a:var.value =~# 'a:.*'
+  if a:var.type == s:NODE_IDENTIFIER
+    if a:var.value =~# '^a:.*'
+      return 1
+    endif
+
+    if a:var.value =~# '^[gbwtsl]:$'
+      return 1
+    endif
+  endif
 endfunction " }}}
 
 function! s:reserved_name(name) " {{{
   if a:name == 'a:000' || a:name == 'v:val' || a:name == 's:'
+    return 1
+  endif
+  if a:name =~# '^[gbwtsl]:$'
     return 1
   endif
   if a:name == 'self'
