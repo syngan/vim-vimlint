@@ -899,7 +899,7 @@ function s:VimlLint.compile_let(node, refchk) " {{{
 
   if a:node.left isnot s:NIL
     let left = self.compile(a:node.left, 0)
-    if s:readonly_var(self.env, left)
+    if s:readonly_var(left)
       call self.error_mes(left, 'E46', 'Cannot change read-only variable ' . left.value, 1)
     else
       call self.append_var(self.env, left, right, "let1")
@@ -909,7 +909,7 @@ function s:VimlLint.compile_let(node, refchk) " {{{
     call map(list, 'self.append_var(self.env, v:val, right, "letn")')
     if a:node.rest isnot s:NIL
       let v = self.compile(a:node.rest, 0)
-      if s:readonly_var(self.env, v)
+      if s:readonly_var(v)
         call self.error_mes(left, 'E46', 'Cannot change read-only variable ' . left.value, 1)
       else
         call self.append_var(self.env, v, right, "letr")
@@ -1727,7 +1727,7 @@ function s:VimlLint.compile_option(node) " {{{
 "  return { 'type' : 'option', 'node' : a:node}
 endfunction " }}}
 
-function! s:readonly_var(env, var) " {{{
+function! s:readonly_var(var) " {{{
   if a:var.type == s:NODE_IDENTIFIER
     if a:var.value =~# '^a:.*'
       return 1
