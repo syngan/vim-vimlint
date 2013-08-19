@@ -1,5 +1,9 @@
-" 日本語ファイル
+" buildin 関数関連
+" バージョン非互換とかみれるといいが
 scriptencoding utf-8
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 let s:builtin_func = {} " {{{
 let s:builtin_func.abs = {'min' : 1, 'max': 1}
@@ -252,13 +256,11 @@ let s:builtin_func.winwidth = {'min' : 1, 'max': 1}
 let s:builtin_func.writefile = {'min' : 2, 'max': 3}
 " }}}
 
-
-function! vimlint#builtin#get_func_inf(name)
+function! vimlint#builtin#get_func_inf(name) "{{{
   return get(s:builtin_func, a:name, {}) 
-endfunction
+endfunction "}}}
 
-
-
-
+let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " vim:set et ts=2 sts=2 sw=2 tw=0 foldmethod=marker:
