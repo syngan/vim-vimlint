@@ -178,8 +178,7 @@ function! s:VimlLint.error_mes(node, eid, mes, print) " {{{
 "  echo a:node
   if a:print
     let filename = get(self, 'filename', '...')
-    let pos = get(a:node, 'pos', {'lnum': '', 'col' : ''})
-
+    let pos = vimlint#util#get_pos(a:node)
     call self.param.outfunc(filename, pos, a:eid, a:mes, self)
   endif
 endfunction " }}}
@@ -989,7 +988,20 @@ function s:VimlLint.compile_if(node, refchk) "{{{
 endfunction "}}}
 
 function s:VimlLint.compile_while(node, refchk) "{{{
-  call self.compile(a:node.cond, 1)
+  let cond = self.compile(a:node.cond, 1)
+
+  if cond.type == s:NODE_NUMBER
+    " while 0
+    if str2nr(cond.value) == 0 
+      if len(a:node.body) > 0
+        let node = a:node.body[0]
+      else
+        let node = a:node
+      endif
+      call self.error_mes(node, 'EVL201', "unreachable code: while", 1)
+      return
+    endif
+  endif
 
   let self.env.global.loop += 1
 
@@ -997,17 +1009,25 @@ function s:VimlLint.compile_while(node, refchk) "{{{
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
-  call s:restore_varstack(self.env, p, "whl")
+  if cond.type != s:NODE_NUMBER
+    " 通常ルート
+    call s:restore_varstack(self.env, p, "whl")
+    let pos = [s:gen_pos_cntl(self.env, p)]
+    call s:reset_env_cntl(self.env)
 
-  let pos = [s:gen_pos_cntl(self.env, p)]
-  call s:reset_env_cntl(self.env)
 
-  " while にはいらなかった場合
-  let p = len(self.env.varstack)
-  let pos += [s:gen_pos_cntl(self.env, p)]
-  call s:reset_env_cntl(self.env)
+    " while にはいらなかった場合
+    let p = len(self.env.varstack)
+    let pos += [s:gen_pos_cntl(self.env, p)]
+    call s:reset_env_cntl(self.env)
 
-  call s:reconstruct_varstack(self, self.env, pos)
+    call s:reconstruct_varstack(self, self.env, pos)
+  else
+    " while 1 
+    " return/break/continue が必須. 
+    " throw があるから.... 
+    let self.env.loopb = 0
+  endif
 
   let self.env.global.loop -= 1
 
