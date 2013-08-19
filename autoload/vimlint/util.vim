@@ -14,8 +14,6 @@ function! s:get_pos(node, depth) " {{{
   endif
 
   if type(a:node) != type({}) 
-    echo "non {}"
-    echo a:node
     return {}
   endif
 
