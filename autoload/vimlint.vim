@@ -45,7 +45,7 @@ function s:VimlLint.new(param) " {{{
   return obj
 endfunction " }}}
 
-" for debug
+" for debug " {{{
 function! s:node2str(node) " {{{
   let a = {}
   let a[1] = 'TOPLEVEL'
@@ -143,6 +143,7 @@ function! s:node2str(node) " {{{
     return "unknown"
   endif
 endfunction " }}}
+" }}}
 
 function! s:env(outer, funcname) " {{{
   let env = {}
@@ -996,7 +997,7 @@ function s:VimlLint.compile_while(node, refchk) "{{{
 
   if cond.type == s:NODE_NUMBER
     " while 0
-    if str2nr(cond.value) == 0 
+    if str2nr(cond.value) == 0
       if len(a:node.body) > 0
         let node = a:node.body[0]
       else
@@ -1027,9 +1028,9 @@ function s:VimlLint.compile_while(node, refchk) "{{{
 
     call s:reconstruct_varstack(self, self.env, pos)
   else
-    " while 1 
-    " return/break/continue が必須. 
-    " throw があるから.... 
+    " while 1
+    " return/break/continue が必須.
+    " throw があるから....
     let self.env.loopb = 0
   endif
 
@@ -1037,11 +1038,31 @@ function s:VimlLint.compile_while(node, refchk) "{{{
 
 endfunction "}}}
 
-" for VAR in LIST
-"   BODy
-" endfor
 function s:VimlLint.compile_for(node, refchk) "{{{
+  " VAR が変数のリスト、または変数であることは, vimlparser がチェックしている
+  " right がリストであることはチェックしていない.
+  " for VAR in LIST
+  "   BODy
+  " endfor
   let right = self.compile(a:node.right, 1) " LIST
+  if right.type == s:NODE_NUMBER ||
+  \  right.type == s:NODE_DICT ||
+  \  right.type == s:NODE_STRING
+    call self.error_mes(right, 'E714', 'List required', 1)
+    return
+  endif
+
+  if right.type == s:NODE_LIST
+    if len(right.value) == 0
+      if len(a:node.body) > 0
+        let node = a:node.body[0]
+      else
+        let node = right
+      endif
+      call self.error_mes(node, 'EVL201', "unreachable code: for", 1)
+      return
+    endif
+  endif
 
   if a:node.left isnot s:NIL
     " for {var} in {list}
@@ -1066,18 +1087,22 @@ function s:VimlLint.compile_for(node, refchk) "{{{
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, 1)
 
-  call s:restore_varstack(self.env, p, "for")
+  if right.type != s:NODE_LIST
+    call s:restore_varstack(self.env, p, "for")
 
-  let pos = [s:gen_pos_cntl(self.env, p)]
-  call s:reset_env_cntl(self.env)
+    let pos = [s:gen_pos_cntl(self.env, p)]
+    call s:reset_env_cntl(self.env)
 
-  " for にはいらなかった場合
-  let p = len(self.env.varstack)
-  let pos += [s:gen_pos_cntl(self.env, p)]
-  call s:reset_env_cntl(self.env)
+    " for にはいらなかった場合
+    let p = len(self.env.varstack)
+    let pos += [s:gen_pos_cntl(self.env, p)]
+    call s:reset_env_cntl(self.env)
 
 "  echo "call reconstruct for"
-  call s:reconstruct_varstack(self, self.env, pos)
+    call s:reconstruct_varstack(self, self.env, pos)
+  else
+    let self.env.loopb = 0
+  endif
 
   let self.env.global.loop -= 1
 endfunction "}}}
