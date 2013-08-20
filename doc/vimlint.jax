@@ -1,13 +1,13 @@
+EVPxxx:          error message by vim-vimplarser
+EVLxxx and Exxx: error message by vim-vimlint
 
-
-E46: Cannot change read-only variable `v`
+E46:  Cannot change read-only variable `v`
 E118: Too many arguments for function: func
 E119: Not enough arguments for function: func
 E133: :return not inside a function
 E586: :continue without :while or :for: continue
 E587: :break without :while or :for: break
-
-EVLxxx: error message by vim-vimlint
+E714: List required
 
 variable
 EVL101: undefined variable `v`
@@ -20,9 +20,8 @@ EVL201: unreachable code `return/throw`
 EVL201: unreachable code `continue/break`
 EVL202: missing call `s`
 EVL203: parse error in `cmd`
+EVL204: constant in conditional context
 
 system error
 EVL901: unkown type `t`
-
-EVP_x: error message by vim-vimplarser
 

@@ -1,6 +1,6 @@
 " @ERR ["EVL104"]
 function! g:hoge(a)
-  if 1
+  if a:a == 1
     if a:a
 	  let c = 1
 	  echo c

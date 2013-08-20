@@ -950,7 +950,11 @@ endfunction "}}}
 
 function s:VimlLint.compile_if(node, refchk) "{{{
 "  call s:VimlLint.error_mes(a:node, "compile_if")
-  call self.compile(a:node.cond, 2) " if ()
+  let cond = self.compile(a:node.cond, 2) " if ()
+
+  if cond.type == s:NODE_NUMBER
+      call self.error_mes(a:node, 'EVL204', "constant in conditional context", 1)
+  endif
 
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
