@@ -1064,8 +1064,7 @@ function s:VimlLint.compile_for(node, refchk) "{{{
     endif
   endif
 
-  if a:node.left isnot s:NIL
-    " for {var} in {list}
+  if a:node.left isnot s:NIL " for {var} in {list}
     let left = self.compile(a:node.left, 0)
     call self.append_var(self.env, left, right, "for")
     " append
@@ -1075,9 +1074,11 @@ function s:VimlLint.compile_for(node, refchk) "{{{
     " for [{var1},...] in {listlist}
     let list = map(a:node.list, 'self.compile(v:val, 0)')
     call map(list, 'self.append_var(self.env, v:val, right, "forn")')
+
     " append
     if a:node.rest isnot s:NIL
-      let rest = self.compile(a:node.rest, a:refchk)
+      let rest = self.compile(a:node.rest, 0)
+      call self.append_var(self.env, rest, right, "forr")
     endif
   endif
 
