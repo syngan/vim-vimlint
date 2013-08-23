@@ -1,3 +1,6 @@
+*vimlint.txt* vim script 用 lint
+	A lint for vim script
+
 EVPxxx:          error message by vim-vimplarser
 EVLxxx and Exxx: error message by vim-vimlint
 
@@ -25,3 +28,5 @@ EVL204: constant in conditional context
 system error
 EVL901: unkown type `t`
 
+==============================================================================
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
