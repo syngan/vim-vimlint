@@ -1,6 +1,6 @@
 " @ERR ["EVL104"]
-function! g:hoge()
-  for b in []
+function! g:hoge(v)
+  for b in a:v
     let a = 1
     echo a
     unlet b

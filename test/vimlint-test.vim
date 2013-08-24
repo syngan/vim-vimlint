@@ -1,6 +1,5 @@
 "
 
-
 " source %
 " echo g:vimlint_test("test")
 
@@ -71,7 +70,7 @@ function! g:vimlint_test(dir)
     endif
   endfor
 
-  " echo ( $B$@$H%O%$%i%$%H$5$l$J$$(B
+  " echo ( だとハイライトされない
   echo "" . (ok + ng) . " test: ok=" . ok . ", ng=" . ng . ", skip=" . sk
   return ret
 endfunction
