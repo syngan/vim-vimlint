@@ -243,6 +243,7 @@ function! s:exists_var(self, env, node)
 endfunction " }}}
 
 function! s:push_varstack(env, dict) " {{{
+
   let a:env.varstack += [a:dict]
 
   if !has_key(a:dict, "type") || type(a:dict.type) != type("")
@@ -260,6 +261,7 @@ endfunction " }}}
 
 function! s:append_var_(env, var, node, val, cnt) " {{{
 
+"  echo "append_var: var=" . a:var . ", cnt=" . a:cnt
   if has_key(a:env.var, a:var)
     let v = a:env.var[a:var]
     if a:cnt > 0
@@ -304,7 +306,8 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
           \ 'var' : a:var,
           \ 'node' : a:node,
           \ 'val' : a:val,
-          \ 'env' : a:env
+          \ 'env' : a:env,
+          \ 'stat' : 0,
           \})
       endif
     else
@@ -403,6 +406,8 @@ function! s:delete_var(env, var) " {{{
     \ 'env' : e,
     \ 'node' : a:var,
     \ 'v' : v,
+    \ 'stat' : 0,
+    \ 'brcon' : 0,
     \})
 
 endfunction " }}}
@@ -448,7 +453,7 @@ endfunction " }}}
 
 function! s:simpl_varstack(env, pos) " {{{
   let d = {}
-  let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0}}
+  let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0, 'stat' : 0}}
 
 "  echo "simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1)
   for i in range(a:pos, len(a:env.varstack) - 1)
@@ -477,21 +482,59 @@ function! s:simpl_varstack(env, pos) " {{{
   endfor
 endfunction " }}}
 
-function! s:reconstruct_varstack(self, env, pos) " {{{
-  " a:pos は s:gen_pos_cntl() により構築される
-  " すべてのルートをみて変数定義まわりの情報を再構築する
-  let vardict = {}
+function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
+  " remake
+  for p in a:pos
+    for j in range(p[1] - 1, p[0], -1)
+      let v = a:env.varstack[j]
+"      echo "v[" . j . "]=" . v.type
+      if v.type == 'nop' && has_key(v, 'rt_from')
+        " v.zz is a return value of reconstruct_varstack_rt
+        " @@memo return [vardict, N, N_lp]
+        let tail = len(a:env.varstack)
+        call s:reconstruct_varstack_chk(a:self, a:env, v.zz, 1)
+        let vs = a:env.varstack[tail :]
+"        echo "nop:" . v.rt_from . ".." . v.rt_to . ",tail=" . tail . ",vs=" . len(vs)
+        for ui in range(len(vs))
+          call remove(a:env.varstack, -1)
+        endfor
+
+        let ui = v.rt_from
+        for ti in range(len(vs))
+          if ui + ti >= v.rt_to && a:env.varstack[ui + ti].type != 'nop'
+            throw "stop"
+          endif
+          let a:env.varstack[ui + ti] = vs[ti]
+        endfor
+        let ui = ui + ti
+        while ui < v.rt_to
+          let a:env.varstack[ui] = a:nop
+          let ui = ui + 1
+        endwhile
+      endif
+    endfor
+  endfor
+  
+endfunction " }}}
+
+function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
+  " すべてのルートをチェックして,
+  " 変数の代入、参照状態を構築する
+  let vardict = {} " 変数情報を詰め込む
+  let nop = a:nop
+
   let N = 0 " return しないルート数
   let N_lp = 0 " break/continue されたルート数
-  let nop = {'type' : 'nop', 'ref' : 0, 'subs' : 0}
-"  echo "reconstruct: " . string(a:pos)
+
   for p in a:pos
+"    echo "reconstruct_rt: " . string(p)
     if p[2] " return した.
       " イベントをなかったことにする
       for j in range(p[0], p[1] - 1)
         let v = a:env.varstack[j]
         if v.type == 'append' && v.v.ref == 0 && a:env.global.fins == 0
-          " finally 区があるかもしれないのです......
+          " 変数を追加したが参照していない
+          " かつ,  finally 句がない場合
           call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var. '`', 1)
         endif
         let a:env.varstack[j] = nop
@@ -499,20 +542,24 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
       continue
     endif
     let N += 1
-    if p[3]
+"echo "p=" . string(p) . ", brk=" . a:brk_cont
+    if p[3] && !a:brk_cont
       let N_lp += 1
       continue
     endif
     let vi = {}
     for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
+"      echo "reconstruct" . j . "/" . (p[1]-1) . ":    ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type . ",pos=" . string(p) . ",var=" . get(v, 'var', '') . ",stat=" . get(v.v, "stat", -1)
       if v.type == 'nop'
         continue
       endif
-"      echo "reconstruct" . j . "/" . (p[1]-1) . ":    ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type . ",pos=" . string(p) . ",var=" . get(v, 'var', '')
       if has_key(vi, v.var)
         " if 文内で定義したものを削除した など
         " simplify によりありえない
+        echo "============ ERR ============="
+        echo v
+        echo vi[v.var]
         throw "err: simpl_varstack()"
       endif
 
@@ -522,7 +569,7 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
       elseif v.type == 'append' || v.type == 'update'
         let vi[v.var] = [v, 1, 0, 0, 0]
       elseif v.type != 'nop'
-        throw 'system error: unknown type'
+        call self.error_mes(v.v, 'EVL901', 'unknown type `' . a:var.type . '`', 1)
       endif
     endfor
 
@@ -541,14 +588,15 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
     endfor
   endfor
 
-  if N == 0
-    " すべての route で return
-    let a:self.env.ret = 1
-    return
-  endif
+  return [vardict, N, N_lp]
+endfunction " }}}
 
-  " vardict に登録してある変数について
-  " すべてのルートでチェックする
+function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
+  " reconstruct_varstack_rt() で構築した情報をもとに,
+  let vardict = a:rtret[0]
+  let N = a:rtret[1]
+  let N_lp = a:rtret[2]
+
   for k in keys(vardict)
     let z = vardict[k]
     if z[2]  + N_lp == N
@@ -572,25 +620,89 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
         throw "stop"
       endtry
 
+"echo "z=" . string(z[1]) . ",N_lp=" . N_lp . ",N=" . N
       if z[1] + N_lp != N
         " すべての route で append されていない
         " 中途半端に定義されている状態
         let var = z[0].env.var[z[0].var]
         let var.stat = 1
+"echo "stat=1"
       endif
     endif
   endfor
+endfunction "}}}
 
+function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
+  " a:pos は s:gen_pos_cntl() により構築される
+  " すべてのルートをみて変数定義まわりの情報を再構築する
+  " test/for7.vim とか.
+
+  let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0, 'stat' : 0}}
+"  echo "reconstruct: " . string(a:pos)
+
+  if a:is_loop
+    " varstack を modify する.
+    call s:reconstruct_varstack_rm(a:self, a:env, a:pos, nop)
+    let rtret = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
+  else
+    let rtret = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 0, nop)
+  endif
+
+  let vardict = rtret[0]
+  let N = rtret[1]
+  let N_lp = rtret[2]
+
+
+  if N == 0
+    " すべての route で return
+    let a:self.env.ret = 1
+    return
+  endif
+
+  call s:reconstruct_varstack_chk(a:self, a:env, rtret, 0)
+
+  if N_lp == 0
+    " break/continue はなかった
+    return
+  endif
+
+  " for 
+  "   if 
+  "     let a = 1
+  "     break
+  "   ....  ここでは a は未定義
+  "
+  " ... ここでは a が中途半端定義
   if N == N_lp
     " すべてのルートで break/continue
     let a:self.env.loopb = 1
   endif
 
+  if a:is_loop
+    return
+  endif
+
+  " for/while の外側用に追加.
+  let v = deepcopy(nop)
+  let v.rt_from = a:pos[0][0]
+  let v.rt_to = len(a:env.varstack)
+
+"  echo "construct rvrt2: range=" . v.rt_from . ".." . v.rt_to
+  let rvrt2 = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
+  echo "vard=" . len(vardict) . ", var2=" . len(rvrt2[0])
+  if len(vardict) <= len(rvrt2[0]) - 1
+    for i in range(len(vardict), len(rvrt2[0]) - 1)
+      call s:push_varstack(a:env, nop)
+    endfor
+  endif
+  let v.zz = rvrt2
+
+  call s:push_varstack(a:env, v)
 endfunction " }}}
 
 function! s:reconstruct_varstack_st(self, env, p) " {{{
+  " try 句の reconstrutt. どこで例外が発生するかわからない状態
   " @param p(list) reconstruct_varstack() の pos(listlist) と同じではない
-  "
   for j in range(a:p, len(a:env.varstack) - 1)
     let v = a:env.varstack[j]
     if v.type == 'append'
@@ -601,7 +713,7 @@ function! s:reconstruct_varstack_st(self, env, p) " {{{
 endfunction " }}}
 
 function! s:echonode(node, refchk) " {{{
-  echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
+"  echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
     \ (has_key(a:node, "value") ?
     \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%") .
     \  ", ref=" . a:refchk
@@ -988,7 +1100,7 @@ function s:VimlLint.compile_if(node, refchk) "{{{
   " reconstruct
   " let して return した、は let していないにする
 "  echo "call reconstruct if: " . string(a:node.pos)
-  call s:reconstruct_varstack(self, self.env, pos)
+  call s:reconstruct_varstack(self, self.env, pos, 0)
 
 endfunction "}}}
 
@@ -1026,7 +1138,7 @@ function s:VimlLint.compile_while(node, refchk) "{{{
     let pos += [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
 
-    call s:reconstruct_varstack(self, self.env, pos)
+    call s:reconstruct_varstack(self, self.env, pos, 1)
   else
     " while 1
     " return/break/continue が必須.
@@ -1088,23 +1200,15 @@ function s:VimlLint.compile_for(node, refchk) "{{{
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, 1)
 
+  call s:restore_varstack(self.env, p, "for")
+  let pos = [s:gen_pos_cntl(self.env, p)]
+  call s:reset_env_cntl(self.env)
   if right.type != s:NODE_LIST
-    call s:restore_varstack(self.env, p, "for")
-
-    let pos = [s:gen_pos_cntl(self.env, p)]
-    call s:reset_env_cntl(self.env)
-
     " for にはいらなかった場合
     let p = len(self.env.varstack)
     let pos += [s:gen_pos_cntl(self.env, p)]
-    call s:reset_env_cntl(self.env)
-
-"  echo "call reconstruct for"
-    call s:reconstruct_varstack(self, self.env, pos)
-  else
-    let self.env.loopb = 0
   endif
-
+  call s:reconstruct_varstack(self, self.env, pos, 1)
   let self.env.global.loop -= 1
 endfunction "}}}
 
@@ -1143,7 +1247,7 @@ function s:VimlLint.compile_try(node, refchk) "{{{
   " try 句はどこで抜けるかわからないため
   " 定義したすべての変数は定義されているかも状態,
   " つまり stat=1 にする.
-  call s:reconstruct_varstack_st(self, self.env, p)
+  call s:reconstruct_varstack_st(self, self.env, p, 0)
 
   let pos = []
   for node in a:node.catch
@@ -1163,7 +1267,9 @@ function s:VimlLint.compile_try(node, refchk) "{{{
 
   endfor
 
-  call s:reconstruct_varstack(self, self.env, pos)
+  " @TODO
+
+  call s:reconstruct_varstack(self, self.env, pos, 0)
 
   " backup env
   let retc = self.env.ret
@@ -1764,4 +1870,4 @@ endfunction " }}}
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
-" vim:set et ts=2 sts=2 sw=2 tw=0 foldmethod=marker:
+" vim:set et ts=2 sts=2 sw=2 tw=0 foldmethod=marker commentstring=\ "\ %s:
