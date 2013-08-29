@@ -148,7 +148,7 @@ function! s:tostring_varstack_n(v)
   let v = a:v
   let s = ""
   let s .= "type=" . v.type[0:2]
-  let s .= ",ref=" . v.v.ref 
+  let s .= ",ref=" . v.v.ref
   let s .= ",sub=" . v.v.subs
   let s .= ",stt=" . v.v.stat
   if has_key(v, "var")
@@ -402,6 +402,14 @@ endfunction " }}}
 function! s:delete_var(env, var) " {{{
   if a:var.type == s:NODE_IDENTIFIER
     let name = a:var.value
+    if name !~# '^[gbwtslv]:' && name !~# '#'
+      if a:env.global == a:env
+        let name = 'g:' . name
+      else
+        let name = 'l:' . name
+      endif
+    endif
+
     if has_key(a:env.var, name)
       let e = a:env
       let v = e.var[name]
@@ -546,7 +554,7 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
       endif
     endfor
   endfor
-  
+
 endfunction " }}}
 
 function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
@@ -699,8 +707,8 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
     return
   endif
 
-  " for 
-  "   if 
+  " for
+  "   if
   "     let a = 1
   "     break
   "   ....  ここでは a は未定義
@@ -724,7 +732,7 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   let rvrt2 = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
 "  echo "vard=" . len(vardict) . ", var2=" . len(rvrt2[0])
   " @TODO 参照情報をコピーする.
- 
+
   if len(vardict) <= len(rvrt2[0]) - 1
     for i in range(len(vardict), len(rvrt2[0]) - 1)
       call s:push_varstack(a:env, nop)
