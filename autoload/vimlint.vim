@@ -1075,7 +1075,8 @@ endfunction " }}}
 
 function s:VimlLint.compile_unlet(node, refchk) "{{{
   " @TODO unlet! の場合には存在チェック不要
-  let list = map(a:node.list, 'self.compile(v:val, 1)')
+  let f = a:node.ea.forceit ? 0 : 1
+  let list = map(a:node.list, 'self.compile(v:val, ' . f . ')')
   for v in list
     " unlet
     call s:delete_var(self.env, v)
