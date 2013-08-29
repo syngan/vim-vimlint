@@ -1286,7 +1286,7 @@ function s:VimlLint.compile_try(node, refchk) "{{{
   " try 句はどこで抜けるかわからないため
   " 定義したすべての変数は定義されているかも状態,
   " つまり stat=1 にする.
-  call s:reconstruct_varstack_st(self, self.env, p, 0)
+  call s:reconstruct_varstack_st(self, self.env, 0)
 
   let pos = []
   for node in a:node.catch
