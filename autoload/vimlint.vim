@@ -642,7 +642,7 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
     let z = vardict[k]
     if z[2]  + N_lp == N
       " すべてのルートで delete
-      call s:delete_var(a:env, z[0].var)
+      call s:delete_var(a:env, z[0].node)
     else
       try
         " あるルートでは delete されなかった.
