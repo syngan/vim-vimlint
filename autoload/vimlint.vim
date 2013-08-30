@@ -154,7 +154,7 @@ function! s:tostring_varstack_n(v)
   if has_key(v, "var")
     let s .= ",var=" . v.var
   elseif has_key(v, "rt_from")
-    let s .= ",rm=" . v.rt_to . ".." .  v.rt_from
+    let s .= ",rm=" . v.rt_from . ".." .  v.rt_to
   else
     let s .= ",var="
   endif
@@ -448,7 +448,7 @@ endfunction " }}}
 
 function! s:restore_varstack(env, pos, pp) " {{{
   " @param pp は debug 用
-  call s:simpl_varstack(a:env, a:pos)
+  call s:simpl_varstack(a:env, a:pos, len(a:env.varstack) - 1)
   let i = len(a:env.varstack)
 "  echo "restore: " . a:pp . ": " . a:pos
   while i > a:pos
@@ -472,15 +472,12 @@ function! s:restore_varstack(env, pos, pp) " {{{
   endwhile
 endfunction " }}}
 
-function! s:simpl_varstack(env, pos) " {{{
+function! s:simpl_varstack(env, pos, pose) " {{{
   let d = {}
   let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0, 'stat' : 0}}
 
 "  echo "simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1)
-  for i in range(a:pos, len(a:env.varstack) - 1)
-    let v = a:env.varstack[i]
-  endfor
-  for i in range(a:pos, len(a:env.varstack) - 1)
+  for i in range(a:pos, a:pose)
     let v = a:env.varstack[i]
     if v.type == 'nop'
       " do nothing
@@ -555,6 +552,7 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
         endwhile
       endif
     endfor
+    call s:simpl_varstack(a:env, p[0], p[1] - 1)
   endfor
 
 endfunction " }}}
@@ -600,8 +598,8 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
         " if 文内で定義したものを削除した など
         " simplify によりありえない
         echo "============ ERR ============="
-        echo v
-        echo vi[v.var]
+"        echo v
+"        echo vi[v.var]
         throw "err: simpl_varstack()"
       endif
 
