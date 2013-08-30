@@ -1,6 +1,6 @@
 " @ERR ["EVL104"]
-function! g:hoge()
-  if 1
+function! g:hoge(a)
+  if a:a == 1
     let env_ev = 1
     let len_env = 2
   else

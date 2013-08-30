@@ -45,7 +45,7 @@ function s:VimlLint.new(param) " {{{
   return obj
 endfunction " }}}
 
-" for debug
+" for debug " {{{
 function! s:node2str(node) " {{{
   let a = {}
   let a[1] = 'TOPLEVEL'
@@ -144,6 +144,24 @@ function! s:node2str(node) " {{{
   endif
 endfunction " }}}
 
+function! s:tostring_varstack_n(v)
+  let v = a:v
+  let s = ""
+  let s .= "type=" . v.type[0:2]
+  let s .= ",ref=" . v.v.ref
+  let s .= ",sub=" . v.v.subs
+  let s .= ",stt=" . v.v.stat
+  if has_key(v, "var")
+    let s .= ",var=" . v.var
+  elseif has_key(v, "rt_from")
+    let s .= ",rm=" . v.rt_from . ".." .  v.rt_to
+  else
+    let s .= ",var="
+  endif
+  return s
+endfunction
+" }}}
+
 function! s:env(outer, funcname) " {{{
   let env = {}
   let env.outer = a:outer
@@ -178,8 +196,7 @@ function! s:VimlLint.error_mes(node, eid, mes, print) " {{{
 "  echo a:node
   if a:print
     let filename = get(self, 'filename', '...')
-    let pos = get(a:node, 'pos', {'lnum': '', 'col' : ''})
-
+    let pos = vimlint#util#get_pos(a:node)
     call self.param.outfunc(filename, pos, a:eid, a:mes, self)
   endif
 endfunction " }}}
@@ -243,6 +260,7 @@ function! s:exists_var(self, env, node)
 endfunction " }}}
 
 function! s:push_varstack(env, dict) " {{{
+
   let a:env.varstack += [a:dict]
 
   if !has_key(a:dict, "type") || type(a:dict.type) != type("")
@@ -260,6 +278,7 @@ endfunction " }}}
 
 function! s:append_var_(env, var, node, val, cnt) " {{{
 
+"  echo "append_var: var=" . a:var . ", cnt=" . a:cnt
   if has_key(a:env.var, a:var)
     let v = a:env.var[a:var]
     if a:cnt > 0
@@ -304,7 +323,8 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
           \ 'var' : a:var,
           \ 'node' : a:node,
           \ 'val' : a:val,
-          \ 'env' : a:env
+          \ 'env' : a:env,
+          \ 'stat' : 0,
           \})
       endif
     else
@@ -382,6 +402,14 @@ endfunction " }}}
 function! s:delete_var(env, var) " {{{
   if a:var.type == s:NODE_IDENTIFIER
     let name = a:var.value
+    if name !~# '^[gbwtslv]:' && name !~# '#'
+      if a:env.global == a:env
+        let name = 'g:' . name
+      else
+        let name = 'l:' . name
+      endif
+    endif
+
     if has_key(a:env.var, name)
       let e = a:env
       let v = e.var[name]
@@ -403,6 +431,8 @@ function! s:delete_var(env, var) " {{{
     \ 'env' : e,
     \ 'node' : a:var,
     \ 'v' : v,
+    \ 'stat' : 0,
+    \ 'brcon' : 0,
     \})
 
 endfunction " }}}
@@ -418,17 +448,13 @@ endfunction " }}}
 
 function! s:restore_varstack(env, pos, pp) " {{{
   " @param pp は debug 用
-  call s:simpl_varstack(a:env, a:pos)
+  call s:simpl_varstack(a:env, a:pos, len(a:env.varstack) - 1)
   let i = len(a:env.varstack)
 "  echo "restore: " . a:pp . ": " . a:pos
   while i > a:pos
     let i = i - 1
     let v = a:env.varstack[i]
-    if has_key(v, "v")
-"      echo "restore[" . a:pp . "] " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type  . ",var=" . get(v, 'var', '')
-    else
-"      echo "restore[" . a:pp . "]  " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : ref=?,sub=?,type=" . v.type  . ",var=" . get(v, 'var', '')
-    endif
+"    echo "restore[" . a:pp . "] " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : " . s:tostring_varstack_n(v)
     if v.type == 'delete'
       let v.env.var[v.var] = v.v
     elseif v.type == 'append'
@@ -446,15 +472,12 @@ function! s:restore_varstack(env, pos, pp) " {{{
   endwhile
 endfunction " }}}
 
-function! s:simpl_varstack(env, pos) " {{{
+function! s:simpl_varstack(env, pos, pose) " {{{
   let d = {}
-  let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0}}
+  let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0, 'stat' : 0}}
 
 "  echo "simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1)
-  for i in range(a:pos, len(a:env.varstack) - 1)
-    let v = a:env.varstack[i]
-  endfor
-  for i in range(a:pos, len(a:env.varstack) - 1)
+  for i in range(a:pos, a:pose)
     let v = a:env.varstack[i]
     if v.type == 'nop'
       " do nothing
@@ -477,21 +500,81 @@ function! s:simpl_varstack(env, pos) " {{{
   endfor
 endfunction " }}}
 
-function! s:reconstruct_varstack(self, env, pos) " {{{
-  " a:pos は s:gen_pos_cntl() により構築される
-  " すべてのルートをみて変数定義まわりの情報を再構築する
-  let vardict = {}
+function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
+  " remake
+  for p in a:pos
+    for j in range(p[0], p[1] - 1)
+      let v = a:env.varstack[j]
+"      echo "v[" . j . "]=" . v.type
+      if v.type == 'nop' && has_key(v, 'rt_from')
+        " v.zz is a return value of reconstruct_varstack_rt
+        " @@memo return [vardict, N, N_lp]
+        let tail = len(a:env.varstack)
+        call s:reconstruct_varstack_chk(a:self, a:env, v.zz, 1)
+        let vs = a:env.varstack[tail :]
+"        echo "nop-:" . v.rt_from . ".." . v.rt_to . ",tail=" . tail . ",vs=" . len(vs)
+        for ui in range(len(vs))
+          call remove(a:env.varstack, -1)
+        endfor
+
+        let ui = v.rt_from
+
+        " @TODO 参照情報をコピー. かなり強引.
+        let vref = {}
+        for ui in range(v.rt_from, v.rt_to - 1)
+          let vp = a:env.varstack[ui]
+          if vp.type == "append"
+            if has_key(vref, vp.var)
+              let vref[vp.var] += vp.v.ref
+            else
+              let vref[vp.var] = vp.v.ref
+            endif
+          endif
+        endfor
+
+        let ti = 0
+        let ui = v.rt_from
+        for ti in range(len(vs))
+          if ui + ti >= v.rt_to && a:env.varstack[ui + ti].type != 'nop'
+            throw "stop"
+          endif
+          let a:env.varstack[ui + ti] = vs[ti]
+"          echo "recon2: varstack[" . (ui+ti) . "]=vs[" . ti . "]=" . s:tostring_varstack_n(vs[ti])
+          if vs[ti].type == "append" && has_key(vref, vs[ti].var)
+            let vs[ti].v.ref += vref[vs[ti].var]
+          endif
+        endfor
+        let ui = ui + ti
+        while ui < v.rt_to
+          let a:env.varstack[ui] = a:nop
+"          echo "recon2: varstack[" . (ui) . "]=nop"
+          let ui = ui + 1
+        endwhile
+      endif
+    endfor
+    call s:simpl_varstack(a:env, p[0], p[1] - 1)
+  endfor
+
+endfunction " }}}
+
+function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
+  " すべてのルートをチェックして,
+  " 変数の代入、参照状態を構築する
+  let vardict = {} " 変数情報を詰め込む
+  let nop = a:nop
+
   let N = 0 " return しないルート数
   let N_lp = 0 " break/continue されたルート数
-  let nop = {'type' : 'nop', 'ref' : 0, 'subs' : 0}
-"  echo "reconstruct: " . string(a:pos)
+
   for p in a:pos
+"    echo "reconstruct_rt: " . string(p) . "/" . len(a:pos)
     if p[2] " return した.
       " イベントをなかったことにする
       for j in range(p[0], p[1] - 1)
         let v = a:env.varstack[j]
         if v.type == 'append' && v.v.ref == 0 && a:env.global.fins == 0
-          " finally 区があるかもしれないのです......
+          " 変数を追加したが参照していない
+          " かつ,  finally 句がない場合
           call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var. '`', 1)
         endif
         let a:env.varstack[j] = nop
@@ -499,20 +582,24 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
       continue
     endif
     let N += 1
-    if p[3]
+"echo "p=" . string(p) . ", brk=" . a:brk_cont
+    if p[3] && !a:brk_cont
       let N_lp += 1
       continue
     endif
     let vi = {}
     for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
+"      echo "reconstruct" . j . "/" . (p[1]-1) . ":    " . s:tostring_varstack_n(v) . ",pos=" . string(p)
       if v.type == 'nop'
         continue
       endif
-"      echo "reconstruct" . j . "/" . (p[1]-1) . ":    ref=" . v.v.ref . ",sub=" . v.v.subs . ",type=" . v.type . ",pos=" . string(p) . ",var=" . get(v, 'var', '')
       if has_key(vi, v.var)
         " if 文内で定義したものを削除した など
         " simplify によりありえない
+        echo "============ ERR ============="
+"        echo v
+"        echo vi[v.var]
         throw "err: simpl_varstack()"
       endif
 
@@ -522,12 +609,13 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
       elseif v.type == 'append' || v.type == 'update'
         let vi[v.var] = [v, 1, 0, 0, 0]
       elseif v.type != 'nop'
-        throw 'system error: unknown type'
+        call self.error_mes(v.v, 'EVL901', 'unknown type `' . a:var.type . '`', 1)
       endif
     endfor
 
     " 情報をマージ
     for k in keys(vi)
+"      echo "_rt(): vi[" . k . "]=" . string(vi[k][1:]) . ",ref=" vi[k][0].v.ref
       if vi[k][1] != vi[k][2] " nop 以外? わかめ
         if has_key(vardict, k)
           let vardict[k][1] += vi[k][1]
@@ -541,19 +629,20 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
     endfor
   endfor
 
-  if N == 0
-    " すべての route で return
-    let a:self.env.ret = 1
-    return
-  endif
+  return [vardict, N, N_lp]
+endfunction " }}}
 
-  " vardict に登録してある変数について
-  " すべてのルートでチェックする
+function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
+  " reconstruct_varstack_rt() で構築した情報をもとに,
+  let vardict = a:rtret[0]
+  let N = a:rtret[1]
+  let N_lp = a:rtret[2]
+
   for k in keys(vardict)
     let z = vardict[k]
     if z[2]  + N_lp == N
       " すべてのルートで delete
-      call s:delete_var(a:env, z[0].var)
+      call s:delete_var(a:env, z[0].node)
     else
       try
         " あるルートでは delete されなかった.
@@ -572,25 +661,91 @@ function! s:reconstruct_varstack(self, env, pos) " {{{
         throw "stop"
       endtry
 
+"echo "z=" . string(z[1]) . ",N_lp=" . N_lp . ",N=" . N
       if z[1] + N_lp != N
         " すべての route で append されていない
         " 中途半端に定義されている状態
         let var = z[0].env.var[z[0].var]
         let var.stat = 1
+"echo "stat=1"
       endif
     endif
   endfor
+endfunction "}}}
 
+function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
+  " a:pos は s:gen_pos_cntl() により構築される
+  " すべてのルートをみて変数定義まわりの情報を再構築する
+  " test/for7.vim とか.
+
+  let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0, 'stat' : 0}}
+"  echo "reconstruct: " . string(a:pos)
+
+  if a:is_loop
+    " varstack を modify する.
+
+    call s:reconstruct_varstack_rm(a:self, a:env, a:pos, nop)
+    let rtret = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
+  else
+    let rtret = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 0, nop)
+  endif
+
+  let vardict = rtret[0]
+  let N = rtret[1]
+  let N_lp = rtret[2]
+
+  if N == 0
+    " すべての route で return
+    let a:self.env.ret = 1
+    return
+  endif
+
+  call s:reconstruct_varstack_chk(a:self, a:env, rtret, 0)
+
+  if N_lp == 0
+    " break/continue はなかった
+    return
+  endif
+
+  " for
+  "   if
+  "     let a = 1
+  "     break
+  "   ....  ここでは a は未定義
+  "
+  " ... ここでは a が中途半端定義
   if N == N_lp
     " すべてのルートで break/continue
     let a:self.env.loopb = 1
   endif
 
+  if a:is_loop
+    return
+  endif
+
+  " for/while の外側用に追加.
+  let v = deepcopy(nop)
+  let v.rt_from = a:pos[0][0]
+  let v.rt_to = len(a:env.varstack)
+
+"  echo "construct rvrt2: range=" . v.rt_from . ".." . v.rt_to
+  let rvrt2 = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
+"  echo "vard=" . len(vardict) . ", var2=" . len(rvrt2[0])
+  " @TODO 参照情報をコピーする.
+
+  if len(vardict) <= len(rvrt2[0]) - 1
+    for i in range(len(vardict), len(rvrt2[0]) - 1)
+      call s:push_varstack(a:env, nop)
+    endfor
+  endif
+  let v.zz = rvrt2
+
+  call s:push_varstack(a:env, v)
 endfunction " }}}
 
 function! s:reconstruct_varstack_st(self, env, p) " {{{
+  " try 句の reconstrutt. どこで例外が発生するかわからない状態
   " @param p(list) reconstruct_varstack() の pos(listlist) と同じではない
-  "
   for j in range(a:p, len(a:env.varstack) - 1)
     let v = a:env.varstack[j]
     if v.type == 'append'
@@ -601,7 +756,7 @@ function! s:reconstruct_varstack_st(self, env, p) " {{{
 endfunction " }}}
 
 function! s:echonode(node, refchk) " {{{
-  echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
+"  echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
     \ (has_key(a:node, "value") ?
     \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%") .
     \  ", ref=" . a:refchk
@@ -920,7 +1075,8 @@ endfunction " }}}
 
 function s:VimlLint.compile_unlet(node, refchk) "{{{
   " @TODO unlet! の場合には存在チェック不要
-  let list = map(a:node.list, 'self.compile(v:val, 1)')
+  let f = a:node.ea.forceit ? 0 : 1
+  let list = map(a:node.list, 'self.compile(v:val, ' . f . ')')
   for v in list
     " unlet
     call s:delete_var(self.env, v)
@@ -951,7 +1107,11 @@ endfunction "}}}
 
 function s:VimlLint.compile_if(node, refchk) "{{{
 "  call s:VimlLint.error_mes(a:node, "compile_if")
-  call self.compile(a:node.cond, 2) " if ()
+  let cond = self.compile(a:node.cond, 2) " if ()
+
+  if cond.type == s:NODE_NUMBER
+      call self.error_mes(a:node, 'EVL204', "constant in conditional context", 1)
+  endif
 
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
@@ -983,13 +1143,27 @@ function s:VimlLint.compile_if(node, refchk) "{{{
 
   " reconstruct
   " let して return した、は let していないにする
-"  echo "call reconstruct if: " . string(a:node.pos)
-  call s:reconstruct_varstack(self, self.env, pos)
+"  echo "call reconstruct _ifs: " . string(a:node.pos)
+  call s:reconstruct_varstack(self, self.env, pos, 0)
+"  echo "call reconstruct _ife: " . string(a:node.pos)
 
 endfunction "}}}
 
 function s:VimlLint.compile_while(node, refchk) "{{{
-  call self.compile(a:node.cond, 1)
+  let cond = self.compile(a:node.cond, 1)
+
+  if cond.type == s:NODE_NUMBER
+    " while 0
+    if str2nr(cond.value) == 0
+      if len(a:node.body) > 0
+        let node = a:node.body[0]
+      else
+        let node = a:node
+      endif
+      call self.error_mes(node, 'EVL201', "unreachable code: while", 1)
+      return
+    endif
+  endif
 
   let self.env.global.loop += 1
 
@@ -997,30 +1171,57 @@ function s:VimlLint.compile_while(node, refchk) "{{{
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
-  call s:restore_varstack(self.env, p, "whl")
+  if cond.type != s:NODE_NUMBER
+    " 通常ルート
+    call s:restore_varstack(self.env, p, "whl")
+    let pos = [s:gen_pos_cntl(self.env, p)]
+    call s:reset_env_cntl(self.env)
 
-  let pos = [s:gen_pos_cntl(self.env, p)]
-  call s:reset_env_cntl(self.env)
 
-  " while にはいらなかった場合
-  let p = len(self.env.varstack)
-  let pos += [s:gen_pos_cntl(self.env, p)]
-  call s:reset_env_cntl(self.env)
+    " while にはいらなかった場合
+    let p = len(self.env.varstack)
+    let pos += [s:gen_pos_cntl(self.env, p)]
+    call s:reset_env_cntl(self.env)
 
-  call s:reconstruct_varstack(self, self.env, pos)
+    call s:reconstruct_varstack(self, self.env, pos, 1)
+  else
+    " while 1
+    " return/break/continue が必須.
+    " throw があるから....
+    let self.env.loopb = 0
+  endif
 
   let self.env.global.loop -= 1
 
 endfunction "}}}
 
-" for VAR in LIST
-"   BODy
-" endfor
 function s:VimlLint.compile_for(node, refchk) "{{{
+  " VAR が変数のリスト、または変数であることは, vimlparser がチェックしている
+  " right がリストであることはチェックしていない.
+  " for VAR in LIST
+  "   BODy
+  " endfor
   let right = self.compile(a:node.right, 1) " LIST
+  if right.type == s:NODE_NUMBER ||
+  \  right.type == s:NODE_DICT ||
+  \  right.type == s:NODE_STRING
+    call self.error_mes(right, 'E714', 'List required', 1)
+    return
+  endif
 
-  if a:node.left isnot s:NIL
-    " for {var} in {list}
+  if right.type == s:NODE_LIST
+    if len(right.value) == 0
+      if len(a:node.body) > 0
+        let node = a:node.body[0]
+      else
+        let node = right
+      endif
+      call self.error_mes(node, 'EVL201', "unreachable code: for", 1)
+      return
+    endif
+  endif
+
+  if a:node.left isnot s:NIL " for {var} in {list}
     let left = self.compile(a:node.left, 0)
     call self.append_var(self.env, left, right, "for")
     " append
@@ -1030,9 +1231,11 @@ function s:VimlLint.compile_for(node, refchk) "{{{
     " for [{var1},...] in {listlist}
     let list = map(a:node.list, 'self.compile(v:val, 0)')
     call map(list, 'self.append_var(self.env, v:val, right, "forn")')
+
     " append
     if a:node.rest isnot s:NIL
-      let rest = self.compile(a:node.rest, a:refchk)
+      let rest = self.compile(a:node.rest, 0)
+      call self.append_var(self.env, rest, right, "forr")
     endif
   endif
 
@@ -1042,19 +1245,18 @@ function s:VimlLint.compile_for(node, refchk) "{{{
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, 1)
 
-  call s:restore_varstack(self.env, p, "for")
 
+  call s:restore_varstack(self.env, p, "for")
   let pos = [s:gen_pos_cntl(self.env, p)]
   call s:reset_env_cntl(self.env)
-
-  " for にはいらなかった場合
-  let p = len(self.env.varstack)
-  let pos += [s:gen_pos_cntl(self.env, p)]
-  call s:reset_env_cntl(self.env)
-
-"  echo "call reconstruct for"
-  call s:reconstruct_varstack(self, self.env, pos)
-
+  if right.type != s:NODE_LIST
+    " for にはいらなかった場合
+    let p = len(self.env.varstack)
+    let pos += [s:gen_pos_cntl(self.env, p)]
+  endif
+"  echo "call reconstruct _fors: " . string(a:node.pos)
+  call s:reconstruct_varstack(self, self.env, pos, 1)
+"  echo "call reconstruct _fore: " . string(a:node.pos)
   let self.env.global.loop -= 1
 endfunction "}}}
 
@@ -1093,7 +1295,7 @@ function s:VimlLint.compile_try(node, refchk) "{{{
   " try 句はどこで抜けるかわからないため
   " 定義したすべての変数は定義されているかも状態,
   " つまり stat=1 にする.
-  call s:reconstruct_varstack_st(self, self.env, p)
+  call s:reconstruct_varstack_st(self, self.env, 0)
 
   let pos = []
   for node in a:node.catch
@@ -1113,7 +1315,9 @@ function s:VimlLint.compile_try(node, refchk) "{{{
 
   endfor
 
-  call s:reconstruct_varstack(self, self.env, pos)
+  " @TODO
+
+  call s:reconstruct_varstack(self, self.env, pos, 0)
 
   " backup env
   let retc = self.env.ret
@@ -1357,266 +1561,15 @@ function s:VimlLint.parse_string(str, node, cmd) "{{{
   endtry
 endfunction "}}}
 
-let s:builtin_func = {} " {{{
-let s:builtin_func.abs = {'min' : 1, 'max': 1}
-let s:builtin_func.acos = {'min' : 1, 'max': 1}
-let s:builtin_func.add = {'min' : 2, 'max': 2}
-let s:builtin_func.append = {'min' : 2, 'max': 2}
-let s:builtin_func.argc = {'min' : 0, 'max': 0}
-let s:builtin_func.argidx = {'min' : 0, 'max': 0}
-let s:builtin_func.argv = {'min' : 0, 'max': 1}
-let s:builtin_func.asin = {'min' : 1, 'max': 1}
-let s:builtin_func.atan = {'min' : 1, 'max': 1}
-let s:builtin_func.atan2 = {'min' : 2, 'max': 2}
-let s:builtin_func.browse = {'min' : 4, 'max': 4}
-let s:builtin_func.browsedir = {'min' : 2, 'max': 2}
-let s:builtin_func.bufexists = {'min' : 1, 'max': 1}
-let s:builtin_func.buflisted = {'min' : 1, 'max': 1}
-let s:builtin_func.bufloaded = {'min' : 1, 'max': 1}
-let s:builtin_func.bufname = {'min' : 1, 'max': 1}
-let s:builtin_func.bufnr = {'min' : 1, 'max': 1}
-let s:builtin_func.bufwinnr = {'min' : 1, 'max': 1}
-let s:builtin_func.byte2line = {'min' : 1, 'max': 1}
-let s:builtin_func.byteidx = {'min' : 2, 'max': 2}
-let s:builtin_func.call = {'min' : 2, 'max': 3}
-let s:builtin_func.ceil = {'min' : 1, 'max': 1}
-let s:builtin_func.changenr = {'min' : 0, 'max': 0}
-let s:builtin_func.char2nr = {'min' : 1, 'max': 1}
-let s:builtin_func.cindent = {'min' : 1, 'max': 1}
-let s:builtin_func.clearmatches = {'min' : 0, 'max': 0}
-let s:builtin_func.col = {'min' : 1, 'max': 1}
-let s:builtin_func.complete = {'min' : 2, 'max': 2}
-let s:builtin_func.complete_add = {'min' : 1, 'max': 1}
-let s:builtin_func.complete_check = {'min' : 0, 'max': 0}
-let s:builtin_func.confirm = {'min' : 1, 'max': 4}
-let s:builtin_func.copy = {'min' : 1, 'max': 1}
-let s:builtin_func.cos = {'min' : 1, 'max': 1}
-let s:builtin_func.cosh = {'min' : 1, 'max': 1}
-let s:builtin_func.count = {'min' : 2, 'max': 4}
-let s:builtin_func.cscope_connection = {'min' : 0, 'max': 3}
-let s:builtin_func.cursor = {'min' : 1, 'max': 3}
-let s:builtin_func.deepcopy = {'min' : 1, 'max': 2}
-let s:builtin_func.delete = {'min' : 1, 'max': 1}
-let s:builtin_func.did_filetype = {'min' : 0, 'max': 0}
-let s:builtin_func.diff_filler = {'min' : 1, 'max': 1}
-let s:builtin_func.diff_hlID = {'min' : 2, 'max': 2}
-let s:builtin_func.empty = {'min' : 1, 'max': 1}
-let s:builtin_func.escape = {'min' : 2, 'max': 2}
-let s:builtin_func.eval = {'min' : 1, 'max': 1}
-let s:builtin_func.eventhandler = {'min' : 0, 'max': 0}
-let s:builtin_func.executable = {'min' : 1, 'max': 1}
-let s:builtin_func.exists = {'min' : 1, 'max': 1}
-let s:builtin_func.exp = {'min' : 1, 'max': 1}
-let s:builtin_func.expand = {'min' : 1, 'max': 2}
-let s:builtin_func.extend = {'min' : 2, 'max': 3}
-let s:builtin_func.feedkeys = {'min' : 1, 'max': 2}
-let s:builtin_func.filereadable = {'min' : 1, 'max': 1}
-let s:builtin_func.filewritable = {'min' : 1, 'max': 1}
-let s:builtin_func.filter = {'min' : 2, 'max': 2}
-let s:builtin_func.finddir = {'min' : 1, 'max': 3}
-let s:builtin_func.findfile = {'min' : 1, 'max': 3}
-let s:builtin_func.float2nr = {'min' : 1, 'max': 1}
-let s:builtin_func.floor = {'min' : 1, 'max': 1}
-let s:builtin_func.fmod = {'min' : 2, 'max': 2}
-let s:builtin_func.fnameescape = {'min' : 1, 'max': 1}
-let s:builtin_func.fnamemodify = {'min' : 2, 'max': 2}
-let s:builtin_func.foldclosed = {'min' : 1, 'max': 1}
-let s:builtin_func.foldclosedend = {'min' : 1, 'max': 1}
-let s:builtin_func.foldlevel = {'min' : 1, 'max': 1}
-let s:builtin_func.foldtext = {'min' : 0, 'max': 0}
-let s:builtin_func.foldtextresult = {'min' : 1, 'max': 1}
-let s:builtin_func.foreground = {'min' : 0, 'max': 0}
-let s:builtin_func.function = {'min' : 1, 'max': 1}
-let s:builtin_func.garbagecollect = {'min' : 0, 'max': 1}
-let s:builtin_func.get = {'min' : 2, 'max': 3}
-let s:builtin_func.getbufline = {'min' : 2, 'max': 3}
-let s:builtin_func.getbufvar = {'min' : 2, 'max': 3}
-let s:builtin_func.getchar = {'min' : 0, 'max': 1}
-let s:builtin_func.getcharmod = {'min' : 0, 'max': 0}
-let s:builtin_func.getcmdline = {'min' : 0, 'max': 0}
-let s:builtin_func.getcmdpos = {'min' : 0, 'max': 0}
-let s:builtin_func.getcmdtype = {'min' : 0, 'max': 0}
-let s:builtin_func.getcwd = {'min' : 0, 'max': 0}
-let s:builtin_func.getfontname = {'min' : 0, 'max': 1}
-let s:builtin_func.getfperm = {'min' : 1, 'max': 1}
-let s:builtin_func.getfsize = {'min' : 1, 'max': 1}
-let s:builtin_func.getftime = {'min' : 1, 'max': 1}
-let s:builtin_func.getftype = {'min' : 1, 'max': 1}
-let s:builtin_func.getline = {'min' : 1, 'max': 2}
-let s:builtin_func.getloclist = {'min' : 1, 'max': 1}
-let s:builtin_func.getmatches = {'min' : 0, 'max': 0}
-let s:builtin_func.getpid = {'min' : 0, 'max': 0}
-let s:builtin_func.getpos = {'min' : 1, 'max': 1}
-let s:builtin_func.getqflist = {'min' : 0, 'max': 0}
-let s:builtin_func.getreg = {'min' : 0, 'max': 2}
-let s:builtin_func.getregtype = {'min' : 0, 'max': 1}
-let s:builtin_func.gettabvar = {'min' : 2, 'max': 2}
-let s:builtin_func.gettabwinvar = {'min' : 3, 'max': 3}
-let s:builtin_func.getwinposx = {'min' : 0, 'max': 0}
-let s:builtin_func.getwinposy = {'min' : 0, 'max': 0}
-let s:builtin_func.getwinvar = {'min' : 2, 'max': 2}
-"let s:builtin_func.glob = {'min' : 1, 'max': 2} less than vim7.3.465
-let s:builtin_func.glob = {'min' : 1, 'max': 3}
-let s:builtin_func.globpath = {'min' : 2, 'max': 3}
-let s:builtin_func.has = {'min' : 1, 'max': 1}
-let s:builtin_func.has_key = {'min' : 2, 'max': 2}
-let s:builtin_func.haslocaldir = {'min' : 0, 'max': 0}
-let s:builtin_func.hasmapto = {'min' : 1, 'max': 3}
-let s:builtin_func.histadd = {'min' : 2, 'max': 2}
-let s:builtin_func.histdel = {'min' : 1, 'max': 2}
-let s:builtin_func.histget = {'min' : 1, 'max': 2}
-let s:builtin_func.histnr = {'min' : 1, 'max': 1}
-let s:builtin_func.hlID = {'min' : 1, 'max': 1}
-let s:builtin_func.hlexists = {'min' : 1, 'max': 1}
-let s:builtin_func.hostname = {'min' : 0, 'max': 0}
-let s:builtin_func.iconv = {'min' : 3, 'max': 3}
-let s:builtin_func.indent = {'min' : 1, 'max': 1}
-let s:builtin_func.index = {'min' : 2, 'max': 4}
-let s:builtin_func.input = {'min' : 1, 'max': 3}
-let s:builtin_func.inputdialog = {'min' : 1, 'max': 3}
-let s:builtin_func.inputlist = {'min' : 1, 'max': 1}
-let s:builtin_func.inputrestore = {'min' : 0, 'max': 0}
-let s:builtin_func.inputsave = {'min' : 0, 'max': 0}
-let s:builtin_func.inputsecret = {'min' : 1, 'max': 2}
-let s:builtin_func.insert = {'min' : 2, 'max': 3}
-let s:builtin_func.invert = {'min' : 1, 'max': 1}
-let s:builtin_func.isdirectory = {'min' : 1, 'max': 1}
-let s:builtin_func.islocked = {'min' : 1, 'max': 1}
-let s:builtin_func.items = {'min' : 1, 'max': 1}
-let s:builtin_func.join = {'min' : 1, 'max': 2}
-let s:builtin_func.keys = {'min' : 1, 'max': 1}
-let s:builtin_func.len = {'min' : 1, 'max': 1}
-let s:builtin_func.libcall = {'min' : 3, 'max': 3}
-let s:builtin_func.libcallnr = {'min' : 3, 'max': 3}
-let s:builtin_func.line = {'min' : 1, 'max': 1}
-let s:builtin_func.line2byte = {'min' : 1, 'max': 1}
-let s:builtin_func.lispindent = {'min' : 1, 'max': 1}
-let s:builtin_func.localtime = {'min' : 0, 'max': 0}
-let s:builtin_func.log = {'min' : 1, 'max': 1}
-let s:builtin_func.log10 = {'min' : 1, 'max': 1}
-let s:builtin_func.map = {'min' : 2, 'max': 2}
-let s:builtin_func.maparg = {'min' : 1, 'max': 4}
-let s:builtin_func.mapcheck = {'min' : 1, 'max': 3}
-let s:builtin_func.match = {'min' : 2, 'max': 4}
-let s:builtin_func.matchadd = {'min' : 2, 'max': 4}
-let s:builtin_func.matcharg = {'min' : 1, 'max': 1}
-let s:builtin_func.matchdelete = {'min' : 1, 'max': 1}
-let s:builtin_func.matchend = {'min' : 2, 'max': 4}
-let s:builtin_func.matchlist = {'min' : 2, 'max': 4}
-let s:builtin_func.matchstr = {'min' : 2, 'max': 4}
-let s:builtin_func.max = {'min' : 1, 'max': 1}
-let s:builtin_func.min = {'min' : 1, 'max': 1}
-let s:builtin_func.mkdir = {'min' : 1, 'max': 3}
-let s:builtin_func.mode = {'min' : 0, 'max': 1}
-let s:builtin_func.nextnonblank = {'min' : 1, 'max': 1}
-let s:builtin_func.nr2char = {'min' : 1, 'max': 1}
-let s:builtin_func.pathshorten = {'min' : 1, 'max': 1}
-let s:builtin_func.pow = {'min' : 2, 'max': 2}
-let s:builtin_func.prevnonblank = {'min' : 1, 'max': 1}
-let s:builtin_func.printf = {'min' : 1, 'max': 65535}
-let s:builtin_func.pumvisible = {'min' : 0, 'max': 0}
-let s:builtin_func.range = {'min' : 1, 'max': 3}
-let s:builtin_func.readfile = {'min' : 1, 'max': 3}
-let s:builtin_func.reltime = {'min' : 0, 'max': 2}
-let s:builtin_func.reltimestr = {'min' : 1, 'max': 1}
-let s:builtin_func.remote_expr = {'min' : 2, 'max': 3}
-let s:builtin_func.remote_foreground = {'min' : 1, 'max': 1}
-let s:builtin_func.remote_peek = {'min' : 1, 'max': 2}
-let s:builtin_func.remote_read = {'min' : 1, 'max': 1}
-let s:builtin_func.remote_send = {'min' : 2, 'max': 3}
-let s:builtin_func.remove = {'min' : 2, 'max': 3}
-let s:builtin_func.rename = {'min' : 2, 'max': 2}
-let s:builtin_func.repeat = {'min' : 2, 'max': 2}
-let s:builtin_func.resolve = {'min' : 1, 'max': 1}
-let s:builtin_func.reverse = {'min' : 1, 'max': 1}
-let s:builtin_func.round = {'min' : 1, 'max': 1}
-let s:builtin_func.search = {'min' : 1, 'max': 4}
-let s:builtin_func.searchdecl = {'min' : 1, 'max': 3}
-let s:builtin_func.searchpair = {'min' : 3, 'max': 65535}
-let s:builtin_func.searchpairpos = {'min' : 3, 'max': 65535}
-let s:builtin_func.searchpos = {'min' : 1, 'max': 4}
-let s:builtin_func.server2client = {'min' : 2, 'max': 2}
-let s:builtin_func.serverlist = {'min' : 0, 'max': 0}
-let s:builtin_func.setbufvar = {'min' : 3, 'max': 3}
-let s:builtin_func.setcmdpos = {'min' : 1, 'max': 1}
-let s:builtin_func.setline = {'min' : 2, 'max': 2}
-let s:builtin_func.setloclist = {'min' : 2, 'max': 3}
-let s:builtin_func.setmatches = {'min' : 1, 'max': 1}
-let s:builtin_func.setpos = {'min' : 2, 'max': 2}
-let s:builtin_func.setqflist = {'min' : 1, 'max': 2}
-let s:builtin_func.setreg = {'min' : 2, 'max': 3}
-let s:builtin_func.settabvar = {'min' : 3, 'max': 3}
-let s:builtin_func.settabwinvar = {'min' : 4, 'max': 4}
-let s:builtin_func.setwinvar = {'min' : 3, 'max': 3}
-let s:builtin_func.shellescape = {'min' : 1, 'max': 2}
-let s:builtin_func.simplify = {'min' : 1, 'max': 1}
-let s:builtin_func.sin = {'min' : 1, 'max': 1}
-let s:builtin_func.sinh = {'min' : 1, 'max': 1}
-let s:builtin_func.sort = {'min' : 1, 'max': 3}
-let s:builtin_func.soundfold = {'min' : 1, 'max': 1}
-let s:builtin_func.spellbadword = {'min' : 0, 'max': 0}
-let s:builtin_func.spellsuggest = {'min' : 1, 'max': 3}
-let s:builtin_func.split = {'min' : 1, 'max': 3}
-let s:builtin_func.sqrt = {'min' : 1, 'max': 1}
-let s:builtin_func.str2float = {'min' : 1, 'max': 1}
-let s:builtin_func.str2nr = {'min' : 1, 'max': 2}
-let s:builtin_func.strchars = {'min' : 1, 'max': 1}
-let s:builtin_func.strdisplaywidth = {'min' : 1, 'max': 2}
-let s:builtin_func.strftime = {'min' : 1, 'max': 2}
-let s:builtin_func.stridx = {'min' : 2, 'max': 3}
-let s:builtin_func.string = {'min' : 1, 'max': 1}
-let s:builtin_func.strlen = {'min' : 1, 'max': 1}
-let s:builtin_func.strpart = {'min' : 2, 'max': 3}
-let s:builtin_func.strridx = {'min' : 2, 'max': 3}
-let s:builtin_func.strtrans = {'min' : 1, 'max': 1}
-let s:builtin_func.strwidth = {'min' : 1, 'max': 1}
-let s:builtin_func.submatch = {'min' : 1, 'max': 1}
-let s:builtin_func.substitute = {'min' : 4, 'max': 4}
-let s:builtin_func.synID = {'min' : 3, 'max': 3}
-let s:builtin_func.synIDattr = {'min' : 2, 'max': 3}
-let s:builtin_func.synIDtrans = {'min' : 1, 'max': 1}
-let s:builtin_func.synconcealed = {'min' : 2, 'max': 2}
-let s:builtin_func.synstack = {'min' : 2, 'max': 2}
-let s:builtin_func.system = {'min' : 1, 'max': 2}
-let s:builtin_func.tabpagebuflist = {'min' : 0, 'max': 1}
-let s:builtin_func.tabpagenr = {'min' : 0, 'max': 1}
-let s:builtin_func.tabpagewinnr = {'min' : 1, 'max': 2}
-let s:builtin_func.tagfiles = {'min' : 0, 'max': 0}
-let s:builtin_func.taglist = {'min' : 1, 'max': 1}
-let s:builtin_func.tan = {'min' : 1, 'max': 1}
-let s:builtin_func.tanh = {'min' : 1, 'max': 1}
-let s:builtin_func.tempname = {'min' : 0, 'max': 0}
-let s:builtin_func.tolower = {'min' : 1, 'max': 1}
-let s:builtin_func.toupper = {'min' : 1, 'max': 1}
-let s:builtin_func.tr = {'min' : 3, 'max': 3}
-let s:builtin_func.trunc = {'min' : 1, 'max': 1}
-let s:builtin_func.type = {'min' : 1, 'max': 1}
-let s:builtin_func.undofile = {'min' : 1, 'max': 1}
-let s:builtin_func.undotree = {'min' : 0, 'max': 0}
-let s:builtin_func.values = {'min' : 1, 'max': 1}
-let s:builtin_func.virtcol = {'min' : 1, 'max': 1}
-let s:builtin_func.visualmode = {'min' : 0, 'max': 1}
-let s:builtin_func.winbufnr = {'min' : 1, 'max': 1}
-let s:builtin_func.wincol = {'min' : 0, 'max': 0}
-let s:builtin_func.winheight = {'min' : 1, 'max': 1}
-let s:builtin_func.winline = {'min' : 0, 'max': 0}
-let s:builtin_func.winnr = {'min' : 0, 'max': 1}
-let s:builtin_func.winrestcmd = {'min' : 0, 'max': 0}
-let s:builtin_func.winrestview = {'min' : 1, 'max': 1}
-let s:builtin_func.winsaveview = {'min' : 0, 'max': 0}
-let s:builtin_func.winwidth = {'min' : 1, 'max': 1}
-let s:builtin_func.writefile = {'min' : 2, 'max': 3}
-" }}}
-
 function s:VimlLint.compile_call(node, refchk) "{{{
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let left = self.compile(a:node.left, 0)
   if has_key(left, 'value') && type(left.value) == type("")
-    " @TODO check built-in functions
-    if has_key(s:builtin_func, left.value)
-      if len(rlist) < s:builtin_func[left.value].min
+    let d = vimlint#builtin#get_func_inf(left.value)
+    if d != {}
+      if len(rlist) < d.min
         call self.error_mes(left, 'E119', 'Not enough arguments for function: ' . left.value, 1)
-      elseif len(rlist) > s:builtin_func[left.value].max
+      elseif len(rlist) > d.max
         call self.error_mes(left, 'E118', 'Too many arguments for function: ' . left.value, 1)
       else
 "        for i in range(len(rlist))
@@ -1624,7 +1577,6 @@ function s:VimlLint.compile_call(node, refchk) "{{{
 "        endfor
       endif
     endif
-
 
     " 例外で, map と filter と,
     " @TODO vital... はどうしよう
@@ -1966,4 +1918,4 @@ endfunction " }}}
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
-" vim:set et ts=2 sts=2 sw=2 tw=0 foldmethod=marker:
+" vim:set et ts=2 sts=2 sw=2 tw=0 foldmethod=marker commentstring=\ "\ %s:

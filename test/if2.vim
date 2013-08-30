@@ -1,6 +1,6 @@
 " @ERR []
 function! g:hoge(a)
-  if 1
+  if a:a == 1
     if a:a
       let b = 1
     else

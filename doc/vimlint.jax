@@ -27,6 +27,7 @@ EVL204: constant in conditional context
 
 system error
 EVL901: unkown type `t`
+EVL902: assert error `t`
 
 ==============================================================================
 vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
