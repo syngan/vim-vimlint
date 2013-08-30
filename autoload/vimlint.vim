@@ -756,7 +756,7 @@ function! s:reconstruct_varstack_st(self, env, p) " {{{
 endfunction " }}}
 
 function! s:echonode(node, refchk) " {{{
-"  echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
+  echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
     \ (has_key(a:node, "value") ?
     \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%") .
     \  ", ref=" . a:refchk
@@ -1632,6 +1632,11 @@ endfunction " }}}
 function s:VimlLint.compile_subscript(node) " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
+  if a:node.right.type == s:NODE_IDENTIFIER
+    if a:node.right.value =~# '^[gbwtslv]:$'
+      call self.error_mes(a:node.right, 'E731', 'using Dictionary as a String', 1)
+    endif
+  endif
   return a:node
 
   " @TODO left is a list or a dictionary
