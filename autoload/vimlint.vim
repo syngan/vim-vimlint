@@ -505,7 +505,6 @@ endfunction " }}}
 
 function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
   " remake
-"  echo "l:a is " . (has_key(a:env.var, "l:a") ? a:env.var["l:a"].ref : -100)
   for p in a:pos
     for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
@@ -516,7 +515,7 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
         let tail = len(a:env.varstack)
         call s:reconstruct_varstack_chk(a:self, a:env, v.zz, 1)
         let vs = a:env.varstack[tail :]
-"        echo "nop:" . v.rt_from . ".." . v.rt_to . ",tail=" . tail . ",vs=" . len(vs)
+"        echo "nop-:" . v.rt_from . ".." . v.rt_to . ",tail=" . tail . ",vs=" . len(vs)
         for ui in range(len(vs))
           call remove(a:env.varstack, -1)
         endfor
@@ -537,11 +536,13 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
         endfor
 
         let ti = 0
+        let ui = v.rt_from
         for ti in range(len(vs))
           if ui + ti >= v.rt_to && a:env.varstack[ui + ti].type != 'nop'
             throw "stop"
           endif
           let a:env.varstack[ui + ti] = vs[ti]
+"          echo "recon2: varstack[" . (ui+ti) . "]=vs[" . ti . "]=" . s:tostring_varstack_n(vs[ti])
           if vs[ti].type == "append" && has_key(vref, vs[ti].var)
             let vs[ti].v.ref += vref[vs[ti].var]
           endif
@@ -549,6 +550,7 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
         let ui = ui + ti
         while ui < v.rt_to
           let a:env.varstack[ui] = a:nop
+"          echo "recon2: varstack[" . (ui) . "]=nop"
           let ui = ui + 1
         endwhile
       endif
