@@ -3,12 +3,12 @@ scriptencoding utf-8
 let s:save_cpo = &cpo
 set cpo&vim
 
-" æœ€ä½é™ã‚„ã‚ŠãŸã„ã“ã¨ {{{
-" - let ã¤ã‘ãšã«å¤‰æ•°ä»£å…¥
-" - call ã¤ã‘ãšã«é–¢æ•°å‘¼ã³å‡ºã—
-" - built-in é–¢æ•°é–¢é€£ã®å¼•æ•°ãƒã‚§ãƒƒã‚¯
-" - scriptencoding æœ‰ç„¡
-" @TODO `=` ã¯ let ä»¥å¤–ã§ä½¿ã†å ´é¢ãŒã‚ã‚‹ã‹?
+" ºÇÄã¸Â¤ä¤ê¤¿¤¤¤³¤È {{{
+" - let ¤Ä¤±¤º¤ËÊÑ¿ôÂåÆş
+" - call ¤Ä¤±¤º¤Ë´Ø¿ô¸Æ¤Ó½Ğ¤·
+" - built-in ´Ø¿ô´ØÏ¢¤Î°ú¿ô¥Á¥§¥Ã¥¯
+" - scriptencoding Í­Ìµ
+" @TODO `=` ¤Ï let °Ê³°¤Ç»È¤¦¾ìÌÌ¤¬¤¢¤ë¤«?
 "
 " Variable i used before definition
 " An rvalue is used that may not be initialized to a value on some execution
@@ -208,14 +208,14 @@ function! s:VimlLint.error_mes(node, eid, mes, print) " {{{
   endif
 endfunction " }}}
 
-" å¤‰æ•°å‚ç…§ s:exists_var(env, node) {{{
+" ÊÑ¿ô»²¾È s:exists_var(env, node) {{{
 " @param var string
 " @param node dict: return value of compile
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
 function! s:exists_var(self, env, node)
   let var = a:node.value
   if var =~# '#'
-    " ãƒã‚§ãƒƒã‚¯ã§ããªã„
+    " ¥Á¥§¥Ã¥¯¤Ç¤­¤Ê¤¤
     return 1
   endif
 
@@ -228,24 +228,24 @@ function! s:exists_var(self, env, node)
   endif
 
   if var =~# '^[gbwt]:'
-    " check ã§ããªã„
-    " å‹ãã‚‰ã„ã¯ä¿å­˜ã—ã¦ã¿ã‚‹?
+    " check ¤Ç¤­¤Ê¤¤
+    " ·¿¤¯¤é¤¤¤ÏÊİÂ¸¤·¤Æ¤ß¤ë?
     return 1
   elseif var =~# '^[s]:'
-    " å­˜åœ¨ã—ã¦ã„ã‚‹ã“ã¨ã«ã—ã¦å…ˆã«ã™ã™ã‚€.
-    " ã©ã“ã§å®šç¾©ã•ã‚Œã‚‹ã‹ã‚ã‹ã‚‰ãªã„
+    " Â¸ºß¤·¤Æ¤¤¤ë¤³¤È¤Ë¤·¤ÆÀè¤Ë¤¹¤¹¤à.
+    " ¤É¤³¤ÇÄêµÁ¤µ¤ì¤ë¤«¤ï¤«¤é¤Ê¤¤
     call s:append_var_(a:env.global, var, a:node, 0, -1)
     return 1
   elseif var =~# '^v:'
     " @TODO :help v:
-    " @TODO map å†…ãªã©ã‹?
+    " @TODO map Æâ¤Ê¤É¤«?
     return 1
   else
-    " ãƒ­ãƒ¼ã‚«ãƒ«å¤‰æ•°
+    " ¥í¡¼¥«¥ëÊÑ¿ô
     let env = a:env
     while has_key(env, 'var')
       if has_key(env.var, var)
-        " ã‚«ã‚¦ãƒ³ã‚¿ã‚’ã‚¢ãƒƒãƒ—ãƒ‡ãƒ¼ãƒ‰
+        " ¥«¥¦¥ó¥¿¤ò¥¢¥Ã¥×¥Ç¡¼¥É
         let stat = env.var[var].stat
         call s:append_var_(env, var, a:node, 0, -1)
 
@@ -253,14 +253,14 @@ function! s:exists_var(self, env, node)
           return 1
         endif
 
-        " è­¦å‘Š
+        " ·Ù¹ğ
         call a:self.error_mes(a:node, 'EVL104', 'variable may not be initialized on some execution path: `' . var . '`', 1)
         return 0
       endif
       let env = env.outer
     endwhile
 
-    " å­˜åœ¨ã—ãªã‹ã£ãŸ
+    " Â¸ºß¤·¤Ê¤«¤Ã¤¿
     call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', 1)
     return 0
   endif
@@ -291,8 +291,8 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
     if a:cnt > 0
       let v.subs += 1
       if v.stat != 0
-        " ã©ã“ã‹ã®ãƒ«ãƒ¼ãƒˆã§ã¯æœªå®šç¾©ã ã£ãŸå¯èƒ½æ€§ãŒã‚ã‚‹ã‚‚ã®ã‚’
-        " ã¡ã‚ƒã‚“ã¨å®šç¾©ã—ãŸ.
+        " ¤É¤³¤«¤Î¥ë¡¼¥È¤Ç¤ÏÌ¤ÄêµÁ¤À¤Ã¤¿²ÄÇ½À­¤¬¤¢¤ë¤â¤Î¤ò
+        " ¤Á¤ã¤ó¤ÈÄêµÁ¤·¤¿.
         "
         " if 1
         "   let a = 1
@@ -301,7 +301,7 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
         "   " does not define a
         " endif
         " ...
-        " let a = 2 " <= ã“ã“
+        " let a = 2 " <= ¤³¤³
         call s:push_varstack(a:env, {
           \ 'type' : 'update',
           \ 'v' : v,
@@ -344,8 +344,8 @@ function! s:append_var_(env, var, node, val, cnt) " {{{
   endif
 endfunction " }}}
 
-" å¤‰æ•°ä»£å…¥s:VimlLint.append_var(env, var, val, pos) " {{{
-" let ã§ã„ã†ã¨ã“ã‚ã®
+" ÊÑ¿ôÂåÆşs:VimlLint.append_var(env, var, val, pos) " {{{
+" let ¤Ç¤¤¤¦¤È¤³¤í¤Î
 " left node  = var
 " right node = val
 " pos = string
@@ -367,14 +367,14 @@ function! s:VimlLint.append_var(env, var, val, pos)
       throw "stop"
     endif
     if a:pos == 'a:'
-      " é–¢æ•°å¼•æ•°
+      " ´Ø¿ô°ú¿ô
       if v != '...'
         let ret = s:append_var_(a:env, 'a:' . v, node, a:val, 1)
       endif
       return ret
     endif
 
-    " æ¥é ­å­ã¯å¿…ãšã¤ã‘ã‚‹.
+    " ÀÜÆ¬»Ò¤ÏÉ¬¤º¤Ä¤±¤ë.
     if v !~# '^[gbwtslv]:' && v !~# '#'
       if a:env.global == a:env
         let v = 'g:' . v
@@ -406,7 +406,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
   return ret
 endfunction " }}}
 
-function! s:delete_var(env, var) " {{{
+function! s:delete_var(self, env, var, chk) " {{{
   if a:var.type == s:NODE_IDENTIFIER
     let name = a:var.value
     if name !~# '^[gbwtslv]:' && name !~# '#'
@@ -420,6 +420,9 @@ function! s:delete_var(env, var) " {{{
     if has_key(a:env.var, name)
       let e = a:env
       let v = e.var[name]
+      if a:chk == 1 && v.ref == 1
+        call a:self.error_mes(v.node, 'EVL102', 'unused variable `' . name . '`', 1)
+      endif
       unlet a:env.var[name]
     elseif has_key(a:env.global.var, name)
       let e = a:env.global
@@ -454,7 +457,7 @@ function! s:gen_pos_cntl(env, p) " {{{
 endfunction " }}}
 
 function! s:restore_varstack(env, pos, pp) " {{{
-  " @param pp ã¯ debug ç”¨
+  " @param pp ¤Ï debug ÍÑ
   call s:simpl_varstack(a:env, a:pos, len(a:env.varstack) - 1)
   let i = len(a:env.varstack)
   call s:decho("restore: " . a:pp . ": " . a:pos)
@@ -465,8 +468,8 @@ function! s:restore_varstack(env, pos, pp) " {{{
     if v.type == 'delete'
       let v.env.var[v.var] = v.v
     elseif v.type == 'append'
-      " break ã•ã‚ŒãŸã‚Šã™ã‚‹ã¨ãã® restore ã§ã¯
-      " let ã•ã‚Œã¦ã„ã‚‹ã¨ã¯é™ã‚‰ãªã„
+      " break ¤µ¤ì¤¿¤ê¤¹¤ë¤È¤­¤Î restore ¤Ç¤Ï
+      " let ¤µ¤ì¤Æ¤¤¤ë¤È¤Ï¸Â¤é¤Ê¤¤
       " @TODO
       if has_key(v.env.var, v.var)
         unlet v.env.var[v.var]
@@ -492,8 +495,8 @@ function! s:simpl_varstack(env, pos, pose) " {{{
       let j = d[v.var]
       let u = a:env.varstack[j]
       if u.type != v.type
-        " let ã—ã¦ unlet
-        " unlet ã—ã¦ let
+        " let ¤·¤Æ unlet
+        " unlet ¤·¤Æ let
         let a:env.varstack[i] = nop
         let a:env.varstack[j] = nop
         unlet d[v.var]
@@ -526,7 +529,7 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
 
         let ui = v.rt_from
 
-        " @TODO å‚ç…§æƒ…å ±ã‚’ã‚³ãƒ”ãƒ¼. ã‹ãªã‚Šå¼·å¼•.
+        " @TODO »²¾È¾ğÊó¤ò¥³¥Ô¡¼. ¤«¤Ê¤ê¶¯°ú.
         let vref = {}
         for ui in range(v.rt_from, v.rt_to - 1)
           let vp = a:env.varstack[ui]
@@ -565,23 +568,23 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
 endfunction " }}}
 
 function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
-  " ã™ã¹ã¦ã®ãƒ«ãƒ¼ãƒˆã‚’ãƒã‚§ãƒƒã‚¯ã—ã¦,
-  " å¤‰æ•°ã®ä»£å…¥ã€å‚ç…§çŠ¶æ…‹ã‚’æ§‹ç¯‰ã™ã‚‹
-  let vardict = {} " å¤‰æ•°æƒ…å ±ã‚’è©°ã‚è¾¼ã‚€
+  " ¤¹¤Ù¤Æ¤Î¥ë¡¼¥È¤ò¥Á¥§¥Ã¥¯¤·¤Æ,
+  " ÊÑ¿ô¤ÎÂåÆş¡¢»²¾È¾õÂÖ¤ò¹½ÃÛ¤¹¤ë
+  let vardict = {} " ÊÑ¿ô¾ğÊó¤òµÍ¤á¹ş¤à
   let nop = a:nop
 
-  let N = 0 " return ã—ãªã„ãƒ«ãƒ¼ãƒˆæ•°
-  let N_lp = 0 " break/continue ã•ã‚ŒãŸãƒ«ãƒ¼ãƒˆæ•°
+  let N = 0 " return ¤·¤Ê¤¤¥ë¡¼¥È¿ô
+  let N_lp = 0 " break/continue ¤µ¤ì¤¿¥ë¡¼¥È¿ô
 
   for p in a:pos
     call s:decho("reconstruct_rt: " . string(p) . "/" . len(a:pos))
-    if p[2] " return ã—ãŸ.
-      " ã‚¤ãƒ™ãƒ³ãƒˆã‚’ãªã‹ã£ãŸã“ã¨ã«ã™ã‚‹
+    if p[2] " return ¤·¤¿.
+      " ¥¤¥Ù¥ó¥È¤ò¤Ê¤«¤Ã¤¿¤³¤È¤Ë¤¹¤ë
       for j in range(p[0], p[1] - 1)
         let v = a:env.varstack[j]
         if v.type == 'append' && v.v.ref == 0 && a:env.global.fins == 0
-          " å¤‰æ•°ã‚’è¿½åŠ ã—ãŸãŒå‚ç…§ã—ã¦ã„ãªã„
-          " ã‹ã¤,  finally å¥ãŒãªã„å ´åˆ
+          " ÊÑ¿ô¤òÄÉ²Ã¤·¤¿¤¬»²¾È¤·¤Æ¤¤¤Ê¤¤
+          " ¤«¤Ä,  finally ¶ç¤¬¤Ê¤¤¾ì¹ç
           call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var. '`', 1)
         endif
         let a:env.varstack[j] = nop
@@ -602,8 +605,8 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
         continue
       endif
       if has_key(vi, v.var)
-        " if æ–‡å†…ã§å®šç¾©ã—ãŸã‚‚ã®ã‚’å‰Šé™¤ã—ãŸ ãªã©
-        " simplify ã«ã‚ˆã‚Šã‚ã‚Šãˆãªã„
+        " if Ê¸Æâ¤ÇÄêµÁ¤·¤¿¤â¤Î¤òºï½ü¤·¤¿ ¤Ê¤É
+        " simplify ¤Ë¤è¤ê¤¢¤ê¤¨¤Ê¤¤
         echo "============ ERR ============="
 "        echo v
 "        echo vi[v.var]
@@ -611,7 +614,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
       endif
 
       if v.type == 'delete'
-        " if æ–‡å‰ã«å®šç¾©ã—ãŸã‚‚ã®ã‚’å‰Šé™¤ã—ãŸ
+        " if Ê¸Á°¤ËÄêµÁ¤·¤¿¤â¤Î¤òºï½ü¤·¤¿
         let vi[v.var] = [v, 0, 1, 0, 0]
       elseif v.type == 'append' || v.type == 'update'
         let vi[v.var] = [v, 1, 0, 0, 0]
@@ -620,10 +623,10 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
       endif
     endfor
 
-    " æƒ…å ±ã‚’ãƒãƒ¼ã‚¸
+    " ¾ğÊó¤ò¥Ş¡¼¥¸
     for k in keys(vi)
       call s:decho("_rt(): vi[" . k . "]=" . string(vi[k][1:]) . ",ref=" . vi[k][0].v.ref)
-      if vi[k][1] != vi[k][2] " nop ä»¥å¤–? ã‚ã‹ã‚
+      if vi[k][1] != vi[k][2] " nop °Ê³°? ¤ï¤«¤á
         if has_key(vardict, k)
           let vardict[k][1] += vi[k][1]
           let vardict[k][2] += vi[k][2]
@@ -640,7 +643,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
 endfunction " }}}
 
 function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
-  " reconstruct_varstack_rt() ã§æ§‹ç¯‰ã—ãŸæƒ…å ±ã‚’ã‚‚ã¨ã«,
+  " reconstruct_varstack_rt() ¤Ç¹½ÃÛ¤·¤¿¾ğÊó¤ò¤â¤È¤Ë,
   let vardict = a:rtret[0]
   let N = a:rtret[1]
   let N_lp = a:rtret[2]
@@ -648,15 +651,15 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
   for k in keys(vardict)
     let z = vardict[k]
     if z[2]  + N_lp == N
-      " ã™ã¹ã¦ã®ãƒ«ãƒ¼ãƒˆã§ delete
-      call s:delete_var(a:env, z[0].node)
+      " ¤¹¤Ù¤Æ¤Î¥ë¡¼¥È¤Ç delete
+      call s:delete_var(a:self, a:env, z[0].node, -1)
     else
       try
-        " ã‚ã‚‹ãƒ«ãƒ¼ãƒˆã§ã¯ delete ã•ã‚Œãªã‹ã£ãŸ.
-        " ã‚ã‚‹ãƒ«ãƒ¼ãƒˆã§ append ã•ã‚ŒãŸ
-        " ã™ã¹ã¦ã®ãƒ«ãƒ¼ãƒˆã§ append ã•ã‚ŒãŸ
+        " ¤¢¤ë¥ë¡¼¥È¤Ç¤Ï delete ¤µ¤ì¤Ê¤«¤Ã¤¿.
+        " ¤¢¤ë¥ë¡¼¥È¤Ç append ¤µ¤ì¤¿
+        " ¤¹¤Ù¤Æ¤Î¥ë¡¼¥È¤Ç append ¤µ¤ì¤¿
         let z[0].v.v = a:self.append_var(z[0].env, z[0].node, z[0].var, 'reconstruct')
-        " ref æƒ…å ±ã‚’è¿½åŠ ã—ãªã„ã¨.
+        " ref ¾ğÊó¤òÄÉ²Ã¤·¤Ê¤¤¤È.
         if z[3] > 0
           call s:exists_var(a:self, a:self.env, z[0].node)
         endif
@@ -670,8 +673,8 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
 
 "echo "z=" . string(z[1]) . ",N_lp=" . N_lp . ",N=" . N
       if z[1] + N_lp != N
-        " ã™ã¹ã¦ã® route ã§ append ã•ã‚Œã¦ã„ãªã„
-        " ä¸­é€”åŠç«¯ã«å®šç¾©ã•ã‚Œã¦ã„ã‚‹çŠ¶æ…‹
+        " ¤¹¤Ù¤Æ¤Î route ¤Ç append ¤µ¤ì¤Æ¤¤¤Ê¤¤
+        " ÃæÅÓÈ¾Ã¼¤ËÄêµÁ¤µ¤ì¤Æ¤¤¤ë¾õÂÖ
         let var = z[0].env.var[z[0].var]
         let var.stat = 1
 "echo "stat=1"
@@ -681,15 +684,15 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
 endfunction "}}}
 
 function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
-  " a:pos ã¯ s:gen_pos_cntl() ã«ã‚ˆã‚Šæ§‹ç¯‰ã•ã‚Œã‚‹
-  " ã™ã¹ã¦ã®ãƒ«ãƒ¼ãƒˆã‚’ã¿ã¦å¤‰æ•°å®šç¾©ã¾ã‚ã‚Šã®æƒ…å ±ã‚’å†æ§‹ç¯‰ã™ã‚‹
-  " test/for7.vim ã¨ã‹.
+  " a:pos ¤Ï s:gen_pos_cntl() ¤Ë¤è¤ê¹½ÃÛ¤µ¤ì¤ë
+  " ¤¹¤Ù¤Æ¤Î¥ë¡¼¥È¤ò¤ß¤ÆÊÑ¿ôÄêµÁ¤Ş¤ï¤ê¤Î¾ğÊó¤òºÆ¹½ÃÛ¤¹¤ë
+  " test/for7.vim ¤È¤«.
 
   let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0, 'stat' : 0}}
 "  echo "reconstruct: " . string(a:pos)
 
   if a:is_loop
-    " varstack ã‚’ modify ã™ã‚‹.
+    " varstack ¤ò modify ¤¹¤ë.
 
     call s:reconstruct_varstack_rm(a:self, a:env, a:pos, nop)
     let rtret = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
@@ -702,7 +705,7 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   let N_lp = rtret[2]
 
   if N == 0
-    " ã™ã¹ã¦ã® route ã§ return
+    " ¤¹¤Ù¤Æ¤Î route ¤Ç return
     let a:self.env.ret = 1
     return
   endif
@@ -710,7 +713,7 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   call s:reconstruct_varstack_chk(a:self, a:env, rtret, 0)
 
   if N_lp == 0
-    " break/continue ã¯ãªã‹ã£ãŸ
+    " break/continue ¤Ï¤Ê¤«¤Ã¤¿
     return
   endif
 
@@ -718,11 +721,11 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   "   if
   "     let a = 1
   "     break
-  "   ....  ã“ã“ã§ã¯ a ã¯æœªå®šç¾©
+  "   ....  ¤³¤³¤Ç¤Ï a ¤ÏÌ¤ÄêµÁ
   "
-  " ... ã“ã“ã§ã¯ a ãŒä¸­é€”åŠç«¯å®šç¾©
+  " ... ¤³¤³¤Ç¤Ï a ¤¬ÃæÅÓÈ¾Ã¼ÄêµÁ
   if N == N_lp
-    " ã™ã¹ã¦ã®ãƒ«ãƒ¼ãƒˆã§ break/continue
+    " ¤¹¤Ù¤Æ¤Î¥ë¡¼¥È¤Ç break/continue
     let a:self.env.loopb = 1
   endif
 
@@ -730,7 +733,7 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
     return
   endif
 
-  " for/while ã®å¤–å´ç”¨ã«è¿½åŠ .
+  " for/while ¤Î³°Â¦ÍÑ¤ËÄÉ²Ã.
   let v = deepcopy(nop)
   let v.rt_from = a:pos[0][0]
   let v.rt_to = len(a:env.varstack)
@@ -738,7 +741,7 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   call s:decho("construct rvrt2: range=" . v.rt_from . ".." . v.rt_to)
   let rvrt2 = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
   call s:decho("vard=" . len(vardict) . ", var2=" . len(rvrt2[0]))
-  " @TODO å‚ç…§æƒ…å ±ã‚’ã‚³ãƒ”ãƒ¼ã™ã‚‹.
+  " @TODO »²¾È¾ğÊó¤ò¥³¥Ô¡¼¤¹¤ë.
 
   if len(vardict) <= len(rvrt2[0]) - 1
     for i in range(len(vardict), len(rvrt2[0]) - 1)
@@ -751,8 +754,8 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
 endfunction " }}}
 
 function! s:reconstruct_varstack_st(self, env, p) " {{{
-  " try å¥ã® reconstrutt. ã©ã“ã§ä¾‹å¤–ãŒç™ºç”Ÿã™ã‚‹ã‹ã‚ã‹ã‚‰ãªã„çŠ¶æ…‹
-  " @param p(list) reconstruct_varstack() ã® pos(listlist) ã¨åŒã˜ã§ã¯ãªã„
+  " try ¶ç¤Î reconstrutt. ¤É¤³¤ÇÎã³°¤¬È¯À¸¤¹¤ë¤«¤ï¤«¤é¤Ê¤¤¾õÂÖ
+  " @param p(list) reconstruct_varstack() ¤Î pos(listlist) ¤ÈÆ±¤¸¤Ç¤Ï¤Ê¤¤
   for j in range(a:p, len(a:env.varstack) - 1)
     let v = a:env.varstack[j]
     if v.type == 'append'
@@ -972,7 +975,7 @@ endfunction " }}}
 function s:VimlLint.compile_excmd(node, refchk) " {{{
 " @TODO
 " e.g. set cpo&vim
-" e.g. a = 3   (let æ¼ã‚Œ)
+" e.g. a = 3   (let Ï³¤ì)
 
   "  lcd `=cwd`
   let s = matchstr(a:node.str, "`=.[^`]*`")
@@ -991,7 +994,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   endif
 
   let s = substitute(a:node.str, '\s', '', 'g')
-  " call ã¤ã‘ã¦ parse ã—ãªãŠã—ãŸã»ã†ãŒè‰¯ã„ã ã‚ã†ã‘ã©.
+  " call ¤Ä¤±¤Æ parse ¤·¤Ê¤ª¤·¤¿¤Û¤¦¤¬ÎÉ¤¤¤À¤í¤¦¤±¤É.
   if a:node.str !~# '^\s*\w\+\s\+\w' &&
   \  s =~# '^\([gbwtsl]:\)\?[#A-Za-z0-9_]\+\(\.\w\+\|\[.*\]\)*(.*)$'
     call self.error_mes(a:node, 'EVL202', 'missing call `' . s . '`', 1)
@@ -1000,7 +1003,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 endfunction
 
 function s:VimlLint.compile_function(node, refchk)
-  " @TODO left ãŒ dot/subs ã ã£ãŸå ´åˆã«ã®ã¿ self ã¯äºˆç´„èªã¨ã™ã‚‹ #5
+  " @TODO left ¤¬ dot/subs ¤À¤Ã¤¿¾ì¹ç¤Ë¤Î¤ß self ¤ÏÍ½Ìó¸ì¤È¤¹¤ë #5
   let left = self.compile(a:node.left, 0) " name of function
   let rlist = map(a:node.rlist, 'self.compile(v:val, 0)')  " list of argument string
 
@@ -1016,10 +1019,10 @@ function s:VimlLint.compile_function(node, refchk)
   endfor
   call self.compile_body(a:node.body, 1)
 
-  " æœªä½¿ç”¨å¤‰æ•°ã¯?
+  " Ì¤»ÈÍÑÊÑ¿ô¤Ï?
   for v in keys(self.env.var)
     if self.env.var[v].ref == 0
-      " a: ã¯ä¾‹å¤–ã¨ã™ã‚‹, ã‚ªãƒ—ã‚·ãƒ§ãƒ³ãŒå¿…è¦ @TODO
+      " a: ¤ÏÎã³°¤È¤¹¤ë, ¥ª¥×¥·¥ç¥ó¤¬É¬Í× @TODO
 "      echo self.env.var[v]
       if v =~# '^a:'
         call self.error_mes(self.env.var[v].node, 'EVL103', 'unused argument `' . v . '`', self.param['unused_argument'])
@@ -1033,7 +1036,7 @@ function s:VimlLint.compile_function(node, refchk)
 endfunction " }}}
 
 function s:VimlLint.compile_delfunction(node, rechk) " {{{
-  " @TODO function ã¯å®šç¾©æ¸ˆã‹?
+  " @TODO function ¤ÏÄêµÁºÑ¤«?
 endfunction " }}}
 
 function s:VimlLint.compile_return(node, refchk) " {{{
@@ -1081,12 +1084,12 @@ function s:VimlLint.compile_let(node, refchk) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_unlet(node, refchk) "{{{
-  " @TODO unlet! ã®å ´åˆã«ã¯å­˜åœ¨ãƒã‚§ãƒƒã‚¯ä¸è¦
+  " @TODO unlet! ¤Î¾ì¹ç¤Ë¤ÏÂ¸ºß¥Á¥§¥Ã¥¯ÉÔÍ×
   let f = a:node.ea.forceit ? 0 : 1
   let list = map(a:node.list, 'self.compile(v:val, ' . f . ')')
   for v in list
     " unlet
-    call s:delete_var(self.env, v)
+    call s:delete_var(self, self.env, v, f)
   endfor
 endfunction "}}}
 
@@ -1149,7 +1152,7 @@ function s:VimlLint.compile_if(node, refchk) "{{{
   call s:reset_env_cntl(self.env)
 
   " reconstruct
-  " let ã—ã¦ return ã—ãŸã€ã¯ let ã—ã¦ã„ãªã„ã«ã™ã‚‹
+  " let ¤·¤Æ return ¤·¤¿¡¢¤Ï let ¤·¤Æ¤¤¤Ê¤¤¤Ë¤¹¤ë
   call s:decho("call reconstruct _ifs: " . string(a:node.pos))
   call s:reconstruct_varstack(self, self.env, pos, 0)
   call s:decho("call reconstruct _ife: " . string(a:node.pos))
@@ -1174,18 +1177,18 @@ function s:VimlLint.compile_while(node, refchk) "{{{
 
   let self.env.global.loop += 1
 
-  " while æ–‡ã®ä¸­
+  " while Ê¸¤ÎÃæ
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
   if cond.type != s:NODE_NUMBER
-    " é€šå¸¸ãƒ«ãƒ¼ãƒˆ
+    " ÄÌ¾ï¥ë¡¼¥È
     call s:restore_varstack(self.env, p, "whl")
     let pos = [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
 
 
-    " while ã«ã¯ã„ã‚‰ãªã‹ã£ãŸå ´åˆ
+    " while ¤Ë¤Ï¤¤¤é¤Ê¤«¤Ã¤¿¾ì¹ç
     let p = len(self.env.varstack)
     let pos += [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
@@ -1193,8 +1196,8 @@ function s:VimlLint.compile_while(node, refchk) "{{{
     call s:reconstruct_varstack(self, self.env, pos, 1)
   else
     " while 1
-    " return/break/continue ãŒå¿…é ˆ.
-    " throw ãŒã‚ã‚‹ã‹ã‚‰....
+    " return/break/continue ¤¬É¬¿Ü.
+    " throw ¤¬¤¢¤ë¤«¤é....
     let self.env.loopb = 0
   endif
 
@@ -1203,8 +1206,8 @@ function s:VimlLint.compile_while(node, refchk) "{{{
 endfunction "}}}
 
 function s:VimlLint.compile_for(node, refchk) "{{{
-  " VAR ãŒå¤‰æ•°ã®ãƒªã‚¹ãƒˆã€ã¾ãŸã¯å¤‰æ•°ã§ã‚ã‚‹ã“ã¨ã¯, vimlparser ãŒãƒã‚§ãƒƒã‚¯ã—ã¦ã„ã‚‹
-  " right ãŒãƒªã‚¹ãƒˆã§ã‚ã‚‹ã“ã¨ã¯ãƒã‚§ãƒƒã‚¯ã—ã¦ã„ãªã„.
+  " VAR ¤¬ÊÑ¿ô¤Î¥ê¥¹¥È¡¢¤Ş¤¿¤ÏÊÑ¿ô¤Ç¤¢¤ë¤³¤È¤Ï, vimlparser ¤¬¥Á¥§¥Ã¥¯¤·¤Æ¤¤¤ë
+  " right ¤¬¥ê¥¹¥È¤Ç¤¢¤ë¤³¤È¤Ï¥Á¥§¥Ã¥¯¤·¤Æ¤¤¤Ê¤¤.
   " for VAR in LIST
   "   BODy
   " endfor
@@ -1248,7 +1251,7 @@ function s:VimlLint.compile_for(node, refchk) "{{{
 
   let self.env.global.loop += 1
 
-  " for æ–‡ã®ä¸­
+  " for Ê¸¤ÎÃæ
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, 1)
 
@@ -1257,7 +1260,7 @@ function s:VimlLint.compile_for(node, refchk) "{{{
   let pos = [s:gen_pos_cntl(self.env, p)]
   call s:reset_env_cntl(self.env)
   if right.type != s:NODE_LIST
-    " for ã«ã¯ã„ã‚‰ãªã‹ã£ãŸå ´åˆ
+    " for ¤Ë¤Ï¤¤¤é¤Ê¤«¤Ã¤¿¾ì¹ç
     let p = len(self.env.varstack)
     let pos += [s:gen_pos_cntl(self.env, p)]
   endif
@@ -1299,14 +1302,14 @@ function s:VimlLint.compile_try(node, refchk) "{{{
   let loopb = self.env.loopb
   call s:reset_env_cntl(self.env)
 
-  " try å¥ã¯ã©ã“ã§æŠœã‘ã‚‹ã‹ã‚ã‹ã‚‰ãªã„ãŸã‚
-  " å®šç¾©ã—ãŸã™ã¹ã¦ã®å¤‰æ•°ã¯å®šç¾©ã•ã‚Œã¦ã„ã‚‹ã‹ã‚‚çŠ¶æ…‹,
-  " ã¤ã¾ã‚Š stat=1 ã«ã™ã‚‹.
+  " try ¶ç¤Ï¤É¤³¤ÇÈ´¤±¤ë¤«¤ï¤«¤é¤Ê¤¤¤¿¤á
+  " ÄêµÁ¤·¤¿¤¹¤Ù¤Æ¤ÎÊÑ¿ô¤ÏÄêµÁ¤µ¤ì¤Æ¤¤¤ë¤«¤â¾õÂÖ,
+  " ¤Ä¤Ş¤ê stat=1 ¤Ë¤¹¤ë.
   call s:reconstruct_varstack_st(self, self.env, 0)
 
   let pos = []
   for node in a:node.catch
-    " catch éƒ¨. error ãŒèµ·ã“ã‚‹ã®ã¯ try éƒ¨ã®æœ€åˆã¨ä»®å®šã—ã¦ã—ã¾ã£ã¦è‰¯ã„ã‹?
+    " catch Éô. error ¤¬µ¯¤³¤ë¤Î¤Ï try Éô¤ÎºÇ½é¤È²¾Äê¤·¤Æ¤·¤Ş¤Ã¤ÆÎÉ¤¤¤«?
     let p = len(self.env.varstack)
 
     if node.pattern isnot s:NIL
@@ -1344,7 +1347,7 @@ endfunction "}}}
 
 function s:VimlLint.compile_throw(node, refchk) "{{{
   call self.compile(a:node.left, 1)
-  " return ã¿ãŸã„ãªã‚‚ã®ã§ã—ã‚‡ã†.
+  " return ¤ß¤¿¤¤¤Ê¤â¤Î¤Ç¤·¤ç¤¦.
   let self.env.ret = 1
 endfunction "}}}
 
@@ -1580,14 +1583,14 @@ function s:VimlLint.compile_call(node, refchk) "{{{
         call self.error_mes(left, 'E118', 'Too many arguments for function: ' . left.value, 1)
       else
 "        for i in range(len(rlist))
-          " å‹ãƒã‚§ãƒƒã‚¯
+          " ·¿¥Á¥§¥Ã¥¯
 "        endfor
       endif
     endif
 
-    " ä¾‹å¤–ã§, map ã¨ filter ã¨,
-    " @TODO vital... ã¯ã©ã†ã—ã‚ˆã†
-    " å¼•æ•°èª¤ã‚Šã¯ãƒã‚§ãƒƒã‚¯æ¸ˆ, ã«ã™ã‚‹.
+    " Îã³°¤Ç, map ¤È filter ¤È,
+    " @TODO vital... ¤Ï¤É¤¦¤·¤è¤¦
+    " °ú¿ô¸í¤ê¤Ï¥Á¥§¥Ã¥¯ºÑ, ¤Ë¤¹¤ë.
     if left.value == 'map' || left.value == 'filter'
       if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'value')
         if rlist[1].type == s:NODE_STRING
@@ -1663,7 +1666,7 @@ function s:VimlLint.compile_number(node) " {{{
 "  return { 'type' : 'integer', 'val' : a:node.value, 'node' : a:node}
 endfunction " }}}
 
-" map ã®å¼•æ•°ãªã©ã‚’ã©ã†å‡¦ç†ã™ã‚‹ã‹?
+" map ¤Î°ú¿ô¤Ê¤É¤ò¤É¤¦½èÍı¤¹¤ë¤«?
 function s:VimlLint.compile_string(node) " {{{
   return a:node
 "  return { 'type' : 'string', 'val' : a:node.value, 'node' : a:node}
@@ -1676,7 +1679,7 @@ function s:VimlLint.compile_list(node, refchk) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_dict(node, refchk) " {{{
-  " @TODO æ–‡å­—åˆ—ã®ã¿
+  " @TODO Ê¸»úÎó¤Î¤ß
   for i in range(len(a:node.value))
     let v = a:node.value[i]
     let v[0] = self.compile(v[0], 1)
@@ -1763,8 +1766,8 @@ function s:VimlLint.compile_op2(node, op) " {{{
 
   return a:node
 
-  " @TODO æ¯”è¼ƒ/æ¼”ç®—ã§ãã‚‹å‹ã©ã†ã—ã‹.
-  " @TODO æ¼”ç®—çµæœã®å‹ã‚’è¿”ã™ã‚ˆã†ã«ã™ã‚‹
+  " @TODO Èæ³Ó/±é»»¤Ç¤­¤ë·¿¤É¤¦¤·¤«.
+  " @TODO ±é»»·ë²Ì¤Î·¿¤òÊÖ¤¹¤è¤¦¤Ë¤¹¤ë
 endfunction " }}}
 
 function! s:vimlint_file(filename, param) " {{{
@@ -1788,7 +1791,7 @@ function! s:vimlint_file(filename, param) " {{{
     endif
     call c.compile(p.parse(r), 1)
 
-    " global å¤‰æ•°ã®ãƒã‚§ãƒƒã‚¯
+    " global ÊÑ¿ô¤Î¥Á¥§¥Ã¥¯
     let env = c.env
     for v in keys(env.var)
       if env.var[v].subs == 0

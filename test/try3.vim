@@ -9,7 +9,7 @@ function! g:hoge()
       echo 123
     endtry
 
-    if pos < 0
+    if pos + a < 0
       continue
     endif
     unlet a

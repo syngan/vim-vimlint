@@ -7,7 +7,7 @@ function! g:hoge()
     endif
 
     let a = 2
-    echo a
+    echo a . b
     unlet b
   endfor
 endfunction
