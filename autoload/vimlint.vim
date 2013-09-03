@@ -434,7 +434,7 @@ function! s:delete_var(env, var) " {{{
 
   call s:push_varstack(a:env, {
     \ 'type' : 'delete',
-    \ 'var' : a:var.value,
+    \ 'var' : name,
     \ 'env' : e,
     \ 'node' : a:var,
     \ 'v' : v,
