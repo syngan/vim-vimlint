@@ -160,6 +160,13 @@ function! s:tostring_varstack_n(v)
   endif
   return s
 endfunction
+
+function! s:decho(str)
+  if g:vimlint#debug > 1
+    echo a:str
+  endif
+endfunction
+
 " }}}
 
 function! s:env(outer, funcname) " {{{
@@ -450,11 +457,11 @@ function! s:restore_varstack(env, pos, pp) " {{{
   " @param pp は debug 用
   call s:simpl_varstack(a:env, a:pos, len(a:env.varstack) - 1)
   let i = len(a:env.varstack)
-"  echo "restore: " . a:pp . ": " . a:pos
+  call s:decho("restore: " . a:pp . ": " . a:pos)
   while i > a:pos
     let i = i - 1
     let v = a:env.varstack[i]
-"    echo "restore[" . a:pp . "] " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : " . s:tostring_varstack_n(v)
+    call s:decho("restore[" . a:pp . "] " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : " . s:tostring_varstack_n(v))
     if v.type == 'delete'
       let v.env.var[v.var] = v.v
     elseif v.type == 'append'
@@ -476,7 +483,7 @@ function! s:simpl_varstack(env, pos, pose) " {{{
   let d = {}
   let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0, 'stat' : 0}}
 
-"  echo "simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1)
+  call s:decho("simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1))
   for i in range(a:pos, a:pose)
     let v = a:env.varstack[i]
     if v.type == 'nop'
@@ -505,14 +512,14 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
   for p in a:pos
     for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
-"      echo "v[" . j . "]=" . v.type
+      call s:decho("v[" . j . "]=" . v.type)
       if v.type == 'nop' && has_key(v, 'rt_from')
         " v.zz is a return value of reconstruct_varstack_rt
         " @@memo return [vardict, N, N_lp]
         let tail = len(a:env.varstack)
         call s:reconstruct_varstack_chk(a:self, a:env, v.zz, 1)
         let vs = a:env.varstack[tail :]
-"        echo "nop-:" . v.rt_from . ".." . v.rt_to . ",tail=" . tail . ",vs=" . len(vs)
+        call s:decho("nop-:" . v.rt_from . ".." . v.rt_to . ",tail=" . tail . ",vs=" . len(vs))
         for ui in range(len(vs))
           call remove(a:env.varstack, -1)
         endfor
@@ -539,7 +546,7 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
             throw "stop"
           endif
           let a:env.varstack[ui + ti] = vs[ti]
-"          echo "recon2: varstack[" . (ui+ti) . "]=vs[" . ti . "]=" . s:tostring_varstack_n(vs[ti])
+          call s:decho("recon2: varstack[" . (ui+ti) . "]=vs[" . ti . "]=" . s:tostring_varstack_n(vs[ti]))
           if vs[ti].type == "append" && has_key(vref, vs[ti].var)
             let vs[ti].v.ref += vref[vs[ti].var]
           endif
@@ -567,7 +574,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
   let N_lp = 0 " break/continue されたルート数
 
   for p in a:pos
-"    echo "reconstruct_rt: " . string(p) . "/" . len(a:pos)
+    call s:decho("reconstruct_rt: " . string(p) . "/" . len(a:pos))
     if p[2] " return した.
       " イベントをなかったことにする
       for j in range(p[0], p[1] - 1)
@@ -590,7 +597,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
     let vi = {}
     for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
-"      echo "reconstruct" . j . "/" . (p[1]-1) . ":    " . s:tostring_varstack_n(v) . ",pos=" . string(p)
+      call s:decho("reconstruct" . j . "/" . (p[1]-1) . ":    " . s:tostring_varstack_n(v) . ",pos=" . string(p))
       if v.type == 'nop'
         continue
       endif
@@ -615,7 +622,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
 
     " 情報をマージ
     for k in keys(vi)
-"      echo "_rt(): vi[" . k . "]=" . string(vi[k][1:]) . ",ref=" vi[k][0].v.ref
+      call s:decho("_rt(): vi[" . k . "]=" . string(vi[k][1:]) . ",ref=" . vi[k][0].v.ref)
       if vi[k][1] != vi[k][2] " nop 以外? わかめ
         if has_key(vardict, k)
           let vardict[k][1] += vi[k][1]
@@ -728,9 +735,9 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   let v.rt_from = a:pos[0][0]
   let v.rt_to = len(a:env.varstack)
 
-"  echo "construct rvrt2: range=" . v.rt_from . ".." . v.rt_to
+  call s:decho("construct rvrt2: range=" . v.rt_from . ".." . v.rt_to)
   let rvrt2 = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
-"  echo "vard=" . len(vardict) . ", var2=" . len(rvrt2[0])
+  call s:decho("vard=" . len(vardict) . ", var2=" . len(rvrt2[0]))
   " @TODO 参照情報をコピーする.
 
   if len(vardict) <= len(rvrt2[0]) - 1
@@ -1143,9 +1150,9 @@ function s:VimlLint.compile_if(node, refchk) "{{{
 
   " reconstruct
   " let して return した、は let していないにする
-"  echo "call reconstruct _ifs: " . string(a:node.pos)
+  call s:decho("call reconstruct _ifs: " . string(a:node.pos))
   call s:reconstruct_varstack(self, self.env, pos, 0)
-"  echo "call reconstruct _ife: " . string(a:node.pos)
+  call s:decho("call reconstruct _ife: " . string(a:node.pos))
 
 endfunction "}}}
 
@@ -1254,9 +1261,9 @@ function s:VimlLint.compile_for(node, refchk) "{{{
     let p = len(self.env.varstack)
     let pos += [s:gen_pos_cntl(self.env, p)]
   endif
-"  echo "call reconstruct _fors: " . string(a:node.pos)
+  call s:decho("call reconstruct _fors: " . string(a:node.pos))
   call s:reconstruct_varstack(self, self.env, pos, 1)
-"  echo "call reconstruct _fore: " . string(a:node.pos)
+  call s:decho("call reconstruct _fore: " . string(a:node.pos))
   let self.env.global.loop -= 1
 endfunction "}}}
 
