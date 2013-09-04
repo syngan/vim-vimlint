@@ -28,6 +28,8 @@ for line in open('resource/builtin-func', 'r'):
   # mode( [expr])			String	current editing mode
   if func == 'getreg':
     argnum = 2
+  elif func == 'deepcopy':
+	argnum = 2
   if line.count('[expr]') > 0:
     argnum = argnum + 1
   if hasdots:
