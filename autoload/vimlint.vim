@@ -1736,6 +1736,12 @@ function s:VimlLint.compile_identifier(node, refchk) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_curlyname(node, refchk) " {{{
+  for f in a:node.value
+    if f.curly
+      call self.compile(f.value, 1)
+    endif
+  endfor
+
   return a:node
 "  return {'type' : 'curly', 'node' : a:node}
 endfunction " }}}
