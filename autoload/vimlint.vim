@@ -619,7 +619,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
       elseif v.type == 'append' || v.type == 'update'
         let vi[v.var] = [v, 1, 0, 0, 0]
       elseif v.type != 'nop'
-        call self.error_mes(v.v, 'EVL901', 'unknown type `' . a:var.type . '`', 1)
+        call self.error_mes(v.v, 'EVL901', 'unknown type `' . v.type . '`', 1)
       endif
     endfor
 
@@ -1035,7 +1035,7 @@ function s:VimlLint.compile_function(node, refchk)
   let self.env = self.env.outer
 endfunction " }}}
 
-function s:VimlLint.compile_delfunction(node, rechk) " {{{
+function s:VimlLint.compile_delfunction(node, refchk) " {{{
   " @TODO function は定義済か?
 endfunction " }}}
 
@@ -1075,7 +1075,7 @@ function s:VimlLint.compile_let(node, refchk) " {{{
     if a:node.rest isnot s:NIL
       let v = self.compile(a:node.rest, 0)
       if s:readonly_var(v)
-        call self.error_mes(left, 'E46', 'Cannot change read-only variable ' . left.value, 1)
+        call self.error_mes(v, 'E46', 'Cannot change read-only variable ' . v.value, 1)
       else
         call self.append_var(self.env, v, right, "letr")
       endif
