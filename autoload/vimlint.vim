@@ -977,10 +977,11 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 " e.g. set cpo&vim
 " e.g. a = 3   (let Ï³¤ì)
 
-  "  lcd `=cwd`
-  let s = matchstr(a:node.str, "`=.[^`]*`")
+  " lcd `=cwd`
+  " edit/new `=file`
+  let s = matchstr(a:node.str, '\v`=\zs.*\ze`')
   if '' != s
-    call self.parse_string(s[2:-2], a:node, 'ExCommand')
+    call self.parse_string(s, a:node, 'ExCommand')
     return
   endif
 
@@ -990,6 +991,15 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
     let a:node.type = s:NODE_IDENTIFIER
     let a:node.value = s
     call self.append_var(self.env, a:node, s:NIL, 'redir')
+    return
+  endif
+
+  " :[line]pu[t] [x]
+	" The register can also be '=' followed by an optional expression
+  " @TODO 'x  position of mark x is unsupported
+  let s = matchstr(a:node.str, '\v^\s*(silent\s+)*\s*([%$.]|[0-9]+|w0|w$)*put\s+\=\zs.*\ze')
+  if s != ''
+    call self.parse_string(s, a:node, 'ExCommand')
     return
   endif
 
@@ -1372,6 +1382,7 @@ function s:VimlLint.compile_echoerr(node, refchk) "{{{
 endfunction "}}}
 
 function s:VimlLint.compile_execute(node, refchk) "{{{
+  " @TODO execute :e `=path`
   let list = map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
