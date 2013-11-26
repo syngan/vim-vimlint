@@ -67,6 +67,8 @@ EVL102: unused variable `v`					*EVL102*
 EVL103: unused argument `v`					*EVL103*
 								*EVL104*
 EVL104: variable may not be initialized on some execution path: `v`
+								*EVL105*
+EVL105: global variable `v` is defined without g:
 
 code
 EVL201: unreachable code `return/throw`				*EVL201*

@@ -1,6 +1,6 @@
 " @ERR ["EVL201"]
-for a in [1,2,3]
+for g:a in [1,2,3]
   continue
 
-  echo a
+  echo g:a
 endfor
