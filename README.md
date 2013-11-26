@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/syngan/vim-vimlint.png?branch=master)](https://travis-ci.org/syngan/vim-vimlint)
+
 # Install
 
 ```vim

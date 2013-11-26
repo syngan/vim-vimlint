@@ -1,4 +1,4 @@
-"
+scriptencoding utf-8
 
 " source %
 " echo g:vimlint_test("test")
@@ -26,10 +26,7 @@ function! s:test(file)
     return -1
   endif
 
-  let ret = vimlint#vimlint(a:file, {
-  \ 'output' : [], 
-  \ 'quiet' : 1,
-  \})
+  let ret = vimlint#vimlint(a:file, {'output' : [], 'quiet' : 1,})
 
   if len(ret) != len(err)
     return 0
@@ -46,7 +43,7 @@ function! s:test(file)
 endfunction
 
 
-function! g:vimlint_test(dir)
+function! g:vimlint_test(dir, ...)
   if isdirectory(a:dir)
     let files = expand(a:dir . "/*.vim")
   else
@@ -70,8 +67,12 @@ function! g:vimlint_test(dir)
     endif
   endfor
 
-  " echo ( だとハイライトされない
-  echo "" . (ok + ng) . " test: ok=" . ok . ", ng=" . ng . ", skip=" . sk
+  if a:0 == 0
+    " echo ( だとハイライトされない
+    echo "" . (ok + ng) . " test: ok=" . ok . ", ng=" . ng . ", skip=" . sk
+  else
+    call writefile(["test=" . (ok+ng), "ok=" . ok, "ng=" . ng, "skip=" . sk], a:1)
+  endif
   return ret
 endfunction
 
