@@ -978,7 +978,6 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 " @TODO
 " e.g. set cpo&vim
 " e.g. a = 3   (let 漏れ)
-
   " lcd `=cwd`
   " edit/new `=file`
   let s = matchstr(a:node.str, '\v`=\zs.*\ze`')
@@ -1789,6 +1788,29 @@ function s:VimlLint.compile_op2(node, op) " {{{
   " @TODO 演算結果の型を返すようにする
 endfunction " }}}
 
+
+function! s:contain_multibyte(str) "{{{
+  return byteidx(a:str, strlen(a:str))==-1
+endfunction "}}}
+
+function! s:check_scriptencoding(c, lines) " {{{
+  let strs = a:lines
+  let se = 0
+  for i in range(0, len(strs) - 1)
+    let s = strs[i]
+    if match(s, '^\s*scriptencoding\s*$') >= 0
+      let se = 0
+    elseif match(s, '^\s*scriptencoding\s.*$') >= 0
+      let se = 1
+    elseif s:contain_multibyte(s) && se == 0
+      call a:c.error_mes({'pos' : {'lnum' : i+1, 'col' : 1}},
+            \ 'EVL205', 'missing scriptencoding', 1)
+      break
+    endif
+  endfor
+endfunction " }}}
+
+
 function! s:vimlint_file(filename, param) " {{{
   let vimfile = a:filename
   let p = s:VimLParser.new()
@@ -1808,6 +1830,8 @@ function! s:vimlint_file(filename, param) " {{{
         let r = s:StringReader.new(readfile(vimfile))
         let c.filename = vimfile
     endif
+
+
     call c.compile(p.parse(r), 1)
 
     " global 変数のチェック
@@ -1817,6 +1841,13 @@ function! s:vimlint_file(filename, param) " {{{
         call c.error_mes(env.var[v].node, 'EVL101', 'undefined variable `' . v . '`', 1)
       endif
     endfor
+
+
+    if has_key(a:param, 'type') && a:param.type == 'string'
+      call s:check_scriptencoding(c, [vimfile])
+    else
+      call s:check_scriptencoding(c, readfile(vimfile))
+    endif
   catch
 
 

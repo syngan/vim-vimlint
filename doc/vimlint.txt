@@ -72,10 +72,11 @@ EVL105: global variable `v` is defined without g:
 
 code
 EVL201: unreachable code `return/throw`				*EVL201*
-EVL201: unreachable code `continue/break`			*EVL202*
-EVL202: missing call `s`					*EVL203*
-EVL203: parse error in `cmd`					*EVL204*
-EVL204: constant in conditional context				*EVL205*
+EVL201: unreachable code `continue/break`			*EVL201*
+EVL202: missing call `s`					*EVL202*
+EVL203: parse error in `cmd`					*EVL203*
+EVL204: constant in conditional context				*EVL204*
+EVL205: missing scriptencoding					*EVL205*
 
 system error
 EVL901: unkown type `t`						*EVL901*
