@@ -35,6 +35,51 @@ let s:default_param_output = {
 \   'filename' : ''}
 " }}}
 
+" 5 必ずエラー
+" 3 警告に変更可能
+" 0 無視可能
+let s:default_errlevel = {}
+let s:default_errlevel.EVL101 = 5
+let s:default_errlevel.EVL102 = 0
+let s:default_errlevel.EVL103 = 0
+let s:default_errlevel.EVL104 = 0
+let s:default_errlevel.EVL105 = 3
+let s:default_errlevel.EVL201 = 0
+let s:default_errlevel.EVL202 = 5
+let s:default_errlevel.EVL203 = 3
+let s:default_errlevel.EVL204 = 0
+let s:default_errlevel.EVL205 = 5
+let s:default_errlevel.EVL901 = 5
+let s:default_errlevel.EVL902 = 5
+
+function! s:extend_errlevel(param)
+  let param = a:param
+  for key in keys(s:default_errlevel)
+    if !has_key(param, key)
+      let param[key] = 5
+    elseif type(param[key]) != type(0)
+      let param[key] = 5
+    elseif param[key] < s:default_errlevel[key]
+      let param[key] = s:default_errlevel[key]
+    elseif param[key] > 5
+      let param[key] = 5
+    endif
+  endfor
+
+  for key in keys(param)
+    if key =~# '^E[1-9]\+$'
+      let param[key] = 5
+    elseif key =~# '^EVP[1-9]\+$' || key =~# '^EVP_.*$'
+      let param[key] = 5
+    elseif key =~# '^EVL[1-9]\+$' && type(param[key]) != type(0)
+      let param[key] = 5
+    endif
+  endfor
+
+  return param
+endfunction
+
+
 function s:VimlLint.new(param) " {{{
   let obj = copy(self)
   let obj.indent = ['']
@@ -188,24 +233,27 @@ function! s:env(outer, funcname) " {{{
   return env
 endfunction " }}}
 
-function! s:output_echo(filename, pos, eid, mes, obj) " {{{
-  echo a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:eid . ': ' . a:mes
+function! s:output_echo(filename, pos, ev, eid, mes, obj) " {{{
+  echo a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ": " . a:eid . ': ' . a:mes
 endfunction " }}}
 
-function! s:output_file(filename, pos, eid, mes, obj) " {{{
-  let a:obj.error += [a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:eid . ': ' . a:mes]
+function! s:output_file(filename, pos, ev, eid, mes, obj) " {{{
+  let a:obj.error += [a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ': ' . a:eid . ': ' . a:mes]
 endfunction " }}}
 
-function! s:output_list(filename, pos, eid, mes, obj) " {{{
-  let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:eid, a:mes]]
+function! s:output_list(filename, pos, ev, eid, mes, obj) " {{{
+  let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:ev, a:eid, a:mes]]
 endfunction " }}}
 
 function! s:VimlLint.error_mes(node, eid, mes, print) " {{{
-"  echo a:node
   if a:print
-    let filename = get(self, 'filename', '...')
-    let pos = vimlint#util#get_pos(a:node)
-    call self.param.outfunc(filename, pos, a:eid, a:mes, self)
+    let lv = has_key(self.param, a:eid) ? self.param[a:eid] : 5
+    if lv > 0
+      let filename = get(self, 'filename', '...')
+      let ev = ["None", "Warning", "Warning", "Warning", "Error", "Error"][lv]
+      let pos = vimlint#util#get_pos(a:node)
+      call self.param.outfunc(filename, pos, ev, a:eid, a:mes, self)
+    endif
   endif
 endfunction " }}}
 
@@ -1779,7 +1827,6 @@ function s:VimlLint.compile_op1(node, op) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_op2(node, op) " {{{
-
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
 
@@ -1914,7 +1961,12 @@ function! vimlint#vimlint(file, ...) " {{{
 
   " param {{{
   let param = a:0 ? copy(a:1) : {}
+  if exists('g:vimlint#config') && type(g:vimlint#config) == type({})
+    let param = extend(param, g:vimlint#config, 'keep')
+  endif
   let param = extend(param, s:default_param, 'keep')
+
+  let param = s:extend_errlevel(param)
 
 
   let out_type = "echo"

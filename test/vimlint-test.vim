@@ -33,7 +33,7 @@ function! s:test(file)
   endif
 
   for i in range(len(ret))
-    if ret[i][3] != err[i]
+    if ret[i][4] != err[i]
       return 0
     endif
   endfor
