@@ -25,7 +25,6 @@ call extend(s:, vimlparser#import())
 let s:VimlLint = {}
 
 let s:default_param = {} " {{{
-let s:default_param.unused_argument = 1
 let s:default_param.recursive = 1
 let s:default_param.quiet = 0
 let s:default_param.type = 'file'
@@ -1085,7 +1084,7 @@ function s:VimlLint.compile_function(node, refchk)
       " a: は例外とする, オプションが必要 @TODO
 "      echo self.env.var[v]
       if v =~# '^a:'
-        call self.error_mes(self.env.var[v].node, 'EVL103', 'unused argument `' . v . '`', self.param['unused_argument'])
+        call self.error_mes(self.env.var[v].node, 'EVL103', 'unused argument `' . v . '`', 1)
       else
         call self.error_mes(self.env.var[v].node, 'EVL102', 'unused variable `' . v . '`', 1)
       endif

@@ -39,7 +39,25 @@ INTERFACE						*vimlint-interface*
 
 ------------------------------------------------------------------------------
 VARIABLES 						*vimlint-variables*
+							*g:vimlint#config*
 
+You can define default values by |g:vimlint#config|.
+g:vimlint#config is a |Dictionary| which contains the following items:
+
+	"output"		Default: None
+		If the value is a |String|, |vimlint| outputs the result to
+		the file.
+
+	"recursive"		Default: 0
+	"quiet"			Default: 0
+	"EVLxxx"		Default: 5
+		0: none
+		3: warning message
+		5: error message
+		If you want not to report "EVL103: unused argument v" then,
+>
+		let g:vimlint#config.EVL103 = 0
+<
 ------------------------------------------------------------------------------
 FUNCTIONS 						*vimlint-functions*
 
