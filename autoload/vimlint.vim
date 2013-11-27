@@ -28,6 +28,7 @@ let s:default_param = {} " {{{
 let s:default_param.unused_argument = 1
 let s:default_param.recursive = 1
 let s:default_param.quiet = 0
+let s:default_param.type = 'file'
 
 let s:default_param_output = {
 \   'append' : 0,
@@ -1810,27 +1811,31 @@ function! s:check_scriptencoding(c, lines) " {{{
   endfor
 endfunction " }}}
 
+function! s:echo_progress(param, msg)
+  if !a:param.quiet
+    if has_key(a:param, 'output')
+      redraw!
+    endif
+    echo a:msg
+  endif
+endfunction
+
 
 function! s:vimlint_file(filename, param) " {{{
   let vimfile = a:filename
   let p = s:VimLParser.new()
   let c = s:VimlLint.new(a:param)
   try
-    if !a:param.quiet
-      if has_key(a:param, 'output')
-        redraw!
-      endif
-      echo '.... ' . a:filename . ' start'
-    endif
 
-    if has_key(a:param, 'type') && a:param.type == 'string'
+    if a:param.type == 'string'
         let r = s:StringReader.new(vimfile)
-        let c.filename = 'string'
+        let c.filename = ''
     else
         let r = s:StringReader.new(readfile(vimfile))
         let c.filename = vimfile
     endif
 
+    call s:echo_progress(a:param, '.... ' . c.filename . ' start')
 
     call c.compile(p.parse(r), 1)
 
@@ -1843,7 +1848,7 @@ function! s:vimlint_file(filename, param) " {{{
     endfor
 
 
-    if has_key(a:param, 'type') && a:param.type == 'string'
+    if a:param.type == 'string'
       call s:check_scriptencoding(c, [vimfile])
     else
       call s:check_scriptencoding(c, readfile(vimfile))
@@ -1877,12 +1882,7 @@ function! s:vimlint_file(filename, param) " {{{
       call writefile(lines, c.param.output.filename)
     endif
 
-    if !a:param.quiet
-      if has_key(c.param, 'output')
-        redraw!
-      endif
-      echo '.... ' . a:filename . ' end'
-    endif
+    call s:echo_progress(a:param, '.... ' . c.filename . ' end')
 
     if a:param.outfunc == function('s:output_list')
       return c.error
@@ -1955,7 +1955,10 @@ function! vimlint#vimlint(file, ...) " {{{
   let files = (type(a:file) == type([])) ? a:file : [a:file]
   let ret = []
   for f in files
-    if isdirectory(f)
+
+    if param.type == "string"
+      let ret += s:vimlint_file(f, param)
+    elseif isdirectory(f)
       let ret += s:vimlint_dir(f, param)
     elseif filereadable(f)
       let ret += s:vimlint_file(f, param)
