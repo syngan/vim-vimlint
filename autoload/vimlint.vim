@@ -333,7 +333,7 @@ endfunction " }}}
 
 function! s:append_var_(env, var, node, val, cnt) " {{{
 
-"  echo "append_var: var=" . a:var . ", cnt=" . a:cnt
+"  echo "append_var: var=" . a:var . ", cnt=" . a:cnt . ", has=" . has_key(a:env.var, a:var)
   if has_key(a:env.var, a:var)
     let v = a:env.var[a:var]
     if a:cnt > 0
@@ -1030,7 +1030,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   " edit/new `=file`
   let s = matchstr(a:node.str, '`=\zs.*\ze`')
   if '' != s
-    call self.parse_string(s, a:node, 'ExCommand')
+    call self.parse_string(s, a:node, 'ExCommand', 1)
     return
   endif
 
@@ -1048,7 +1048,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   " @TODO 'x  position of mark x is unsupported
   let s = matchstr(a:node.str, '\v^\s*(silent\s+)*\s*([%$.]|[0-9]+|w0|w$)*put\s+\=\zs.*\ze')
   if s != ''
-    call self.parse_string(s, a:node, 'ExCommand')
+    call self.parse_string(s, a:node, 'ExCommand', 1)
     return
   endif
 
@@ -1174,15 +1174,134 @@ function s:VimlLint.compile_unlockvar(node, refchk) "{{{
   endfor
 endfunction "}}}
 
+function! s:neg_exists(ex)
+  let a = a:ex
+  if len(a) == 0
+    return a
+  endif
+  let stack = [a]
+  while len(stack) > 0
+    let b = remove(stack, -1)
+    if len(b) == 0
+      continue
+    elseif b[1] == 'e'
+      let b[0] = !b[0]
+      continue
+    else
+      let stack += b[2]
+    endif
+  endwhile
+
+  return a
+endfunction
+
+function! s:VimlLint.extract_exists(cond)
+  " @return a list of {type:and/or/exists, bool, var]
+  " これ以外はしらない
+  " exists()
+  " !exists()
+  " exists != 0
+  " exists == 0
+  " call s:echonode(a:cond, 0)
+  if a:cond.type == s:NODE_EQUAL ||
+      \  a:cond.type == s:NODE_NEQUAL
+    if a:cond.left == a:cond.right
+      return []
+    endif
+    if a:cond.left.type == s:NODE_NUMBER
+      let l = a:cond.right
+      let r = a:cond.left
+    else
+      let l = a:cond.left
+      let r = a:cond.right
+    endif
+
+    if r.type != s:NODE_NUMBER || r.value != 0
+      return []
+    endif
+
+    if l.type != s:NODE_CALL
+      return []
+    endif
+    let a = s:VimlLint.extract_exists(l)
+    if len(a) == 0
+      return a
+    elseif a:cond.type == s:NODE_EQUAL
+      let a[0] = !a[0]
+      return a
+    else
+      return a
+    endif
+  elseif a:cond.type == s:NODE_CALL
+    let l = a:cond.left
+    if l.type != s:NODE_IDENTIFIER || l.value !=# "exists"
+      return []
+    endif
+
+    let r = a:cond.rlist[0]
+    if r.type != s:NODE_STRING
+      return []
+    endif
+    return [1, 'e', r.value]
+  elseif a:cond.type == s:NODE_AND ||
+        \ a:cond.type == s:NODE_OR
+    let a = []
+    for lr in [s:VimlLint.extract_exists(a:cond.left),
+            \ s:VimlLint.extract_exists(a:cond.right)]
+      if len(lr) == 0
+        continue
+      elseif lr[1] != 'e' && lr[0] == (a:cond.type == s:NODE_AND)
+        let a += lr[2]
+      else
+        let a += [lr]
+      endif
+    endfor
+    return [a:cond.type == s:NODE_AND, 'ao', a]
+  elseif a:cond.type == s:NODE_NOT
+    let a = s:VimlLint.extract_exists(a:cond.left)
+    return s:neg_exists(a)
+  endif
+
+  return []
+endfunction
+
+function s:VimlLint.check_exists(ex, cond) " {{{
+  let a = a:ex
+  if len(a) == 0
+    return
+  endif
+
+  if a[1] == 'e'
+    let a = [a]
+  elseif a[0]
+    let a = a[2]
+  else
+    return
+  endif
+
+  for b in a
+    if b[1] == 'e' && b[0]
+      " appe)nd する.
+      call self.parse_string(b[2][1 : -2] . " = 1", a:cond, 'exists', 0)
+    endif
+  endfor
+endfunction " }}}
+
+
 function s:VimlLint.compile_if(node, refchk) "{{{
 "  call s:VimlLint.error_mes(a:node, "compile_if")
   let cond = self.compile(a:node.cond, 2) " if ()
+  let tcond = cond
+
 
   if cond.type == s:NODE_NUMBER
       call self.error_mes(a:node, 'EVL204', "constant in conditional context", 1)
   endif
 
   let p = len(self.env.varstack)
+  let ex = [self.extract_exists(cond)]
+  "echo "if" . string(ex)
+  call self.check_exists(ex[-1], cond)
   call self.compile_body(a:node.body, a:refchk)
 
   call s:restore_varstack(self.env, p, "if1")
@@ -1191,8 +1310,20 @@ function s:VimlLint.compile_if(node, refchk) "{{{
   call s:reset_env_cntl(self.env)
 
   for node in a:node.elseif
+
+    let cond = self.compile(node.cond, 2) " if ()
+    let tcond = {'type' : s:NODE_OR, 'left' : tcond, 'right' : cond}
+
+    if cond.type == s:NODE_NUMBER
+        call self.error_mes(a:node, 'EVL204', "constant in conditional context", 1)
+    endif
+
     call self.compile(node.cond, 2)
     let p = len(self.env.varstack)
+
+    let ex += [self.extract_exists(cond)]
+    "echo "elif" . string(ex)
+    call self.check_exists(ex[-1], cond)
     call self.compile_body(node.body, a:refchk)
     call s:restore_varstack(self.env, p, "if2")
 
@@ -1203,6 +1334,16 @@ function s:VimlLint.compile_if(node, refchk) "{{{
   let p = len(self.env.varstack)
 
   if a:node.else isnot s:NIL
+    " else
+    let ex = filter(ex, 'len(v:val) > 0')
+    if len(ex) == 0
+    elseif len(ex) == 1
+      let ex = ex[0]
+    else
+      let ex = [0, 'ao', ex]
+    endif
+    "echo "else" . string(ex)
+    call self.check_exists(s:neg_exists(ex), cond)
     call self.compile_body(a:node.else.body, a:refchk)
     call s:restore_varstack(self.env, p, "if3")
   endif
@@ -1619,12 +1760,16 @@ function! s:escape_string(str) "{{{
   return a:str
 endfunction "}}}
 
-function s:VimlLint.parse_string(str, node, cmd) "{{{
+function s:VimlLint.parse_string(str, node, cmd, ref) "{{{
   try
     let p = s:VimLParser.new()
     let c = s:VimlLint.new(self.param)
     let c.env = self.env
-    let r = s:StringReader.new('echo ' . a:str)
+    if a:ref
+      let r = s:StringReader.new('echo ' . a:str)
+    else
+      let r = s:StringReader.new('let ' . a:str)
+    endif
     call c.compile(p.parse(r), 1)
   catch
     call self.error_mes(a:node, 'EVL203', 'parse error in `' . a:cmd . '`', 1)
@@ -1655,21 +1800,21 @@ function s:VimlLint.compile_call(node, refchk) "{{{
       if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'value')
         if rlist[1].type == s:NODE_STRING
           let s = s:escape_string(rlist[1].value)
-          call self.parse_string(s[1:-2], left, left.value)
+          call self.parse_string(s[1:-2], left, left.value, 1)
         endif
       endif
     elseif left.value == 'eval'
       if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'value')
         if rlist[0].type == s:NODE_STRING
           let s = s:escape_string(rlist[0].value)
-          call self.parse_string(s[1:-2], left, left.value)
+          call self.parse_string(s[1:-2], left, left.value, 1)
         endif
       endif
     elseif left.value == 'substitute'
       if len(rlist) >= 3 && type(rlist[2]) == type({})
       \ && has_key(rlist[2], 'value') && rlist[2].value[1:] =~# '^\\='
         let s = s:escape_string(rlist[2].value)
-        call self.parse_string(s[3:-2], left, left.value)
+        call self.parse_string(s[3:-2], left, left.value, 1)
       endif
     endif
   endif
@@ -1821,14 +1966,12 @@ endfunction " }}}
 
 function s:VimlLint.compile_op1(node, op) " {{{
   let a:node.left = self.compile(a:node.left, 1)
-
   return a:node
 endfunction " }}}
 
 function s:VimlLint.compile_op2(node, op) " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
-
   return a:node
 
   " @TODO 比較/演算できる型どうしか.
