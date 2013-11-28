@@ -1028,7 +1028,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 " e.g. a = 3   (let Ï³¤ì)
   " lcd `=cwd`
   " edit/new `=file`
-  let s = matchstr(a:node.str, '\v`=\zs.*\ze`')
+  let s = matchstr(a:node.str, '`=\zs.*\ze`')
   if '' != s
     call self.parse_string(s, a:node, 'ExCommand')
     return
