@@ -37,41 +37,85 @@ let s:default_param_output = {
 " 5 必ずエラー
 " 3 警告に変更可能
 " 0 無視可能
+let s:DEF_ERR = 5
+let s:DEF_WRN = 3
+let s:DEF_NON = 0
 let s:default_errlevel = {}
-let s:default_errlevel.EVL101 = 5
-let s:default_errlevel.EVL102 = 0
-let s:default_errlevel.EVL103 = 0
-let s:default_errlevel.EVL104 = 0
-let s:default_errlevel.EVL105 = 3
-let s:default_errlevel.EVL201 = 0
-let s:default_errlevel.EVL202 = 5
-let s:default_errlevel.EVL203 = 3
-let s:default_errlevel.EVL204 = 0
-let s:default_errlevel.EVL205 = 5
-let s:default_errlevel.EVL901 = 5
-let s:default_errlevel.EVL902 = 5
+let s:default_errlevel.EVL101 = s:DEF_ERR
+let s:default_errlevel.EVL102 = s:DEF_NON
+let s:default_errlevel.EVL103 = s:DEF_NON
+let s:default_errlevel.EVL104 = s:DEF_NON
+let s:default_errlevel.EVL105 = s:DEF_WRN
+let s:default_errlevel.EVL201 = s:DEF_NON
+let s:default_errlevel.EVL202 = s:DEF_ERR
+let s:default_errlevel.EVL203 = s:DEF_WRN
+let s:default_errlevel.EVL204 = s:DEF_NON
+let s:default_errlevel.EVL205 = s:DEF_ERR
+let s:default_errlevel.EVL901 = s:DEF_ERR
+let s:default_errlevel.EVL902 = s:DEF_ERR
+
+function! s:set_param(param, key, errlv, var)
+" echo "set_param[" . a:key . "," . a:var . "]=" . a:errlv
+  let key = a:key
+  let param = a:param
+  if has_key(param, key)
+    if type(param[key]) != type({})
+      unlet param[key]
+      let param[key] = {'_' : s:DEF_ERR}
+    endif
+  else
+    let param[key] = {'_' : s:DEF_ERR}
+  endif
+
+  if a:errlv < s:default_errlevel[key]
+    let elv = s:default_errlevel[key]
+  elseif a:errlv > s:DEF_ERR
+    let elv = s:DEF_ERR
+  else
+    let elv = a:errlv
+  endif
+  let dict = param[key]
+  if g:vimlint#debug > 0
+    echo "vimlint: set_param(" . key . ":" . a:var . ")=" . elv
+  endif
+  if has_key(dict, a:var)
+    unlet dict[a:var]
+  endif
+  let dict[a:var] = elv
+endfunction
 
 function! s:extend_errlevel(param)
   let param = a:param
   for key in keys(s:default_errlevel)
+"   echo "param[" . key . "]"
     if !has_key(param, key)
-      let param[key] = 5
-    elseif type(param[key]) != type(0)
-      let param[key] = 5
-    elseif param[key] < s:default_errlevel[key]
-      let param[key] = s:default_errlevel[key]
-    elseif param[key] > 5
-      let param[key] = 5
+      call s:set_param(param, key, s:DEF_ERR, '_')
+    elseif type(param[key]) == type(0)
+      call s:set_param(param, key, param[key], '_')
+    elseif type(param[key]) != type({})
+      call s:set_param(param, key, s:DEF_ERR, '_')
+    else
+      for k in keys(param[key])
+        call s:set_param(param, key, param[key][k], k)
+      endfor
+      if !has_key(param[key], '_')
+        call s:set_param(param, key, s:DEF_ERR, '_')
+      endif
     endif
   endfor
 
   for key in keys(param)
     if key =~# '^E[1-9]\+$'
-      let param[key] = 5
+      " 設定されていても無視
+      unlet param[key]
     elseif key =~# '^EVP[1-9]\+$' || key =~# '^EVP_.*$'
-      let param[key] = 5
+      " 設定されていても無視
+      unlet param[key]
     elseif key =~# '^EVL[1-9]\+$' && type(param[key]) != type(0)
-      let param[key] = 5
+      " もし実際にこのエラーがあるとすると, 
+      " s:default_errlevel の更新漏れ.
+      " とりあえず, 最高レベルのエラーで設定しておく.
+      call s:set_param(param, key, s:DEF_ERR, '_')
     endif
   endfor
 
@@ -232,6 +276,7 @@ function! s:env(outer, funcname) " {{{
   return env
 endfunction " }}}
 
+" @vimlint(EVL103, 0, a:obj)
 function! s:output_echo(filename, pos, ev, eid, mes, obj) " {{{
   echo a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ": " . a:eid . ': ' . a:mes
 endfunction " }}}
@@ -243,16 +288,27 @@ endfunction " }}}
 function! s:output_list(filename, pos, ev, eid, mes, obj) " {{{
   let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:ev, a:eid, a:mes]]
 endfunction " }}}
+" @vimlint(EVL103, 5, a:obj)
 
-function! s:VimlLint.error_mes(node, eid, mes, print) " {{{
-  if a:print
-    let lv = has_key(self.param, a:eid) ? self.param[a:eid] : 5
-    if lv > 0
-      let filename = get(self, 'filename', '...')
-      let ev = ["None", "Warning", "Warning", "Warning", "Error", "Error"][lv]
-      let pos = vimlint#util#get_pos(a:node)
-      call self.param.outfunc(filename, pos, ev, a:eid, a:mes, self)
-    endif
+function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
+  if type(a:var) == type("")
+    let var = a:var
+  else
+    let var = '_'
+  endif
+
+  if !has_key(self.param, a:eid)
+    let lv = s:DEF_ERR
+  elseif has_key(self.param[a:eid], var)
+    let lv = self.param[a:eid][var]
+  else
+    let lv = self.param[a:eid]['_']
+  endif
+  if lv > 0
+    let filename = get(self, 'filename', '...')
+    let ev = ["None", "Warning", "Warning", "Warning", "Error", "Error"][lv]
+    let pos = vimlint#util#get_pos(a:node)
+    call self.param.outfunc(filename, pos, ev, a:eid, a:mes, self)
   endif
 endfunction " }}}
 
@@ -302,14 +358,14 @@ function! s:exists_var(self, env, node)
         endif
 
         " 警告
-        call a:self.error_mes(a:node, 'EVL104', 'variable may not be initialized on some execution path: `' . var . '`', 1)
+        call a:self.error_mes(a:node, 'EVL104', 'variable may not be initialized on some execution path: `' . var . '`', var)
         return 0
       endif
       let env = env.outer
     endwhile
 
     " 存在しなかった
-    call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', 1)
+    call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', var)
     return 0
   endif
 endfunction " }}}
@@ -425,7 +481,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
     " 接頭子は必ずつける.
     if v !~# '^[gbwtslv]:' && v !~# '#'
       if a:env.global == a:env
-        call self.error_mes(a:var, 'EVL105', 'global variable `' . v . '` is defined without g:', 1)
+        call self.error_mes(a:var, 'EVL105', 'global variable `' . v . '` is defined without g:', v)
         let v = 'g:' . v
 
       else
@@ -471,7 +527,7 @@ function! s:delete_var(self, env, var, chk) " {{{
       let e = a:env
       let v = e.var[name]
       if a:chk == 1 && v.ref == 1
-        call a:self.error_mes(v.node, 'EVL102', 'unused variable `' . name . '`', 1)
+        call a:self.error_mes(v.node, 'EVL102', 'unused variable `' . name . '`', name)
       endif
       unlet a:env.var[name]
     elseif has_key(a:env.global.var, name)
@@ -635,7 +691,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
         if v.type == 'append' && v.v.ref == 0 && a:env.global.fins == 0
           " 変数を追加したが参照していない
           " かつ,  finally 句がない場合
-          call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var. '`', 1)
+          call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var. '`', v.var)
         endif
         let a:env.varstack[j] = nop
       endfor
@@ -794,6 +850,7 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   " @TODO 参照情報をコピーする.
 
   if len(vardict) <= len(rvrt2[0]) - 1
+    " @vimlint(EVL102, 0, l:i)
     for i in range(len(vardict), len(rvrt2[0]) - 1)
       call s:push_varstack(a:env, nop)
     endfor
@@ -802,6 +859,7 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
 
   call s:push_varstack(a:env, v)
 endfunction " }}}
+" @vimlint(EVL102, 5, l:i)
 
 function! s:reconstruct_varstack_st(self, env, p) " {{{
   " try 句の reconstrutt. どこで例外が発生するかわからない状態
@@ -1020,6 +1078,24 @@ function s:VimlLint.compile_toplevel(node, refchk) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_comment(node, refchk) " {{{
+  let s = a:node.str
+	let m = '^\s*@vimlint\s*(\s*\(EVL\d\+\)\s*,\s*\(\d\+\)\(\s*,\s*\(\w\+\)\)\=\s*)\s*'
+  let l = matchlist(s, m)
+  if len(l) == 0
+    return
+  endif
+
+  if !has_key(self.param, l[1])
+    echo "not haskey " . l[1]
+    return
+  endif
+  if l[3] == ''
+    let v = '_'
+  else
+    let v = l[4]
+  endif
+  
+  call s:set_param(self.param, l[1], str2nr(l[2]), v)
 endfunction " }}}
 
 function s:VimlLint.compile_excmd(node, refchk) " {{{
@@ -1084,9 +1160,9 @@ function s:VimlLint.compile_function(node, refchk)
       " a: は例外とする, オプションが必要 @TODO
 "      echo self.env.var[v]
       if v =~# '^a:'
-        call self.error_mes(self.env.var[v].node, 'EVL103', 'unused argument `' . v . '`', 1)
+        call self.error_mes(self.env.var[v].node, 'EVL103', 'unused argument `' . v . '`', v)
       else
-        call self.error_mes(self.env.var[v].node, 'EVL102', 'unused variable `' . v . '`', 1)
+        call self.error_mes(self.env.var[v].node, 'EVL102', 'unused variable `' . v . '`', v)
       endif
     endif
   endfor
@@ -2032,7 +2108,7 @@ function! s:vimlint_file(filename, param) " {{{
     let env = c.env
     for v in keys(env.var)
       if env.var[v].subs == 0
-        call c.error_mes(env.var[v].node, 'EVL101', 'undefined variable `' . v . '`', 1)
+        call c.error_mes(env.var[v].node, 'EVL101', 'undefined variable `' . v . '`', v)
       endif
     endfor
 
