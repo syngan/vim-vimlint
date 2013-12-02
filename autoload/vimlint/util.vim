@@ -1,5 +1,5 @@
-" ユーティリティ
 scriptencoding utf-8
+" ユーティリティ
 
 let s:save_cpo = &cpo
 set cpo&vim
