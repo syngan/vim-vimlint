@@ -42,21 +42,33 @@ VARIABLES 						*vimlint-variables*
 							*g:vimlint#config*
 
 You can define default values by |g:vimlint#config|.
-g:vimlint#config is a |Dictionary| which contains the following items:
+|g:vimlint#config| is a |Dictionary| which contains the following items:
 
 	"output"		Default: None
+		The value is a |String|, a |List| or a |Funcref|.
 		If the value is a |String|, |vimlint| outputs the result to
-		the file.
+		the file by using vimlint#util#output_file().
+		If the value is a |List|, |vimlit| returns the list of
+		the results by using vimlint#util#output_list().
 
 	"recursive"		Default: 0
 	"quiet"			Default: 0
 	"EVLxxx"		Default: 5
+		The value is a positive |Number| or a |Dictionary|.
+
 		1: none
 		3: warning message
 		5: error message
-		If you want not to report "EVL103: unused argument v" then,
->
-		let g:vimlint#config.EVL103 = 0
+
+		If you want not to report "EVL103: unused argument v" for all
+		variables, then >
+		let g:vimlint#config.EVL103 = 1
+<		or >
+		let g:vimlint#config.EVL103 = {':' : 1}
+<
+		If you want not to report "EVL103" only for the variable
+		'hoge', then >
+		let g:vimlint#config.EVL103 = {'hoge' : 1}
 <
 ------------------------------------------------------------------------------
 FUNCTIONS 						*vimlint-functions*
