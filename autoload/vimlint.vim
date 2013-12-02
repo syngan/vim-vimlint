@@ -36,12 +36,13 @@ let s:default_param_output = {
 
 " 5 必ずエラー
 " 3 警告に変更可能
-" 0 無視可能
+" 1 無視可能
+" 0 元に戻す.
 let s:DEF_ERR = 5
 let s:DEF_WRN = 3
-let s:DEF_NON = 0
+let s:DEF_NON = 1
 let s:default_errlevel = {}
-let s:default_errlevel.EVL101 = s:DEF_ERR
+let s:default_errlevel.EVL101 = s:DEF_NON
 let s:default_errlevel.EVL102 = s:DEF_NON
 let s:default_errlevel.EVL103 = s:DEF_NON
 let s:default_errlevel.EVL104 = s:DEF_NON
@@ -53,6 +54,19 @@ let s:default_errlevel.EVL204 = s:DEF_NON
 let s:default_errlevel.EVL205 = s:DEF_ERR
 let s:default_errlevel.EVL901 = s:DEF_ERR
 let s:default_errlevel.EVL902 = s:DEF_ERR
+let s:def_var_name = ':'
+
+function! s:bak_param(param, key, var)
+  let dict = a:param.bak[a:key]
+  if has_key(dict, a:var)
+    let elv = dict[a:var]
+  else
+    let elv = dict[s:def_var_name]
+  endif
+
+  call s:set_param(a:param, a:key, elv, a:var)
+ 
+endfunction
 
 function! s:set_param(param, key, errlv, var)
 " echo "set_param[" . a:key . "," . a:var . "]=" . a:errlv
@@ -61,10 +75,10 @@ function! s:set_param(param, key, errlv, var)
   if has_key(param, key)
     if type(param[key]) != type({})
       unlet param[key]
-      let param[key] = {'_' : s:DEF_ERR}
+      let param[key] = {s:def_var_name : s:DEF_ERR}
     endif
   else
-    let param[key] = {'_' : s:DEF_ERR}
+    let param[key] = {s:def_var_name : s:DEF_ERR}
   endif
 
   if a:errlv < s:default_errlevel[key]
@@ -89,17 +103,17 @@ function! s:extend_errlevel(param)
   for key in keys(s:default_errlevel)
 "   echo "param[" . key . "]"
     if !has_key(param, key)
-      call s:set_param(param, key, s:DEF_ERR, '_')
+      call s:set_param(param, key, s:DEF_ERR, s:def_var_name)
     elseif type(param[key]) == type(0)
-      call s:set_param(param, key, param[key], '_')
+      call s:set_param(param, key, param[key], s:def_var_name)
     elseif type(param[key]) != type({})
-      call s:set_param(param, key, s:DEF_ERR, '_')
+      call s:set_param(param, key, s:DEF_ERR, s:def_var_name)
     else
       for k in keys(param[key])
         call s:set_param(param, key, param[key][k], k)
       endfor
-      if !has_key(param[key], '_')
-        call s:set_param(param, key, s:DEF_ERR, '_')
+      if !has_key(param[key], s:def_var_name)
+        call s:set_param(param, key, s:DEF_ERR, s:def_var_name)
       endif
     endif
   endfor
@@ -115,7 +129,7 @@ function! s:extend_errlevel(param)
       " もし実際にこのエラーがあるとすると, 
       " s:default_errlevel の更新漏れ.
       " とりあえず, 最高レベルのエラーで設定しておく.
-      call s:set_param(param, key, s:DEF_ERR, '_')
+      call s:set_param(param, key, s:DEF_ERR, s:def_var_name)
     endif
   endfor
 
@@ -276,7 +290,7 @@ function! s:env(outer, funcname) " {{{
   return env
 endfunction " }}}
 
-" @vimlint(EVL103, 0, a:obj)
+" @vimlint(EVL103, 1, a:obj)
 function! s:output_echo(filename, pos, ev, eid, mes, obj) " {{{
   echo a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ": " . a:eid . ': ' . a:mes
 endfunction " }}}
@@ -288,13 +302,13 @@ endfunction " }}}
 function! s:output_list(filename, pos, ev, eid, mes, obj) " {{{
   let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:ev, a:eid, a:mes]]
 endfunction " }}}
-" @vimlint(EVL103, 5, a:obj)
+" @vimlint(EVL103, 0, a:obj)
 
 function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
   if type(a:var) == type("")
     let var = a:var
   else
-    let var = '_'
+    let var = s:def_var_name
   endif
 
   if !has_key(self.param, a:eid)
@@ -302,11 +316,11 @@ function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
   elseif has_key(self.param[a:eid], var)
     let lv = self.param[a:eid][var]
   else
-    let lv = self.param[a:eid]['_']
+    let lv = self.param[a:eid][s:def_var_name]
   endif
-  if lv > 0
+  if lv > s:DEF_NON
     let filename = get(self, 'filename', '...')
-    let ev = ["None", "Warning", "Warning", "Warning", "Error", "Error"][lv]
+    let ev = ["None", "None", "Warning", "Warning", "Error", "Error"][lv]
     let pos = vimlint#util#get_pos(a:node)
     call self.param.outfunc(filename, pos, ev, a:eid, a:mes, self)
   endif
@@ -748,6 +762,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
   return [vardict, N, N_lp]
 endfunction " }}}
 
+" @vimlint(EVL103, 1, a:brk_cont)
 function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
   " reconstruct_varstack_rt() で構築した情報をもとに,
   let vardict = a:rtret[0]
@@ -788,6 +803,7 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
     endif
   endfor
 endfunction "}}}
+" @vimlint(EVL103, 0, a:brk_cont)
 
 function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   " a:pos は s:gen_pos_cntl() により構築される
@@ -901,7 +917,7 @@ function s:VimlLint.compile(node, refchk) " {{{
   if a:node.type == s:NODE_TOPLEVEL " {{{
     return self.compile_toplevel(a:node, a:refchk)
   elseif a:node.type == s:NODE_COMMENT
-    return self.compile_comment(a:node, a:refchk)
+    return self.compile_comment(a:node)
   elseif a:node.type == s:NODE_EXCMD
     return self.compile_excmd(a:node, a:refchk)
   elseif a:node.type == s:NODE_FUNCTION
@@ -1077,27 +1093,41 @@ function s:VimlLint.compile_toplevel(node, refchk) " {{{
   return self.lines
 endfunction " }}}
 
-function s:VimlLint.compile_comment(node, refchk) " {{{
+function! s:isvarname(s)
+  return a:s =~# '^[vgslabwt]:$\|^\([vgslabwt]:\)\?[A-Za-z_][0-9A-Za-z_#]*$'
+endfunction
+
+function s:VimlLint.compile_comment(node) " {{{
   let s = a:node.str
-	let m = '^\s*@vimlint\s*(\s*\(EVL\d\+\)\s*,\s*\(\d\+\)\(\s*,\s*\(\w\+\)\)\=\s*)\s*'
+	let m = '^\s*@vimlint\s*(\s*\(EVL\d\+\)\s*,\s*\(\d\+\)\(\s*,\s*\([A-Za-z_:#]\+\)\)\=\s*)\s*'
   let l = matchlist(s, m)
   if len(l) == 0
     return
   endif
+  if !s:isvarname(l[4]) && l[4] !=# s:def_var_name
+    return
+  endif
 
   if !has_key(self.param, l[1])
-    echo "not haskey " . l[1]
+    if vimlint#debug > 1
+      echo "vimlint: unknown error code: " . l[1]
+    endif
     return
   endif
   if l[3] == ''
-    let v = '_'
+    let v = s:def_var_name
   else
     let v = l[4]
   endif
-  
-  call s:set_param(self.param, l[1], str2nr(l[2]), v)
+  if l[2] == '0'
+    call s:bak_param(self.param, l[1], v)
+  else
+    call s:set_param(self.param, l[1], str2nr(l[2]), v)
+  endif
 endfunction " }}}
 
+
+" @vimlint(EVL103, 1, a:refchk)
 function s:VimlLint.compile_excmd(node, refchk) " {{{
 " @TODO
 " e.g. set cpo&vim
@@ -1136,7 +1166,9 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   endif
 
 endfunction
+" @vimlint(EVL103, 0, a:refchk)
 
+" @vimlint(EVL103, 1, a:refchk)
 function s:VimlLint.compile_function(node, refchk)
   " @TODO left が dot/subs だった場合にのみ self は予約語とする #5
   let left = self.compile(a:node.left, 0) " name of function
@@ -1169,10 +1201,15 @@ function s:VimlLint.compile_function(node, refchk)
 
   let self.env = self.env.outer
 endfunction " }}}
+" @vimlint(EVL103, 0, a:refchk)
 
+" @vimlint(EVL103, 1, a:refchk)
+" @vimlint(EVL103, 1, a:node)
 function s:VimlLint.compile_delfunction(node, refchk) " {{{
   " @TODO function は定義済か?
 endfunction " }}}
+" @vimlint(EVL103, 0, a:refchk)
+" @vimlint(EVL103, 0, a:node)
 
 function s:VimlLint.compile_return(node, refchk) " {{{
 
@@ -2185,6 +2222,7 @@ function! vimlint#vimlint(file, ...) " {{{
   let param = extend(param, s:default_param, 'keep')
 
   let param = s:extend_errlevel(param)
+  let param.bak = deepcopy(param)
 
 
   let out_type = "echo"
