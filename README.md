@@ -35,6 +35,14 @@ call vimlint#vimlint('vimlint.vim', {'output' : {'filename': 'hoge', 'append': 1
 
 # Example
 
+## PR
+
+- [remove unnecessary global variables by syngan ? Pull Request #14 ? Shougo/unite-outline ? GitHub](https://github.com/Shougo/unite-outline/pull/14)
+- [vitalizer s:git_checkout() ? Issue #95 ? vim-jp/vital.vim ? GitHub](https://github.com/vim-jp/vital.vim/issues/95)
+- [fix s:validate() by syngan ? Pull Request #35 ? thinca/vim-ref ? GitHub](https://github.com/thinca/vim-ref/pull/35)
+- [undefined variable: bundle_names ? Issue #142 ? Shougo/neobundle.vim ? GitHub](https://github.com/Shougo/neobundle.vim/issues/142)
+- [fix vimlint error: by syngan ? Pull Request #111 ? Shougo/vimshell.vim ? GitHub](https://github.com/Shougo/vimshell.vim/pull/111)
+
 ## undefined variable
 
 ```vim
@@ -109,7 +117,7 @@ vimlparser: E488: Trailing characters: =: line 4 col 7
 
 ```vim
 function vimlint#vimlint..VimLParser.parse..VimLParser.parse_one_cmd..VimLParser
-.parse_command..VimLParser.parse_cmd_elseif, ¹Ô 2^@vimlparser: E582: :elseif wit
+.parse_command..VimLParser.parse_cmd_elseif, ï¿½ï¿½ 2^@vimlparser: E582: :elseif wit
 hout :if: line 429 col 5
 ```
 
