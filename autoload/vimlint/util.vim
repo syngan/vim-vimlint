@@ -46,6 +46,25 @@ function! vimlint#util#get_pos(node) " {{{
   endif
 endfunction " }}}
 
+
+" @vimlint(EVL103, 1, a:obj)
+function! vimlint#util#output_echo(filename, pos, ev, eid, mes, obj) " {{{
+  echo a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ": " . a:eid . ': ' . a:mes
+endfunction " }}}
+
+function! vimlint#util#output_file(filename, pos, ev, eid, mes, obj) " {{{
+  let a:obj.error += [a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ': ' . a:eid . ': ' . a:mes]
+endfunction " }}}
+
+function! vimlint#util#output_list(filename, pos, ev, eid, mes, obj) " {{{
+  let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:ev, a:eid, a:mes]]
+endfunction " }}}
+
+function! vimlint#util#output_vimconsole(filename, pos, ev, eid, mes, obj) " {{{
+  call vimconsole#log(a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ": " . a:eid . ': ' . a:mes)
+endfunction "}}}
+" @vimlint(EVL103, 0, a:obj)
+
 let &cpo = s:save_cpo
 unlet s:save_cpo
 

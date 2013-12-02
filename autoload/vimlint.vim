@@ -290,19 +290,6 @@ function! s:env(outer, funcname) " {{{
   return env
 endfunction " }}}
 
-" @vimlint(EVL103, 1, a:obj)
-function! s:output_echo(filename, pos, ev, eid, mes, obj) " {{{
-  echo a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ": " . a:eid . ': ' . a:mes
-endfunction " }}}
-
-function! s:output_file(filename, pos, ev, eid, mes, obj) " {{{
-  let a:obj.error += [a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ': ' . a:eid . ': ' . a:mes]
-endfunction " }}}
-
-function! s:output_list(filename, pos, ev, eid, mes, obj) " {{{
-  let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:ev, a:eid, a:mes]]
-endfunction " }}}
-" @vimlint(EVL103, 0, a:obj)
 
 function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
   if type(a:var) == type("")
@@ -2174,7 +2161,7 @@ function! s:vimlint_file(filename, param) " {{{
     call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : i}}, i, msg, 1)
   finally
 
-    if a:param.outfunc == function('s:output_file')
+    if a:param.outfunc == function('vimlint#util#output_file')
       if filewritable(c.param.output.filename)
         let lines = extend(readfile(c.param.output.filename), c.error)
       else
@@ -2186,7 +2173,7 @@ function! s:vimlint_file(filename, param) " {{{
 
     call s:echo_progress(a:param, '.... ' . c.filename . ' end')
 
-    if a:param.outfunc == function('s:output_list')
+    if a:param.outfunc == function('vimlint#util#output_list')
       return c.error
     else
       return []
@@ -2215,7 +2202,7 @@ endfunction " }}}
 function! vimlint#vimlint(file, ...) " {{{
 
   " param {{{
-  let param = a:0 ? copy(a:1) : {}
+  let param = a:0 ? deepcopy(a:1) : {}
   if exists('g:vimlint#config') && type(g:vimlint#config) == type({})
     let param = extend(param, g:vimlint#config, 'keep')
   endif
@@ -2231,6 +2218,12 @@ function! vimlint#vimlint(file, ...) " {{{
       let param.output = {'filename' : param.output}
     elseif type(param.output) == type([])
       let out_type = "list"
+      unlet param.output
+      let param.outfunc = function('vimlint#util#output_list')
+    elseif type(param.output) == type(function('tr'))
+      let out_type = "function"
+
+      let param.outfunc = param.output
       unlet param.output
     elseif type(param.output) != type({})
       unlet param.output
@@ -2248,15 +2241,12 @@ function! vimlint#vimlint(file, ...) " {{{
 
   if out_type == "file"
     " file
-    let param.outfunc = function('s:output_file')
+    let param.outfunc = function('vimlint#util#output_file')
     if !param.output.append
       call writefile([], param.output.filename)
     endif
-  elseif out_type == "list"
-    let param.outfunc = function('s:output_list')
-  else
-    " echo
-    let param.outfunc = function('s:output_echo')
+  elseif out_type == "echo"
+    let param.outfunc = function('vimlint#util#output_echo')
   endif " }}}
   " }}}
 
