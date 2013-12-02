@@ -866,7 +866,7 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   " @TODO 参照情報をコピーする.
 
   if len(vardict) <= len(rvrt2[0]) - 1
-    " @vimlint(EVL102, 0, l:i)
+    " @vimlint(EVL102, 1, l:i)
     for i in range(len(vardict), len(rvrt2[0]) - 1)
       call s:push_varstack(a:env, nop)
     endfor
@@ -875,8 +875,9 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
 
   call s:push_varstack(a:env, v)
 endfunction " }}}
-" @vimlint(EVL102, 5, l:i)
+" @vimlint(EVL102, 0, l:i)
 
+" @vimlint(EVL103, 1, a:self)
 function! s:reconstruct_varstack_st(self, env, p) " {{{
   " try 句の reconstrutt. どこで例外が発生するかわからない状態
   " @param p(list) reconstruct_varstack() の pos(listlist) と同じではない
@@ -888,6 +889,7 @@ function! s:reconstruct_varstack_st(self, env, p) " {{{
   endfor
 
 endfunction " }}}
+" @vimlint(EVL103, 0, a:self)
 
 function! s:echonode(node, refchk) " {{{
   echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
@@ -955,7 +957,7 @@ function s:VimlLint.compile(node, refchk) " {{{
   elseif a:node.type == s:NODE_ECHON
     return self.compile_echon(a:node, a:refchk)
   elseif a:node.type == s:NODE_ECHOHL
-    return self.compile_echohl(a:node, a:refchk)
+"    return self.compile_echohl(a:node, a:refchk)
   elseif a:node.type == s:NODE_ECHOMSG
     return self.compile_echomsg(a:node, a:refchk)
   elseif a:node.type == s:NODE_ECHOERR
@@ -1166,9 +1168,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   endif
 
 endfunction
-" @vimlint(EVL103, 0, a:refchk)
 
-" @vimlint(EVL103, 1, a:refchk)
 function s:VimlLint.compile_function(node, refchk)
   " @TODO left が dot/subs だった場合にのみ self は予約語とする #5
   let left = self.compile(a:node.left, 0) " name of function
@@ -1201,14 +1201,11 @@ function s:VimlLint.compile_function(node, refchk)
 
   let self.env = self.env.outer
 endfunction " }}}
-" @vimlint(EVL103, 0, a:refchk)
 
-" @vimlint(EVL103, 1, a:refchk)
 " @vimlint(EVL103, 1, a:node)
 function s:VimlLint.compile_delfunction(node, refchk) " {{{
   " @TODO function は定義済か?
 endfunction " }}}
-" @vimlint(EVL103, 0, a:refchk)
 " @vimlint(EVL103, 0, a:node)
 
 function s:VimlLint.compile_return(node, refchk) " {{{
@@ -1609,8 +1606,6 @@ function s:VimlLint.compile_try(node, refchk) "{{{
     let self.env.global.fins += 1
   endif
 
-  let pos_try = s:gen_pos_cntl(self.env, p)
-
   let ret = self.env.ret
   let loopb = self.env.loopb
   call s:reset_env_cntl(self.env)
@@ -1665,28 +1660,28 @@ function s:VimlLint.compile_throw(node, refchk) "{{{
 endfunction "}}}
 
 function s:VimlLint.compile_echo(node, refchk) "{{{
-  let list = map(a:node.list, 'self.compile(v:val, 1)')
+  call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
 function s:VimlLint.compile_echon(node, refchk) "{{{
-  let list = map(a:node.list, 'self.compile(v:val, 1)')
+  call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
-function s:VimlLint.compile_echohl(node, refchk) "{{{
-  " @TODO
-endfunction "}}}
+" function s:VimlLint.compile_echohl(node, refchk) "{{{
+"   " @TODO
+" endfunction "}}}
 
 function s:VimlLint.compile_echomsg(node, refchk) "{{{
-  let list = map(a:node.list, 'self.compile(v:val, 1)')
+  call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
 function s:VimlLint.compile_echoerr(node, refchk) "{{{
-  let list = map(a:node.list, 'self.compile(v:val, 1)')
+  call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
 function s:VimlLint.compile_execute(node, refchk) "{{{
   " @TODO execute :e `=path`
-  let list = map(a:node.list, 'self.compile(v:val, 1)')
+  call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
 " expr1: expr2 ? expr1 : expr1
@@ -2068,6 +2063,7 @@ function s:VimlLint.compile_env(node, refchk) " {{{
   return a:node
 "  return {'type' : 'env', 'node' : a:node}
 endfunction " }}}
+" @vimlint(EVL103, 0, a:refchk)
 
 " register
 function s:VimlLint.compile_reg(node) " {{{
@@ -2077,11 +2073,14 @@ function s:VimlLint.compile_reg(node) " {{{
 "  throw 'NotImplemented: reg'
 endfunction " }}}
 
+" @vimlint(EVL103, 1, a:op)
 function s:VimlLint.compile_op1(node, op) " {{{
   let a:node.left = self.compile(a:node.left, 1)
   return a:node
 endfunction " }}}
+" @vimlint(EVL103, 0, a:op)
 
+" @vimlint(EVL103, 1, a:op)
 function s:VimlLint.compile_op2(node, op) " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
@@ -2090,6 +2089,7 @@ function s:VimlLint.compile_op2(node, op) " {{{
   " @TODO 比較/演算できる型どうしか.
   " @TODO 演算結果の型を返すようにする
 endfunction " }}}
+" @vimlint(EVL103, 0, a:op)
 
 
 function! s:contain_multibyte(str) "{{{
@@ -2294,4 +2294,88 @@ endfunction " }}}
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
+" ignore EVL101 {{{
+" @vimlint(EVL101, 1, s:NIL)
+" @vimlint(EVL101, 1, s:VimLParser)
+" @vimlint(EVL101, 1, s:StringReader)
+" @vimlint(EVL101, 1, s:NODE_COMMENT)
+" @vimlint(EVL101, 1, s:NODE_ECHOHL)
+" @vimlint(EVL101, 1, s:NODE_FUNCTION)
+" @vimlint(EVL101, 1, s:NODE_TOPLEVEL)
+" @vimlint(EVL101, 1, s:NODE_REMAINDER)
+" @vimlint(EVL101, 1, s:NODE_UNLOCKVAR)
+" @vimlint(EVL101, 1, s:NODE_FOR)
+" @vimlint(EVL101, 1, s:NODE_GREATERCI)
+" @vimlint(EVL101, 1, s:NODE_NOMATCH)
+" @vimlint(EVL101, 1, s:NODE_WHILE)
+" @vimlint(EVL101, 1, s:NODE_TRY)
+" @vimlint(EVL101, 1, s:NODE_MINUS)
+" @vimlint(EVL101, 1, s:NODE_IF)
+" @vimlint(EVL101, 1, s:NODE_ISNOT)
+" @vimlint(EVL101, 1, s:NODE_THROW)
+" @vimlint(EVL101, 1, s:NODE_MATCH)
+" @vimlint(EVL101, 1, s:NODE_LOCKVAR)
+" @vimlint(EVL101, 1, s:NODE_SEQUALCI)
+" @vimlint(EVL101, 1, s:NODE_IS)
+" @vimlint(EVL101, 1, s:NODE_LET)
+" @vimlint(EVL101, 1, s:NODE_PLUS)
+" @vimlint(EVL101, 1, s:NODE_IDENTIFIER)
+" @vimlint(EVL101, 1, s:NODE_NEQUALCS)
+" @vimlint(EVL101, 1, s:NODE_SEQUALCS)
+" @vimlint(EVL101, 1, s:NODE_REG)
+" @vimlint(EVL101, 1, s:NODE_SLICE)
+" @vimlint(EVL101, 1, s:NODE_SMALLERCI)
+" @vimlint(EVL101, 1, s:NODE_NOMATCHCS)
+" @vimlint(EVL101, 1, s:NODE_EXCMD)
+" @vimlint(EVL101, 1, s:NODE_NEQUALCI)
+" @vimlint(EVL101, 1, s:NODE_SMALLERCS)
+" @vimlint(EVL101, 1, s:NODE_MATCHCI)
+" @vimlint(EVL101, 1, s:NODE_ISCI)
+" @vimlint(EVL101, 1, s:NODE_AND)
+" @vimlint(EVL101, 1, s:NODE_MATCHCS)
+" @vimlint(EVL101, 1, s:NODE_RETURN)
+" @vimlint(EVL101, 1, s:NODE_DOT)
+" @vimlint(EVL101, 1, s:NODE_EXCALL)
+" @vimlint(EVL101, 1, s:NODE_EQUALCI)
+" @vimlint(EVL101, 1, s:NODE_ECHON)
+" @vimlint(EVL101, 1, s:NODE_NEQUAL)
+" @vimlint(EVL101, 1, s:NODE_CALL)
+" @vimlint(EVL101, 1, s:NODE_EQUALCS)
+" @vimlint(EVL101, 1, s:NODE_EXECUTE)
+" @vimlint(EVL101, 1, s:NODE_MULTIPLY)
+" @vimlint(EVL101, 1, s:NODE_SUBTRACT)
+" @vimlint(EVL101, 1, s:NODE_GREATERCS)
+" @vimlint(EVL101, 1, s:NODE_ISNOTCI)
+" @vimlint(EVL101, 1, s:NODE_EQUAL)
+" @vimlint(EVL101, 1, s:NODE_TERNARY)
+" @vimlint(EVL101, 1, s:NODE_STRING)
+" @vimlint(EVL101, 1, s:NODE_OR)
+" @vimlint(EVL101, 1, s:NODE_SUBSCRIPT)
+" @vimlint(EVL101, 1, s:NODE_LIST)
+" @vimlint(EVL101, 1, s:NODE_NUMBER)
+" @vimlint(EVL101, 1, s:NODE_GEQUALCI)
+" @vimlint(EVL101, 1, s:NODE_DICT)
+" @vimlint(EVL101, 1, s:NODE_GEQUALCS)
+" @vimlint(EVL101, 1, s:NODE_GREATER)
+" @vimlint(EVL101, 1, s:NODE_DELFUNCTION)
+" @vimlint(EVL101, 1, s:NODE_ECHOERR)
+" @vimlint(EVL101, 1, s:NODE_ADD)
+" @vimlint(EVL101, 1, s:NODE_CURLYNAME)
+" @vimlint(EVL101, 1, s:NODE_CONTINUE)
+" @vimlint(EVL101, 1, s:NODE_UNLET)
+" @vimlint(EVL101, 1, s:NODE_BREAK)
+" @vimlint(EVL101, 1, s:NODE_OPTION)
+" @vimlint(EVL101, 1, s:NODE_ECHOMSG)
+" @vimlint(EVL101, 1, s:NODE_NOMATCHCI)
+" @vimlint(EVL101, 1, s:NODE_ENV)
+" @vimlint(EVL101, 1, s:NODE_ECHO)
+" @vimlint(EVL101, 1, s:NODE_NOT)
+" @vimlint(EVL101, 1, s:NODE_SMALLER)
+" @vimlint(EVL101, 1, s:NODE_SEQUAL)
+" @vimlint(EVL101, 1, s:NODE_ISCS)
+" @vimlint(EVL101, 1, s:NODE_GEQUAL)
+" @vimlint(EVL101, 1, s:NODE_ISNOTCS)
+" @vimlint(EVL101, 1, s:NODE_CONCAT)
+" @vimlint(EVL101, 1, s:NODE_DIVIDE)
+" }}}
 " vim:set et ts=2 sts=2 sw=2 tw=0 foldmethod=marker commentstring=\ "\ %s:
