@@ -51,7 +51,7 @@ g:vimlint#config is a |Dictionary| which contains the following items:
 	"recursive"		Default: 0
 	"quiet"			Default: 0
 	"EVLxxx"		Default: 5
-		0: none
+		1: none
 		3: warning message
 		5: error message
 		If you want not to report "EVL103: unused argument v" then,
