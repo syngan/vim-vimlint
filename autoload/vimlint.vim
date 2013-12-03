@@ -65,7 +65,7 @@ function! s:bak_param(param, key, var)
   endif
 
   call s:set_param(a:param, a:key, elv, a:var)
- 
+
 endfunction
 
 function! s:set_param(param, key, errlv, var)
@@ -126,7 +126,7 @@ function! s:extend_errlevel(param)
       " 設定されていても無視
       unlet param[key]
     elseif key =~# '^EVL[1-9]\+$' && type(param[key]) != type(0)
-      " もし実際にこのエラーがあるとすると, 
+      " もし実際にこのエラーがあるとすると,
       " s:default_errlevel の更新漏れ.
       " とりあえず, 最高レベルのエラーで設定しておく.
       call s:set_param(param, key, s:DEF_ERR, s:def_var_name)
@@ -2078,7 +2078,6 @@ function s:VimlLint.compile_op2(node, op) " {{{
 endfunction " }}}
 " @vimlint(EVL103, 0, a:op)
 
-
 function! s:contain_multibyte(str) "{{{
   return byteidx(a:str, strlen(a:str))==-1
 endfunction "}}}
@@ -2100,22 +2099,24 @@ function! s:check_scriptencoding(c, lines) " {{{
   endfor
 endfunction " }}}
 
-function! s:echo_progress(param, msg)
+function! s:echo_progress(param, msg) " {{{
   if !a:param.quiet
     if has_key(a:param, 'output')
       redraw!
     endif
-    echo a:msg
+    if exists("*strftime")
+      echo strftime("%H:%M:%S ") . a:msg
+    else
+      echo a:msg
+    endif
   endif
-endfunction
-
+endfunction " }}}
 
 function! s:vimlint_file(filename, param) " {{{
   let vimfile = a:filename
   let p = s:VimLParser.new()
   let c = s:VimlLint.new(a:param)
   try
-
     if a:param.type == 'string'
         let r = s:StringReader.new(vimfile)
         let c.filename = ''
@@ -2126,7 +2127,11 @@ function! s:vimlint_file(filename, param) " {{{
 
     call s:echo_progress(a:param, '.... ' . c.filename . ' start')
 
-    call c.compile(p.parse(r), 1)
+    let vp = p.parse(r)
+
+    call s:echo_progress(a:param, '.... ' . c.filename . ' check')
+
+    call c.compile(vp, 1)
 
     " global 変数のチェック
     let env = c.env
@@ -2136,14 +2141,12 @@ function! s:vimlint_file(filename, param) " {{{
       endif
     endfor
 
-
     if a:param.type == 'string'
       call s:check_scriptencoding(c, [vimfile])
     else
       call s:check_scriptencoding(c, readfile(vimfile))
     endif
   catch
-
 
     let line = matchstr(v:exception, '.*line \zs\d\+\ze col \d\+$')
     let col  = matchstr(v:exception, '.*line \d\+ col \zs\d\+\ze$')
@@ -2172,12 +2175,7 @@ function! s:vimlint_file(filename, param) " {{{
     endif
 
     call s:echo_progress(a:param, '.... ' . c.filename . ' end')
-
-    if a:param.outfunc == function('vimlint#util#output_list')
-      return c.error
-    else
-      return []
-    endif
+    return c.error
   endtry
 
 endfunction " }}}
