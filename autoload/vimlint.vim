@@ -1369,16 +1369,21 @@ function s:VimlLint.check_exists(ex, cond) " {{{
   endif
 
   if a[1] == 'e'
+    " if exists()
     let a = [a]
   elseif a[0]
+    " if exists() && exists() && ...
     let a = a[2]
   else
+    " if exists() || exists() ||
+    " not supported
     return
   endif
 
   for b in a
-    if b[1] == 'e' && b[0]
-      " appe)nd する.
+    if b[1] == 'e' && b[0] && b[2][1] =~# '[A-Za-z0-9_]'
+      " append する.
+      " @see :h exists()
       call self.parse_string(b[2][1 : -2] . " = 1", a:cond, 'exists', 0)
     endif
   endfor
