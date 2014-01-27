@@ -327,6 +327,9 @@ function! s:exists_var(self, env, node)
     if a:env.global == a:env
       let var = 'g:' . var
     else
+      if var ==# "count"
+        call a:self.error_mes(a:node, 'EVL106', 'local variable `' . var . '` is used withoug l:', var)
+      endif
       let var = 'l:' . var
     endif
   endif
@@ -485,6 +488,9 @@ function! s:VimlLint.append_var(env, var, val, pos)
         let v = 'g:' . v
 
       else
+        if v ==# "count"
+          call self.error_mes(a:var, 'EVL106', 'local variable `' . v . '` is used withoug l:', v)
+        endif
         let v = 'l:' . v
       endif
     endif
@@ -1383,7 +1389,6 @@ function s:VimlLint.check_exists(ex, cond) " {{{
     endif
   endfor
 endfunction " }}}
-
 
 function s:VimlLint.compile_if(node, refchk) "{{{
 "  call s:VimlLint.error_mes(a:node, "compile_if")

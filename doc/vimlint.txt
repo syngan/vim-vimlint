@@ -29,7 +29,6 @@ INTRODUCTION						|vimlint-introduction|
 INTERFACE		 				|vimlint-interface|
   FUNCTIONS						|vimlint-functions|
 ERROR CODE						|vimlint-errorcode|
-CHANGELOG						|vimlint-changelog|
 
 ==============================================================================
 INTRODUCTION						*vimlint-introduction*
@@ -99,6 +98,16 @@ EVL103: unused argument `v`					*EVL103*
 EVL104: variable may not be initialized on some execution path: `v`
 								*EVL105*
 EVL105: global variable `v` is defined without g:
+EVL106: local variable `v` is used without l:			*EVL106*
+	See |v:count|.
+>
+	    function! g:incorrect()
+	        let count = 1
+	    endif
+	    function! g:correct()
+	        let l:count = 1
+	    endif
+<
 
 code
 EVL201: unreachable code `return/throw`				*EVL201*
