@@ -64,6 +64,10 @@ function! vimlint#util#output_list(filename, pos, ev, eid, mes, obj) " {{{
   let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:ev, a:eid, a:mes]]
 endfunction " }}}
 
+function! vimlint#util#isvarname(s)"{{{
+  return a:s =~# '^[vgslabwt]:$\|^\([vgslabwt]:\)\?[A-Za-z_][0-9A-Za-z_#]*$'
+endfunction"}}}
+
 let &cpo = s:save_cpo
 unlet s:save_cpo
 

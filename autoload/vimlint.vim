@@ -7,7 +7,6 @@ set cpo&vim
 " - let つけずに変数代入
 " - call つけずに関数呼び出し
 " - built-in 関数関連の引数チェック
-" - scriptencoding 有無
 " @TODO `=` は let 以外で使う場面があるか?
 "
 " Variable i used before definition
@@ -1082,10 +1081,6 @@ function s:VimlLint.compile_toplevel(node, refchk) " {{{
   return self.lines
 endfunction " }}}
 
-function! s:isvarname(s)
-  return a:s =~# '^[vgslabwt]:$\|^\([vgslabwt]:\)\?[A-Za-z_][0-9A-Za-z_#]*$'
-endfunction
-
 function s:VimlLint.compile_comment(node) " {{{
   let s = a:node.str
 	let m = '^\s*@vimlint\s*(\s*\(EVL\d\+\)\s*,\s*\(\d\+\)\(\s*,\s*\([A-Za-z_:#]\+\)\)\=\s*)\s*'
@@ -1093,7 +1088,7 @@ function s:VimlLint.compile_comment(node) " {{{
   if len(l) == 0
     return
   endif
-  if !s:isvarname(l[4]) && l[4] !=# s:def_var_name
+  if !vimlint#util#isvarname(l[4]) && l[4] !=# s:def_var_name
     return
   endif
 
