@@ -47,7 +47,7 @@ You can define default values by |g:vimlint#config|.
 		The value is a |String|, a |List| or a |Funcref|.
 		If the value is a |String|, |vimlint| outputs the result to
 		the file by using vimlint#util#output_file().
-		If the value is a |List|, |vimlit| returns the list of
+		If the value is a |List|, |vimlint| returns the list of
 		the results by using vimlint#util#output_list().
 
 	"recursive"		Default: 0
@@ -59,13 +59,13 @@ You can define default values by |g:vimlint#config|.
 		3: warning message
 		5: error message
 
-		If you want not to report "EVL103: unused argument v" for all
+		If you want not to report "|EVL103|: unused argument v" for all
 		variables, then >
 		let g:vimlint#config.EVL103 = 1
 <		or >
 		let g:vimlint#config.EVL103 = {':' : 1}
 <
-		If you want not to report "EVL103" only for the variable
+		If you want not to report "|EVL103|" only for the variable
 		'hoge', then >
 		let g:vimlint#config.EVL103 = {'hoge' : 1}
 <
@@ -78,17 +78,17 @@ vimlint#vimlint({input} [, {param}])			*vimlint#vimlint()*
 ==============================================================================
 ERROR CODE 						*vimlint-errorcode*
 
-EVPxxx:          error message by |vim-vimplarser|
-EVLxxx and Exxx: error message by vim-vimlint
+EVPxxx:          error message by |vim-vimplarser|.
+EVLxxx and Exxx: error message by |vim-vimlint|.
 
-E46:  Cannot change read-only variable `v`
-E118: Too many arguments for function: func
-E119: Not enough arguments for function: func
-E133: :return not inside a function
-E586: :continue without :while or :for: continue
-E587: :break without :while or :for: break
-E714: List required
-E731: using Dictionary as a String
+|E46|:  Cannot change read-only variable `v`
+|E118|: Too many arguments for function: func
+|E119|: Not enough arguments for function: func
+|E133|: :return not inside a function
+|E586|: :continue without :while or :for: continue
+|E587|: :break without :while or :for: break
+|E714|: List required
+|E731|: using Dictionary as a String
 
 variable
 EVL101: undefined variable `v`					*EVL101*
