@@ -118,7 +118,7 @@ EVL204: constant in conditional context				*EVL204*
 EVL205: missing scriptencoding					*EVL205*
 
 system error
-EVL901: unkown type `t`						*EVL901*
+EVL901: unknown type `t`					*EVL901*
 EVL902: assert error `t`					*EVL902*
 
 ==============================================================================
