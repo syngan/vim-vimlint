@@ -37,6 +37,7 @@ call vimlint#vimlint('vimlint.vim', {'output' : {'filename': 'hoge', 'append': 1
 
 ## PR
 
+- [fixed vimlint error by syngan ? Pull Request #18 ? Shougo/unite-outline](https://github.com/Shougo/unite-outline/pull/18)
 - [remove unnecessary global variables by syngan ? Pull Request #14 ? Shougo/unite-outline ? GitHub](https://github.com/Shougo/unite-outline/pull/14)
 - [vitalizer s:git_checkout() ? Issue #95 ? vim-jp/vital.vim ? GitHub](https://github.com/vim-jp/vital.vim/issues/95)
 - [fix s:validate() by syngan ? Pull Request #35 ? thinca/vim-ref ? GitHub](https://github.com/thinca/vim-ref/pull/35)
