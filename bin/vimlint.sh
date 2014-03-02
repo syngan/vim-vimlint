@@ -18,9 +18,27 @@ EOF
 
 OPT=
 DIR=
-while getopts h OPT
+FILE=/tmp/vimlint.$$.tmp
+RET=0
+VLINT=
+VPARS=
+while getopts ho:l:p: OPT
 do
 	case $OPT in
+	o)
+		FILE=$OPTARG ;;
+	p)
+		if [ ! -f "${OPTARG}/autoload/vimlparser.vim" ]; then
+			usage
+			exit 1
+		fi
+		VPARS="$OPTARG" ;;
+	l)
+		if [ ! -f "${OPTARG}/autoload/vimlint.vim" ]; then
+			usage
+			exit 1
+		fi
+		VLINT="$OPTARG" ;;
 	d)
 		DIR=$OPTARG ;;
 	h)
@@ -33,14 +51,30 @@ do
 done
 shift `expr $OPTIND - 1`
 
-TMPFILE=/tmp/vimlint.$$.tmp
+VOPT=""
+if [ "${VLINT}" != "" ]; then
+	VOPT="${VOPT} -c 'set rtp+=${VLINT}'"
+fi
+
+if [ "${VPARS}" != "" ]; then
+	VOPT="${VOPT} -c 'set rtp+=${VPARS}'"
+fi
 
 for file in "$@"
 do
-	vim -c 'call vimlint#vimlint("'${file}'", {"output" : "'${TMPFILE}'"})' -c 'qall!' > /dev/null 2>&1
-	cat ${TMPFILE}
-	rm -f ${TMPFILE}
+	VIM="vim ${VOPT} -c 'call vimlint#vimlint(\"'${file}'\", {\"output\" : \"'${FILE}'\"})' -c 'qall!'"
+	eval ${VIM} > /dev/null 2>&1
+	if [ -f ${FILE} ]; then
+		grep Error ${FILE} > /dev/null
+		if [ $? -eq 0 ]; then
+			RET=1
+		fi
+		cat ${FILE}
+		rm -f ${FILE}
+	fi
 done
+
+exit ${RET}
 
 
 # EOF
