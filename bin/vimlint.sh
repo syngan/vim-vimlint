@@ -64,12 +64,14 @@ for file in "$@"
 do
 	VIM="vim ${VOPT} -c 'call vimlint#vimlint(\"'${file}'\", {\"output\" : \"'${FILE}'\"})' -c 'qall!'"
 	eval ${VIM} > /dev/null 2>&1
-	if [ -f ${FILE} ]; then
-		grep Error ${FILE} > /dev/null
-		if [ $? -eq 0 ]; then
-			RET=1
+	if [ -f ${FILE} -a ]; then
+		if [ `cat ${FILE} | wc -l` -gt 0 ]; then
+			grep Error "${FILE}"
+			if [ $? -eq 0 ]; then
+				RET=1
+			fi
+			cat ${FILE}
 		fi
-		cat ${FILE}
 		rm -f ${FILE}
 	fi
 done
