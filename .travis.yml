@@ -6,6 +6,7 @@ script:
     - vim -c 'set rtp+=.,/tmp/vimlparser' -c 'source test/vimlint-test.vim' -c 'call g:vimlint_test("test", "/tmp/vimlint_test.log")' -c "qall!"
     - grep "ng=0" /tmp/vimlint_test.log
     - grep "skip=1" /tmp/vimlint_test.log
+    - sh ./bin/vimlint.sh -p /tmp/vimlparser autoload
 after_faulure:
     - cat /tmp/vimlint_test.log
  
