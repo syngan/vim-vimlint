@@ -28,6 +28,18 @@ call vimlint#vimlint('vimlint.vim', {'output' : 'hoge'})
 call vimlint#vimlint('vimlint.vim', {'output' : {'filename': 'hoge', 'append': 1}})
 ```
 
+# Travis-CI
+
+Create `.travis.yml` in your plugin's directory.
+```
+before_script:
+    - git clone https://github.com/syngan/vim-vimlint /tmp/vim-vimlint
+    - git clone https://github.com/ynkdir/vim-vimlparser /tmp/vim-vimlparser
+
+script:
+  - sh /tmp/vim-vimlint/bin/vimlint.sh -l /tmp/vim-vimlint -p /tmp/vim-vimlparser autoload
+```
+
 # Example
 
 ## PR
