@@ -18,11 +18,6 @@ call vimlint#vimlint('vimlint.vim')
 call vimlint#vimlint(directory)
 ```
 
-- ignore "unused argument" 
-```vim
-call vimlint#vimlint('vimlint.vim', {'unused_argument' : 0})
-```
-
 - output to the file "hoge"
 ```vim
 call vimlint#vimlint('vimlint.vim', {'output' : 'hoge'})
@@ -122,5 +117,8 @@ function vimlint#vimlint..VimLParser.parse..VimLParser.parse_one_cmd..VimLParser
 hout :if: line 429 col 5
 ```
 
+# Blog in Japanese
 
-
+- [vimlint category](http://d.hatena.ne.jp/syngan/searchdiary?word=*[vim-vimlint])
+- [vim-vimlint 作った](http://d.hatena.ne.jp/syngan/20131122/1385046290)
+- [少しばかり機能追加した](http://d.hatena.ne.jp/syngan/20131130/1385816375)
