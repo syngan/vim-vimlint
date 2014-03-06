@@ -50,6 +50,7 @@ script:
 - [fix s:validate() by syngan ? Pull Request #35 ? thinca/vim-ref ? GitHub](https://github.com/thinca/vim-ref/pull/35)
 - [undefined variable: bundle_names ? Issue #142 ? Shougo/neobundle.vim ? GitHub](https://github.com/Shougo/neobundle.vim/issues/142)
 - [fix vimlint error: by syngan ? Pull Request #111 ? Shougo/vimshell.vim ? GitHub](https://github.com/Shougo/vimshell.vim/pull/111)
+- https://github.com/vim-jp/vital.vim/commit/d4e9ff07b6e37fd96e2d10857bd4fdae522983a0
 
 ## undefined variable
 
