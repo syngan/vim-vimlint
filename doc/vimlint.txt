@@ -101,15 +101,22 @@ EVL105: global variable `v` is defined without g:
 EVL106: local variable `v` is used without l:			*EVL106*
 	See |v:count|.
 >
-	    function! g:incorrect()
+	    function! Incorrect()
 	        let count = 1
 	    endif
-	    function! g:correct()
+	    function! Correct()
 	        let l:count = 1
 	    endif
 <
 EVL107: A function name does not allowd to contain a colon.	*EVL107*
-
+>
+	    function! g:incorrect()
+	        return 0
+	    endif
+	    function! Correct()
+	        return 1
+	    endif
+<
 code
 EVL201: unreachable code `return/throw`				*EVL201*
 EVL201: unreachable code `continue/break`
