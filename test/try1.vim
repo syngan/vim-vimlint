@@ -1,5 +1,5 @@
 " @ERR []
-function! g:hoge()
+function! Hoge()
   try
     echo 1 
   catch

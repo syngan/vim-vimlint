@@ -1,5 +1,5 @@
 " @ERR []
-function! g:hoge() range
+function! Hoge() range
   echo a:firstline + a:lastline
 endfunction
 

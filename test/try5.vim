@@ -1,5 +1,5 @@
 " @ERR []
-function! g:hoge(expr)
+function! Hoge(expr)
   try
     return eval(a:expr)
   finally

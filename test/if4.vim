@@ -1,5 +1,5 @@
 " @ERR ["EVL104"]
-function! g:hoge()
+function! Hoge()
   if 1 == 1
     if executable('curl')
       let cmd = 'curl --fail -s -o'

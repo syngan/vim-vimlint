@@ -1,5 +1,5 @@
 " @ERR ["EVL104"]
-function! g:hoge(a)
+function! Hoge(a)
   if a:a == 1
     if a:a
 	  let c = 1

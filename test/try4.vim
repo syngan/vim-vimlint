@@ -1,5 +1,5 @@
 " @ERR ["EVL104"]
-function! g:hoge(a)
+function! Hoge(a)
   if a:a == 1
     let env_ev = 1
     let len_env = 2

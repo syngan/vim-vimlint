@@ -1,5 +1,5 @@
 " @ERR []
-function! g:hoge()
+function! Hoge()
   let bundles = filter(neobundle#config#get_autoload_bundles(),
         \ "has_key(v:val.autoload, 'filetypes')")
   for filetype in neobundle#util#get_filetypes()

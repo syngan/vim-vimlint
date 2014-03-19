@@ -1,5 +1,5 @@
 " @ERR []
-function! g:hoge()
+function! Hoge()
   try
     let a = 1
     return 2

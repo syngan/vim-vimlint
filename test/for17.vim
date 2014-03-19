@@ -1,5 +1,5 @@
 " @ERR ["EVL102"]
-function! g:hoge(pos)
+function! Hoge(pos)
   for p in a:pos
     if p
       for j in range(3)

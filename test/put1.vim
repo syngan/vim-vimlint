@@ -1,5 +1,5 @@
 " @ERR []
-function! g:hoge()
+function! Hoge()
   let path = "."
   silent 0put =getpos(path)
 endfunction

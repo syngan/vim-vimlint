@@ -1,4 +1,4 @@
 " @ERR ["EVL101"]
-function! g:hoge()
+function! Hoge()
   echo a:lastline
 endfunction

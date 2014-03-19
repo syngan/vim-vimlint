@@ -1,5 +1,5 @@
 " @ERR ["EVL104"]
-function! g:hoge()
+function! Hoge()
   if len([1,2,3]) == 0
     let a  = 3
   else

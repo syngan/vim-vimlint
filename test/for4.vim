@@ -1,5 +1,5 @@
 " @ERR []
-function! g:hoge()
+function! Hoge()
   for b in [1,2,3]
     if len([]) == 1
       let a = 1

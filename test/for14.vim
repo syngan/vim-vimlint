@@ -1,5 +1,5 @@
 " @ERR ["EVL102"]
-function! g:hoge(v)
+function! Hoge(v)
   for a in a:v
     if a == 1
       let b = a

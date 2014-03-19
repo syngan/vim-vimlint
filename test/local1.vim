@@ -1,5 +1,5 @@
 " @ERR ["EVL106"]
-function! g:hoge()
+function! Hoge()
   let count = 1
   echo l:count
 endfunction

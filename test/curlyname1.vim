@@ -1,5 +1,5 @@
 " @ERR []
-function! g:hoge(n)
+function! Hoge(n)
   if a:n <= 1
     return 1
   endif

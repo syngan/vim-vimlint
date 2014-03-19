@@ -1,5 +1,5 @@
 " @ERR ["EVL104"]
-function! g:hoge()
+function! Hoge()
   for a in [1,2,3]
     if a == 0
       let b = a

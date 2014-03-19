@@ -1,5 +1,5 @@
 " @ERR ["EVL101"]
-function! g:hoge()
+function! Hoge()
 	let s:a = 0
 	if s:a
 		echo s:a

@@ -1,5 +1,5 @@
 " @ERR ["EVL101"]
-function! g:hoge()
+function! Hoge()
   let a = 1
   echo a
   unlet a

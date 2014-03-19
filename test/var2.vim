@@ -1,5 +1,5 @@
 " @ERR ["E46"]
 " E461 in vim
-function! g:hoge()
+function! Hoge()
   let s: = {}
 endfunction

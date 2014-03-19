@@ -1,5 +1,5 @@
 " @ERR []
-function! g:hoge(c)
+function! Hoge(c)
 	let b = eval('a:c')
 	echo b
 endfunction

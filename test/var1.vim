@@ -1,5 +1,5 @@
 " @ERR ["E46"]
-function! g:hoge(a)
+function! Hoge(a)
   let a:a = 1
   echo a:a
 endfunction

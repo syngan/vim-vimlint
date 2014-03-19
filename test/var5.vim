@@ -1,4 +1,4 @@
 " @ERR []
-function! g:hoge()
+function! Hoge()
   echo b:
 endfunction

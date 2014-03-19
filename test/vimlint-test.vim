@@ -43,7 +43,7 @@ function! s:test(file)
 endfunction
 
 
-function! g:vimlint_test(dir, ...)
+function! Vimlint_test(dir, ...)
   if isdirectory(a:dir)
     let files = expand(a:dir . "/*.vim")
   else
