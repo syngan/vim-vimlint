@@ -108,6 +108,7 @@ EVL106: local variable `v` is used without l:			*EVL106*
 	        let l:count = 1
 	    endif
 <
+EVL107: A function name does not allowd to contain a colon.	*EVL107*
 
 code
 EVL201: unreachable code `return/throw`				*EVL201*

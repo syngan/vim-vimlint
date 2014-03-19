@@ -55,7 +55,7 @@ let s:default_errlevel.EVL901 = s:DEF_ERR
 let s:default_errlevel.EVL902 = s:DEF_ERR
 let s:def_var_name = ':'
 
-function! s:bak_param(param, key, var)
+function! s:bak_param(param, key, var) " {{{
   let dict = a:param.bak[a:key]
   if has_key(dict, a:var)
     let elv = dict[a:var]
@@ -65,9 +65,9 @@ function! s:bak_param(param, key, var)
 
   call s:set_param(a:param, a:key, elv, a:var)
 
-endfunction
+endfunction " }}}
 
-function! s:set_param(param, key, errlv, var)
+function! s:set_param(param, key, errlv, var) " {{{
 " echo "set_param[" . a:key . "," . a:var . "]=" . a:errlv
   let key = a:key
   let param = a:param
@@ -95,9 +95,9 @@ function! s:set_param(param, key, errlv, var)
     unlet dict[a:var]
   endif
   let dict[a:var] = elv
-endfunction
+endfunction " }}}
 
-function! s:extend_errlevel(param)
+function! s:extend_errlevel(param) " {{{
   let param = a:param
   for key in keys(s:default_errlevel)
 "   echo "param[" . key . "]"
@@ -133,8 +133,7 @@ function! s:extend_errlevel(param)
   endfor
 
   return param
-endfunction
-
+endfunction " }}}
 
 function s:VimlLint.new(param) " {{{
   let obj = copy(self)
@@ -288,7 +287,6 @@ function! s:env(outer, funcname) " {{{
   endif
   return env
 endfunction " }}}
-
 
 function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
   if type(a:var) == type("")
@@ -1116,7 +1114,6 @@ function s:VimlLint.compile_comment(node) " {{{
   endif
 endfunction " }}}
 
-
 " @vimlint(EVL103, 1, a:refchk)
 function s:VimlLint.compile_excmd(node, refchk) " {{{
 " @TODO
@@ -1155,11 +1152,35 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
     call self.error_mes(a:node, 'EVL202', 'missing call `' . s . '`', 1)
   endif
 
+endfunction "}}}
+
+function! s:get_funcname(self, node)
+  if a:node.type == s:NODE_IDENTIFIER
+    return a:node.value
+  endif
+  if a:node.type == s:NODE_DOT
+    return s:get_funcname(a:self, a:node.left) . '.' . s:get_funcname(a:self, a:node.right)
+  endif
+  if a:node.type == s:NODE_CURLYNAME
+    return ''
+  endif
+
+  call a:self.error_mes(a:node, 'EVL901', 'unknown type `' . a:node.type . '` in get_funcname()', 1)
+  return ''
 endfunction
 
-function s:VimlLint.compile_function(node, refchk)
+function s:VimlLint.compile_function(node, refchk) "{{{
   " @TODO left が dot/subs だった場合にのみ self は予約語とする #5
   let left = self.compile(a:node.left, 0) " name of function
+  let funcname = s:get_funcname(self, left)
+  if funcname =~ ':' && funcname !~ '^s:'
+    " https://groups.google.com/forum/#!topic/vim_dev/iZMnLrMXEZM/discussion
+    "  A function name should not be allowed to contain a colon.
+    "  The intention, as mentioned in the quoted docs,  is only alphanumeric
+    "  characters and '_', while prepending s: is allowed to make the function
+    "  script-local.  Something like abc:def() was never intended to work.
+    call self.error_mes(left, 'EVL107', 'A function name does not allowed to contain a colon: `' . funcname . '`', 1)
+  endif
   let rlist = map(a:node.rlist, 'self.compile(v:val, 0)')  " list of argument string
 
   let self.env = s:env(self.env, left)
