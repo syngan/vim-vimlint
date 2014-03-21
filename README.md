@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/syngan/vim-vimlint.png?branch=master)](https://travis-ci.org/syngan/vim-vimlint)
+[![Build Status](https://travis-ci.org/syngan/vim-vimlint.svg?branch=master)](https://travis-ci.org/syngan/vim-vimlint)
 
 # Install
 
