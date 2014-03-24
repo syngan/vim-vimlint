@@ -1,7 +1,7 @@
 scriptencoding utf-8
 
 " source %
-" echo g:vimlint_test("test")
+" echo Vimlint_test("test")
 
 function! s:test(file)
   " @return 
