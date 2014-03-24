@@ -1159,7 +1159,7 @@ function! s:get_funcname(self, node)
     return a:node.value
   endif
   if a:node.type == s:NODE_DOT
-    return s:get_funcname(a:self, a:node.left) . '.' . s:get_funcname(a:self, a:node.right)
+    return "a" . '.' . s:get_funcname(a:self, a:node.right)
   endif
   if a:node.type == s:NODE_CURLYNAME
     return ''
