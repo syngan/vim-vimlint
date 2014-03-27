@@ -135,3 +135,4 @@ hout :if: line 429 col 5
 - [vimlint category](http://d.hatena.ne.jp/syngan/searchdiary?word=*[vim-vimlint])
 - [vim-vimlint 作った](http://d.hatena.ne.jp/syngan/20131122/1385046290)
 - [少しばかり機能追加した](http://d.hatena.ne.jp/syngan/20131130/1385816375)
+- [vim-vimlint で Travis-CI 連携](http://d.hatena.ne.jp/syngan/20140321/1395411106)
