@@ -1086,8 +1086,12 @@ function s:VimlLint.compile_toplevel(node, refchk) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_comment(node) " {{{
+  " コメント部に @vimlint(EVLxxx, number [, var]) な形式があれば
+  " それを元にエラーレベルを修正する
+  " 0 は元に戻すを意味する.
+  " 1 は, none. (:h vimlint-variables)
   let s = a:node.str
-	let m = '^\s*@vimlint\s*(\s*\(EVL\d\+\)\s*,\s*\(\d\+\)\(\s*,\s*\([A-Za-z_:#]\+\)\)\=\s*)\s*'
+  let m = '^\s*@vimlint\s*(\s*\(EVL\d\+\)\s*,\s*\(\d\+\)\(\s*,\s*\([A-Za-z_:#]\+\)\)\=\s*)\s*'
   let l = matchlist(s, m)
   if len(l) == 0
     return
