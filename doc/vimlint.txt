@@ -50,7 +50,7 @@ You can define default values by |g:vimlint#config|.
 		If the value is a |List|, |vimlint| returns the list of
 		the results by using vimlint#util#output_list().
 
-	"recursive"		Default: 0
+	"recursive"		Default: 1
 	"quiet"			Default: 0
 	"EVLxxx"		Default: 5
 		The value is a positive |Number| or a |Dictionary|.
@@ -74,6 +74,9 @@ FUNCTIONS 						*vimlint-functions*
 
 vimlint#vimlint({input} [, {param}])			*vimlint#vimlint()*
 
+{input} is a filename or a directory.
+{param} is a |Dictionary|. See |g:vimlint#config|.
+
 
 ==============================================================================
 ERROR CODE 						*vimlint-errorcode*
@@ -96,12 +99,12 @@ EVL101: undefined variable `v`					*EVL101*
 	    function! Incorrect()
 	        echo v
 	    endif
-	    function! Correct1()
+	    function! Correct()
 		let v = 1
 		echo v
 	    endif
 	    " @vimlint(EVL101, 1, l:v)
-	    function! Correct2()
+	    function! AvoidError()
 		let v = 1
 		echo v
 	    endif
@@ -114,12 +117,12 @@ EVL102: unused variable `v`					*EVL102*
 		let b = 2
 		echo b
 	    endif
-	    function! Correct1()
+	    function! Correct()
 		let b = 2
 		echo b
 	    endif
 	    " @vimlint(EVL102, 1, l:a)
-	    function! Correct2(v)
+	    function! AvoidError()
 		let a = 1
 		let b = 2
 		echo b
@@ -131,11 +134,11 @@ EVL103: unused argument `v`					*EVL103*
 	    function! Incorrect(v)
 	        return 0
 	    endif
-	    function! Correct1()
+	    function! Correct()
 		return 0
 	    endif
 	    " @vimlint(EVL103, 1, a:v)
-	    function! Correct2(v)
+	    function! AvoidError()
 		return 0
 	    endif
 	    " @vimlint(EVL103, 0, a:v)
