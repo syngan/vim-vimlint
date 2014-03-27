@@ -92,8 +92,54 @@ EVLxxx and Exxx: error message by |vim-vimlint|.
 
 variable
 EVL101: undefined variable `v`					*EVL101*
+>
+	    function! Incorrect()
+	        echo v
+	    endif
+	    function! Correct1()
+		let v = 1
+		echo v
+	    endif
+	    " @vimlint(EVL101, 1, l:v)
+	    function! Correct2()
+		let v = 1
+		echo v
+	    endif
+	    " @vimlint(EVL101, 0, l:v)
+<
 EVL102: unused variable `v`					*EVL102*
+>
+	    function! Incorrect()
+		let a = 1
+		let b = 2
+		echo b
+	    endif
+	    function! Correct1()
+		let b = 2
+		echo b
+	    endif
+	    " @vimlint(EVL102, 1, l:a)
+	    function! Correct2(v)
+		let a = 1
+		let b = 2
+		echo b
+	    endif
+	    " @vimlint(EVL103, 0, l:a)
+<
 EVL103: unused argument `v`					*EVL103*
+>
+	    function! Incorrect(v)
+	        return 0
+	    endif
+	    function! Correct1()
+		return 0
+	    endif
+	    " @vimlint(EVL103, 1, a:v)
+	    function! Correct2(v)
+		return 0
+	    endif
+	    " @vimlint(EVL103, 0, a:v)
+<
 								*EVL104*
 EVL104: variable may not be initialized on some execution path: `v`
 								*EVL105*
