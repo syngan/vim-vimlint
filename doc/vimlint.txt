@@ -145,6 +145,30 @@ EVL103: unused argument `v`					*EVL103*
 <
 								*EVL104*
 EVL104: variable may not be initialized on some execution path: `v`
+>
+	    function! Incorrect(b)
+		if a:b
+		    let v = 1
+		endif
+	        return v
+	    endif
+	    function! Correct()
+		if a:b
+		    let v = 1
+		else
+		    let v = 2
+		endif
+		return v
+	    endif
+	    " @vimlint(EVL104, 1, l:v)
+	    function! Incorrect(b)
+		if a:b
+		    let v = 1
+		endif
+	        return v
+	    endif
+	    " @vimlint(EVL104, 0, l:v)
+<
 								*EVL105*
 EVL105: global variable `v` is defined without g:
 EVL106: local variable `v` is used without l:			*EVL106*
