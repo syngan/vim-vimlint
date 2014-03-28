@@ -2227,10 +2227,8 @@ function! s:vimlint_dir(dir, param) " {{{
   return ret
 endfunction " }}}
 
-function! vimlint#vimlint(file, ...) " {{{
-
-  " param {{{
-  let param = a:0 ? deepcopy(a:1) : {}
+function! s:get_param(p) " {{{
+  let param = a:p
   if exists('g:vimlint#config') && type(g:vimlint#config) == type({})
     let param = extend(param, g:vimlint#config, 'keep')
   endif
@@ -2275,8 +2273,14 @@ function! vimlint#vimlint(file, ...) " {{{
     endif
   elseif out_type == "echo"
     let param.outfunc = function('vimlint#util#output_echo')
-  endif " }}}
-  " }}}
+  endif "}}}
+
+  return param
+endfunction " }}}
+
+function! vimlint#vimlint(file, ...) " {{{
+
+  let param = s:get_param(a:0 ? deepcopy(a:1) : {})
 
   let files = (type(a:file) == type([])) ? a:file : [a:file]
   let ret = []
