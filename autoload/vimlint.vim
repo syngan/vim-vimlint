@@ -890,7 +890,7 @@ endfunction " }}}
 
 function s:VimlLint.compile(node, refchk) " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
-    if a:node.type != 2 && g:vimlint#debug > 2
+    if a:node.type != 2 && g:vimlint#debug > 2 || g:vimlint#debug >= 5
       call s:echonode(a:node, a:refchk)
     endif
 "  else
@@ -1096,7 +1096,7 @@ function s:VimlLint.compile_comment(node) " {{{
   if len(l) == 0
     return
   endif
-  if !vimlint#util#isvarname(l[4]) && l[4] !=# s:def_var_name
+  if !vimlint#util#isvarname(l[4]) && l[4] !=# s:def_var_name && l[4] != ''
     return
   endif
 
@@ -1106,6 +1106,7 @@ function s:VimlLint.compile_comment(node) " {{{
     endif
     return
   endif
+
   if l[3] == ''
     let v = s:def_var_name
   else
