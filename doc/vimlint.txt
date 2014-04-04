@@ -164,7 +164,7 @@ EVL104: variable may not be initialized on some execution path: `v`
 		if a:b
 		    let v = 1
 		endif
-	        return v
+		return v
 	    endif
 	    " @vimlint(EVL104, 0, l:v)
 <
@@ -195,6 +195,16 @@ EVL201: unreachable code `continue/break`
 EVL202: missing call `s`					*EVL202*
 EVL203: parse error in `cmd`					*EVL203*
 EVL204: constant in conditional context				*EVL204*
+>
+	    if 1
+		" incorrect
+	    endif
+	    @vimlint(EVL204, 1)
+	    if 1
+	    @vimlint(EVL204, 0)
+	        " avoid error
+	    endif 1
+<
 EVL205: missing scriptencoding					*EVL205*
 
 system error
