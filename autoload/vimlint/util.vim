@@ -21,8 +21,7 @@ function! vimlint#util#isdict_type(node) " {{{
 endfunction " }}}
 
 function! vimlint#util#notstr_type(node) " {{{
-  return vimlint#util#isnum_type(a:node) ||
-  \  vimlint#util#islist_type(a:node) ||
+  return vimlint#util#islist_type(a:node) ||
   \  vimlint#util#isdict_type(a:node)
 endfunction " }}}
 
