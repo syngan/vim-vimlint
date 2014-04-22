@@ -23,11 +23,6 @@ call vimlint#vimlint(directory)
 call vimlint#vimlint('vimlint.vim', {'output' : 'hoge'})
 ```
 
-- append to the file "hoge"
-```vim
-call vimlint#vimlint('vimlint.vim', {'output' : {'filename': 'hoge', 'append': 1}})
-```
-
 # Travis-CI
 
 Create `.travis.yml` in your plugin's directory.
