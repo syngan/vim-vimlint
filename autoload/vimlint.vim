@@ -1159,7 +1159,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 
 endfunction "}}}
 
-function! s:get_funcname(self, node)
+function! s:get_funcname(self, node) " {{{
   if a:node.type == s:NODE_IDENTIFIER
     return a:node.value
   endif
@@ -1172,7 +1172,7 @@ function! s:get_funcname(self, node)
 
   call a:self.error_mes(a:node, 'EVL901', 'unknown type `' . a:node.type . '` in get_funcname()', 1)
   return ''
-endfunction
+endfunction " }}}
 
 function s:VimlLint.compile_function(node, refchk) "{{{
   " @TODO left が dot/subs だった場合にのみ self は予約語とする #5
@@ -1298,7 +1298,7 @@ function s:VimlLint.compile_unlockvar(node, refchk) "{{{
   endfor
 endfunction "}}}
 
-function! s:neg_exists(ex)
+function! s:neg_exists(ex) " {{{
   let a = a:ex
   if len(a) == 0
     return a
@@ -1317,9 +1317,9 @@ function! s:neg_exists(ex)
   endwhile
 
   return a
-endfunction
+endfunction " }}}
 
-function! s:VimlLint.extract_exists(cond)
+function! s:VimlLint.extract_exists(cond) " {{{
   " @return a list of {type:and/or/exists, bool, var]
   " これ以外はしらない
   " exists()
@@ -1387,7 +1387,7 @@ function! s:VimlLint.extract_exists(cond)
   endif
 
   return []
-endfunction
+endfunction " }}}
 
 function s:VimlLint.check_exists(ex, cond) " {{{
   let a = a:ex
@@ -1904,6 +1904,7 @@ endfunction "}}}
 
 function s:VimlLint.compile_call(node, refchk) "{{{
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
+  let a:node.rlist = rlist
   let left = self.compile(a:node.left, 0)
   if has_key(left, 'value') && type(left.value) == type("")
     let d = vimlint#builtin#get_func_inf(left.value)
@@ -1918,6 +1919,8 @@ function s:VimlLint.compile_call(node, refchk) "{{{
 "        endfor
       endif
     endif
+
+    call vimlint#builtin_arg#check(self, left.value, a:node)
 
     " 例外で, map と filter と,
     " @TODO vital... はどうしよう

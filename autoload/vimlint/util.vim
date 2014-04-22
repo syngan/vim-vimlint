@@ -4,6 +4,34 @@ scriptencoding utf-8
 let s:save_cpo = &cpo
 set cpo&vim
 
+function! vimlint#util#isnum_type(node) " {{{
+  return a:node.type == 80
+endfunction " }}}
+
+function! vimlint#util#isstr_type(node) " {{{
+  return a:node.type == 81
+endfunction " }}}
+
+function! vimlint#util#islist_type(node) " {{{
+  return a:node.type == 82
+endfunction " }}}
+
+function! vimlint#util#isdict_type(node) " {{{
+  return a:node.type == 83
+endfunction " }}}
+
+function! vimlint#util#notstr_type(node) " {{{
+  return vimlint#util#isnum_type(a:node) ||
+  \  vimlint#util#islist_type(a:node) ||
+  \  vimlint#util#isdict_type(a:node)
+endfunction " }}}
+
+function! vimlint#util#isstr_value(node, str) " {{{
+  return a:node.value ==# '"' . a:str . '"' ||
+        \ a:node.value ==# "'" . a:str . "'"
+endfunction " }}}
+
+
 function! s:valid_pos(pos) "{{{
   return has_key(a:pos, 'lnum')
 endfunction "}}}

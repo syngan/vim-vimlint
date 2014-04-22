@@ -23,9 +23,11 @@ for line in open('resource/builtin-func', 'r'):
   argmin = line2.count("{")
   func = re.sub(re3, '', line2)
 
-  # 例外がいくつかある. bug だと思うが.
   # getreg( [{regname} [, 1]])	String	contents of register
+  # => 1 のみを受け付ける.
+  #
   # mode( [expr])			String	current editing mode
+  # => 好みらしい.
   if func == 'getreg':
     argnum = 2
   elif func == 'deepcopy':
