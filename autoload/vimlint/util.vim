@@ -25,6 +25,12 @@ function! vimlint#util#notstr_type(node) " {{{
   \  vimlint#util#isdict_type(a:node)
 endfunction " }}}
 
+function! vimlint#util#notdict_type(node) " {{{
+  return vimlint#util#islist_type(a:node) ||
+  \  vimlint#util#isstr_type(a:node) ||
+  \  vimlint#util#isnum_type(a:node)
+endfunction " }}}
+
 function! vimlint#util#isstr_value(node, str) " {{{
   return a:node.value ==# '"' . a:str . '"' ||
         \ a:node.value ==# "'" . a:str . "'"

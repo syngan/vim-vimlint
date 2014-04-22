@@ -19,6 +19,16 @@ function! s:EVL108(vl, node, n, fname, mes) " {{{
   call a:vl.error_mes(a:node, 'EVL108', nth . " argument of " . a:fname . " should be " . a:mes, 1)
 endfunction " }}}
 
+function! s:funcs.keys(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  for i in range(1)
+    if vimlint#util#notdict_type(rlist[i])
+      call s:EVL108(a:vl, a:node, i+1, a:fname, 'a dictionary')
+    endif
+  endfor
+
+endfunction " }}}
+
 function! s:funcs.substitute(vl, fname, node) " {{{
 " substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 " flags は "" or "g"
@@ -26,7 +36,7 @@ function! s:funcs.substitute(vl, fname, node) " {{{
 
   for i in range(4)
     if vimlint#util#notstr_type(rlist[i])
-      call s:EVL108(a:vl, a:node, i+1, a:fname, 'string')
+      call s:EVL108(a:vl, a:node, i+1, a:fname, 'a string')
     endif
   endfor
 
@@ -42,8 +52,6 @@ endfunction " }}}
 function! vimlint#builtin_arg#check(vl, fname, node) " {{{
   if has_key(s:funcs, a:fname)
     return s:funcs[a:fname](a:vl, a:fname, a:node)
-  else
-    return []
   endif
 endfunction " }}}
 
