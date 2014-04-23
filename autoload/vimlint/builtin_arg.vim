@@ -1,5 +1,4 @@
 scriptencoding utf-8
-" 日本語ファイル
 
 let s:save_cpo = &cpo
 
@@ -29,6 +28,36 @@ function! s:funcs.keys(vl, fname, node) " {{{
 
 endfunction " }}}
 
+function! s:funcs.search(vl, fname, node) " {{{
+" search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
+" flags は "" or "g"
+  let rlist = a:node.rlist
+
+  for i in range(min([2, len(rlist)]))
+    if vimlint#util#notstr_type(rlist[i])
+      call s:EVL108(a:vl, a:node, i+1, a:fname, 'a string')
+    endif
+  endfor
+
+  if len(rlist) >= 2
+    let flag = rlist[1]
+    if vimlint#util#isstr_type(flag)
+      let str = vimlint#util#str_value(flag)
+      if str =~# '[^bcenpswW]'
+        call s:EVL108(a:vl, a:node, 2, a:fname, '"bcenpswW"')
+      elseif str =~# 'w' && str =~# 'W'
+        call s:EVL108(a:vl, a:node, 2, a:fname, '"w" or "W"')
+      elseif str =~# 's' && str =~# 'n'
+        call s:EVL108(a:vl, a:node, 2, a:fname, '"s" or "n"')
+      elseif str =~# 'e' && str =~# 'n'
+        call s:EVL108(a:vl, a:node, 2, a:fname, '"e" or "n"')
+      elseif str =~# '\(.\).*\1'
+        call s:EVL108(a:vl, a:node, 2, a:fname, 'once')
+      endif
+    endif
+  endif
+endfunction " }}}
+
 function! s:funcs.substitute(vl, fname, node) " {{{
 " substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 " flags は "" or "g"
@@ -42,8 +71,8 @@ function! s:funcs.substitute(vl, fname, node) " {{{
 
   let flag = rlist[3]
   if vimlint#util#isstr_type(flag)
-    if !vimlint#util#isstr_value(flag, '') && 
-    \  !vimlint#util#isstr_value(flag, 'g')
+    let str = vimlint#util#str_value(flag)
+    if str != "" && str != "g"
       call s:EVL108(a:vl, a:node, 4, a:fname, '"g" or ""')
     endif
   endif

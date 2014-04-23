@@ -21,6 +21,7 @@ function! vimlint#util#isdict_type(node) " {{{
 endfunction " }}}
 
 function! vimlint#util#notstr_type(node) " {{{
+  " 変数などは判定できないので isstr_type() ではエラー判定できないため.
   return vimlint#util#islist_type(a:node) ||
   \  vimlint#util#isdict_type(a:node)
 endfunction " }}}
@@ -31,11 +32,11 @@ function! vimlint#util#notdict_type(node) " {{{
   \  vimlint#util#isnum_type(a:node)
 endfunction " }}}
 
-function! vimlint#util#isstr_value(node, str) " {{{
-  return a:node.value ==# '"' . a:str . '"' ||
-        \ a:node.value ==# "'" . a:str . "'"
+function! vimlint#util#str_value(node) " {{{
+  " node が str と一致するか.
+  " isstr_type() で判定済みと仮定
+  return a:node.value[1 : -2]
 endfunction " }}}
-
 
 function! s:valid_pos(pos) "{{{
   return has_key(a:pos, 'lnum')
