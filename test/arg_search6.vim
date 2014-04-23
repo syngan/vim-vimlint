@@ -1,2 +1,2 @@
 " @ERR ["EVL108"]
-call search("hoge", "sp", "", "")
+call search("hoge", "sn", "", "")
