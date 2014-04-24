@@ -58,6 +58,8 @@ function! s:funcs.search(vl, fname, node) " {{{
   endif
 endfunction " }}}
 
+let s:funcs.searchpos = s:funcs.search
+
 function! s:funcs.substitute(vl, fname, node) " {{{
 " substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 " flags は "" or "g"
