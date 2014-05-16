@@ -1178,7 +1178,7 @@ function s:VimlLint.compile_function(node, refchk) "{{{
   " @TODO left が dot/subs だった場合にのみ self は予約語とする #5
   let left = self.compile(a:node.left, 0) " name of function
   let funcname = s:get_funcname(self, left)
-  if funcname =~ ':' && funcname !~# '^s:' && funcname !~# '^g:[A-Z]'
+  if funcname =~ ':' && funcname !~ '^s:'
     " https://groups.google.com/forum/#!topic/vim_dev/iZMnLrMXEZM/discussion
     "  A function name should not be allowed to contain a colon.
     "  The intention, as mentioned in the quoted docs,  is only alphanumeric
@@ -1906,7 +1906,6 @@ function s:VimlLint.compile_call(node, refchk) "{{{
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let a:node.rlist = rlist
   let left = self.compile(a:node.left, 0)
-  " 関数名がそのまま left.value に入っている..
   if has_key(left, 'value') && type(left.value) == type("")
     let d = vimlint#builtin#get_func_inf(left.value)
     if d != {}
@@ -1946,16 +1945,6 @@ function s:VimlLint.compile_call(node, refchk) "{{{
         let s = s:escape_string(rlist[2].value)
         call self.parse_string(s[3:-2], left, left.value, 1)
       endif
-    endif
-
-    if left.value =~# '^[gl]:[a-z][A-Za-z0-9_]\+$'
-      call self.error_mes(left, 'E117', 'Unknown function: `' . left.value . '`', 1)
-    elseif left.value =~# '^\%([la]:\)\?[A-Za-z0-9_]\+$'
-      \ && left.value !~ '^[a-z0-9_]\+$'
-      " variable? 参照しましたよ.
-      " 新しい関数がでたらどうする？
-      " @TODO local function が EVL101 になってしまうので gbwtsla にしない
-      call s:exists_var(self, self.env, left)
     endif
   endif
 

@@ -85,7 +85,6 @@ EVPxxx:          error message by |vim-vimplarser|.
 EVLxxx and Exxx: error message by |vim-vimlint|.
 
 |E46|:  Cannot change read-only variable `v`
-|E117|: Unknown function: func
 |E118|: Too many arguments for function: func
 |E119|: Not enough arguments for function: func
 |E133|: :return not inside a function
