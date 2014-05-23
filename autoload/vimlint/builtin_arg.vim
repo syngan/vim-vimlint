@@ -18,6 +18,13 @@ function! s:EVL108(vl, node, n, fname, mes) " {{{
   call a:vl.error_mes(a:node, 'EVL108', nth . " argument of " . a:fname . " should be " . a:mes, 1)
 endfunction " }}}
 
+function! s:funcs.List1(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  if vimlint#util#notlist_type(rlist[0])
+    call s:EVL108(a:vl, a:node, 1, a:fname, 'a list')
+  endif
+endfunction " }}}
+
 function! s:funcs.keys(vl, fname, node) " {{{
   let rlist = a:node.rlist
   for i in range(1)
@@ -27,6 +34,9 @@ function! s:funcs.keys(vl, fname, node) " {{{
   endfor
 
 endfunction " }}}
+
+let s:funcs.max = s:funcs.List1
+let s:funcs.min = s:funcs.List1
 
 function! s:funcs.search(vl, fname, node) " {{{
 " search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
