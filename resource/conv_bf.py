@@ -29,9 +29,7 @@ for line in open('resource/builtin-func', 'r'):
   # mode( [expr])			String	current editing mode
   # => 好みらしい.
   if func == 'getreg':
-    argnum = 2
-  elif func == 'deepcopy':
-	argnum = 2
+    argnum = 3
   if line.count('[expr]') > 0:
     argnum = argnum + 1
   if hasdots:

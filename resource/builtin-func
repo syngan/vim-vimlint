@@ -22,6 +22,7 @@ bufnr( {expr})			Number	Number of the buffer {expr}
 bufwinnr( {expr})		Number	window number of buffer {expr}
 byte2line( {byte})		Number	line number at byte count {byte}
 byteidx( {expr}, {nr})		Number	byte index of {nr}'th char in {expr}
+byteidxcomp( {expr}, {nr})	Number	byte index of {nr}'th char in {expr}
 call( {func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
 ceil( {expr})			Float	round {expr} up
@@ -45,7 +46,7 @@ cscope_connection( [{num} , {dbpath} [, {prepend}]])
 cursor( {lnum}, {col} [, {coladd}])
 				Number	move cursor to {lnum}, {col}, {coladd}
 cursor( {list})			Number	move cursor to position in {list}
-deepcopy( {expr})		any	make a full copy of {expr}
+deepcopy( {expr} [, {noref}])	any	make a full copy of {expr}
 delete( {fname})		Number	delete file {fname}
 did_filetype()			Number	TRUE if FileType autocommand event used
 diff_filler( {lnum})		Number	diff filler lines about {lnum}
@@ -55,6 +56,7 @@ escape( {string}, {chars})	String	escape {chars} in {string} with '\'
 eval( {string})			any	evaluate {string} into its value
 eventhandler( )			Number	TRUE if inside an event handler
 executable( {expr})		Number	1 if executable {expr} exists
+exepath( {expr})		String  full path of the command {expr}
 exists( {expr})			Number	TRUE if {expr} exists
 extend( {expr1}, {expr2} [, {expr3}])
 				List/Dict insert items of {expr2} into {expr1}
@@ -107,7 +109,8 @@ getmatches()			List	list of current matches
 getpid()			Number	process ID of Vim
 getpos( {expr})			List	position of cursor, mark, etc.
 getqflist()			List	list of quickfix items
-getreg( [{regname} [, 1]])	String	contents of register
+getreg( [{regname} [, 1 [, {list}]]])
+				String or List   contents of register
 getregtype( [{regname}])	String	type of register
 gettabvar( {nr}, {varname} [, {def}])
 				any	variable {varname} in tab {nr} or {def}
@@ -119,7 +122,7 @@ getwinvar( {nr}, {varname} [, {def}])
 				any	variable {varname} in window {nr}
 glob( {expr} [, {nosuf} [, {list}]])
 				any	expand file wildcards in {expr}
-globpath( {path}, {expr} [, {flag}])
+globpath( {path}, {expr} [, {nosuf} [, {list}]])
 				String	do glob({expr}) for all dirs in {path}
 has( {feature})			Number	TRUE if feature {feature} supported
 has_key( {dict}, {key})		Number	TRUE if {dict} has entry {key}
@@ -278,7 +281,8 @@ strridx( {haystack}, {needle} [, {start}])
 				Number	last index of {needle} in {haystack}
 strtrans( {expr})		String	translate string to make it printable
 strwidth( {expr})		Number	display cell length of the String {expr}
-submatch( {nr})			String	specific match in ":s" or substitute()
+submatch( {nr}[, {list}])	String or List
+					specific match in ":s" or substitute()
 substitute( {expr}, {pat}, {sub}, {flags})
 				String	all {pat} in {expr} replaced with {sub}
 synID( {lnum}, {col}, {trans})	Number	syntax ID at {lnum} and {col}
@@ -288,6 +292,7 @@ synIDtrans( {synID})		Number	translated syntax ID of {synID}
 synconcealed( {lnum}, {col})	List    info about concealing
 synstack( {lnum}, {col})	List	stack of syntax IDs at {lnum} and {col}
 system( {expr} [, {input}])	String	output of shell command/filter {expr}
+systemlist( {expr} [, {input}])	List	output of shell command/filter {expr}
 tabpagebuflist( [{arg}])	List	list of buffer numbers in tab page
 tabpagenr( [{arg}])		Number	number of current or last tab page
 tabpagewinnr( {tabarg}[, {arg}])
@@ -305,6 +310,8 @@ trunc( {expr})			Float	truncate Float {expr}
 type( {name})			Number	type of variable {name}
 undofile( {name})		String	undo file name for {name}
 undotree()			List	undo file tree
+uniq( {list} [, {func} [, {dict}]])
+				List	remove adjacent duplicates from a list
 values( {dict})			List	values in {dict}
 virtcol( {expr})		Number	screen column of cursor or mark
 visualmode( [expr])		String	last visual mode used
