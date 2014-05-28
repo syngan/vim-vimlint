@@ -25,6 +25,15 @@ function! s:funcs.List1(vl, fname, node) " {{{
   endif
 endfunction " }}}
 
+function! s:funcs.getregtype(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  for i in range(len(rlist))
+    if vimlint#util#notstr_type(rlist[i])
+      call s:EVL108(a:vl, a:node, i+1, a:fname, 'a regname')
+    endif
+  endfor
+endfunction " }}}
+
 function! s:funcs.keys(vl, fname, node) " {{{
   let rlist = a:node.rlist
   for i in range(1)
