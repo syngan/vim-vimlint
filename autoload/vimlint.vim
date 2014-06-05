@@ -310,18 +310,19 @@ function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
   endif
 endfunction " }}}
 
-" 変数参照 s:exists_var(env, node) {{{
+" 変数参照 s:exists_var {{{
 " @param var string
 " @param node dict: return value of compile
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
-function! s:exists_var(self, env, node)
+function! s:exists_var(self, env, node, funcref)
   let var = a:node.value
   if var =~# '#'
-    " チェックできない
+    " cannot support
     return 1
   endif
 
   if var !~# '^[gbwtslva]:'
+    let append_prefix = 1
     if a:env.global == a:env
       let var = 'g:' . var
     else
@@ -330,13 +331,15 @@ function! s:exists_var(self, env, node)
       endif
       let var = 'l:' . var
     endif
+  else
+    let append_prefix = 0
   endif
 
   if var =~# '^[gbwt]:'
     " check できない
     " 型くらいは保存してみる?
     return 1
-  elseif var =~# '^[s]:'
+  elseif var =~# '^s:'
     " 存在していることにして先にすすむ.
     " どこで定義されるかわからない
     call s:append_var_(a:env.global, var, a:node, 0, -1)
@@ -366,7 +369,10 @@ function! s:exists_var(self, env, node)
     endwhile
 
     " 存在しなかった
-    call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', var)
+    if !append_prefix || !a:funcref || a:node.value =~# '^[A-Z][A-Za-z0-9]\+'
+      " prefix なしの場合は、builtin-func 
+      call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', var)
+    endif
     return 0
   endif
 endfunction " }}}
@@ -772,7 +778,7 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
         let z[0].v.v = a:self.append_var(z[0].env, z[0].node, z[0].var, 'reconstruct')
         " ref 情報を追加しないと.
         if z[3] > 0
-          call s:exists_var(a:self, a:self.env, z[0].node)
+          call s:exists_var(a:self, a:self.env, z[0].node, 0)
         endif
 
       catch
@@ -1178,7 +1184,7 @@ function s:VimlLint.compile_function(node, refchk) "{{{
   " @TODO left が dot/subs だった場合にのみ self は予約語とする #5
   let left = self.compile(a:node.left, 0) " name of function
   let funcname = s:get_funcname(self, left)
-  if funcname =~ ':' && funcname !~ '^s:'
+  if funcname =~ ':' && funcname !~# '^s:' && funcname !~# '^g:[A-Z]'
     " https://groups.google.com/forum/#!topic/vim_dev/iZMnLrMXEZM/discussion
     "  A function name should not be allowed to contain a colon.
     "  The intention, as mentioned in the quoted docs,  is only alphanumeric
@@ -1281,7 +1287,7 @@ function s:VimlLint.compile_lockvar(node, refchk) "{{{
     if var.type != s:NODE_IDENTIFIER
 "      call self.error_mes(a:node, "Ex#, 'lockvar: internal variable is required: ' . var, 1)
     else
-      call s:exists_var(self, self.env, var)
+      call s:exists_var(self, self.env, var, 0)
 "      call self.error_mes(a:node, "Ex#, 'undefined variable: ' . var, 1)
     endif
   endfor
@@ -1292,7 +1298,7 @@ function s:VimlLint.compile_unlockvar(node, refchk) "{{{
     if var.type != s:NODE_IDENTIFIER
 "      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
     else
-      call s:exists_var(self, self.env, var)
+      call s:exists_var(self, self.env, var, 0)
 "      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
@@ -1906,6 +1912,7 @@ function s:VimlLint.compile_call(node, refchk) "{{{
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let a:node.rlist = rlist
   let left = self.compile(a:node.left, 0)
+  " 関数名がそのまま left.value に入っている..
   if has_key(left, 'value') && type(left.value) == type("")
     let d = vimlint#builtin#get_func_inf(left.value)
     if d != {}
@@ -1949,6 +1956,12 @@ function s:VimlLint.compile_call(node, refchk) "{{{
 
     if left.value =~# '^[gl]:[a-z][A-Za-z0-9_]\+$'
       call self.error_mes(left, 'E117', 'Unknown function: `' . left.value . '`', 1)
+    elseif left.value =~# '^\%([la]:\)\?[A-Za-z0-9_]\+$'
+      \ && left.value !~ '^[a-z0-9_]\+$'
+      " variable? 参照しましたよ.
+      " 新しい関数がでたらどうする？
+      " @TODO local function が EVL101 になってしまうので gbwtsla にしない
+      call s:exists_var(self, self.env, left, 1)
     endif
   endif
 
@@ -2066,7 +2079,7 @@ function s:VimlLint.compile_identifier(node, refchk) " {{{
   let name = a:node.value
   if s:reserved_name(name)
   elseif a:refchk
-    call s:exists_var(self, self.env, a:node)
+    call s:exists_var(self, self.env, a:node, 0)
 "    call self.error_mes(a:node, 'EVLx', 'undefined variable: ' . name, 1)
   endif
   return a:node
