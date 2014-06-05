@@ -2,6 +2,10 @@
 #-*- coding: utf-8 -*-
 # :h functions
 # の関数リストから辞書を構築する
+#
+#
+# 1) copy the `:h functions` to resource/builtin-func
+# 2) do conv_by.py and output to autoload/vimlint/builtin.vim
 ###########################
 
 # import {{{
