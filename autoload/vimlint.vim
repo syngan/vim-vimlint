@@ -1946,6 +1946,10 @@ function s:VimlLint.compile_call(node, refchk) "{{{
         call self.parse_string(s[3:-2], left, left.value, 1)
       endif
     endif
+
+    if left.value =~# '^[gl]:[a-z][A-Za-z0-9_]\+$'
+      call self.error_mes(left, 'E117', 'Unknown function: `' . left.value . '`', 1)
+    endif
   endif
 
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
