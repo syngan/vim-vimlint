@@ -193,6 +193,8 @@ EVL107: A function name does not allowd to contain a colon: `v`	*EVL107*
 
 EVL108: `n`th argument of `v` should be `xxx`			*EVL108*
 
+EVL109: local variable `v` is used outside of a function	*EVL109*
+
 
 code
 EVL201: unreachable code `return/throw`				*EVL201*

@@ -486,7 +486,12 @@ function! s:VimlLint.append_var(env, var, val, pos)
     endif
 
     " 接頭子は必ずつける.
-    if v !~# '^[gbwtslv]:' && v !~# '#'
+    if v =~# '^l:'
+      if a:env.global == a:env
+        " global area で l:
+        call self.error_mes(a:var, 'EVL109', 'local variable `' . v . '` is used outside of a function', v)
+      endif
+    elseif v !~# '^[gbwtslv]:' && v !~# '#'
       if a:env.global == a:env
         call self.error_mes(a:var, 'EVL105', 'global variable `' . v . '` is defined without g:', v)
         let v = 'g:' . v
