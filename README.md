@@ -4,10 +4,8 @@
 
 ```vim
 
-NeoBundleLazy 'syngan/vim-vimlint', {
-    \ 'depends' : 'ynkdir/vim-vimlparser',
-    \ 'autoload' : {
-    \ 'functions' : 'vimlint#vimlint'}}
+NeoBundle 'syngan/vim-vimlint', {
+    \ 'depends' : 'ynkdir/vim-vimlparser'}
 ```
 
 # Usage
@@ -34,6 +32,9 @@ before_script:
 script:
   - sh /tmp/vim-vimlint/bin/vimlint.sh -l /tmp/vim-vimlint -p /tmp/vim-vimlparser autoload
 ```
+
+- [vim-vimlint ã§ Travis-CI é€£æº](http://d.hatena.ne.jp/syngan/20140321/1395411106)
+
 
 # Example
 
@@ -122,13 +123,13 @@ vimlparser: E488: Trailing characters: =: line 4 col 7
 
 ```vim
 function vimlint#vimlint..VimLParser.parse..VimLParser.parse_one_cmd..VimLParser
-.parse_command..VimLParser.parse_cmd_elseif, ï¿½ï¿½ 2^@vimlparser: E582: :elseif wit
+.parse_command..VimLParser.parse_cmd_elseif, éƒç·’ç”³ 2^@vimlparser: E582: :elseif wit
 hout :if: line 429 col 5
 ```
 
 # Blog in Japanese
 
 - [vimlint category](http://d.hatena.ne.jp/syngan/searchdiary?word=*[vim-vimlint])
-- [vim-vimlint ºî¤Ã¤¿](http://d.hatena.ne.jp/syngan/20131122/1385046290)
-- [¾¯¤·¤Ğ¤«¤êµ¡Ç½ÄÉ²Ã¤·¤¿](http://d.hatena.ne.jp/syngan/20131130/1385816375)
-- [vim-vimlint ¤Ç Travis-CI Ï¢·È](http://d.hatena.ne.jp/syngan/20140321/1395411106)
+- [vim-vimlint ä½œã£ãŸ](http://d.hatena.ne.jp/syngan/20131122/1385046290)
+- [å°‘ã—ã°ã‹ã‚Šæ©Ÿèƒ½è¿½åŠ ã—ãŸ](http://d.hatena.ne.jp/syngan/20131130/1385816375)
+- [vim-vimlint ã§ Travis-CI é€£æº](http://d.hatena.ne.jp/syngan/20140321/1395411106)
