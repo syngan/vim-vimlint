@@ -369,7 +369,7 @@ function! s:exists_var(self, env, node, funcref)
     endwhile
 
     " 存在しなかった
-    if !append_prefix || !a:funcref || a:node.value =~# '^[A-Z][A-Za-z0-9]\+'
+    if !append_prefix || !a:funcref
       " prefix なしの場合は、builtin-func 
       call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', var)
     endif
