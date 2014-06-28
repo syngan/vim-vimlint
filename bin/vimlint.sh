@@ -59,12 +59,13 @@ fi
 if [ "${VPARS}" != "" ]; then
 	VOPT="${VOPT} -c 'set rtp+=${VPARS}'"
 fi
+VOPT="${VOPT} -c 'set rtp+=`pwd`'"
 
 for file in "$@"
 do
 	VIM="vim ${VOPT} -c 'call vimlint#vimlint(\"'${file}'\", {\"output\" : \"'${FILE}'\"})' -c 'qall!'"
 	eval ${VIM} > /dev/null 2>&1
-	if [ -f ${FILE} -a ]; then
+	if [ -f ${FILE} ]; then
 		if [ `cat ${FILE} | wc -l` -gt 0 ]; then
 			grep Error "${FILE}"
 			if [ $? -eq 0 ]; then
