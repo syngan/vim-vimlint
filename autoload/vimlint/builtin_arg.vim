@@ -65,11 +65,11 @@ function! s:funcs.search(vl, fname, node) " {{{
       if str =~# '[^bcenpswW]'
         call s:EVL108(a:vl, a:node, 2, a:fname, '"bcenpswW"')
       elseif str =~# 'w' && str =~# 'W'
-        call s:EVL108(a:vl, a:node, 2, a:fname, '"w" or "W"')
+        call s:EVL108(a:vl, a:node, 2, a:fname, 'either "w" or "W"')
       elseif str =~# 's' && str =~# 'n'
-        call s:EVL108(a:vl, a:node, 2, a:fname, '"s" or "n"')
+        call s:EVL108(a:vl, a:node, 2, a:fname, 'either "s" or "n"')
       elseif str =~# 'e' && str =~# 'n'
-        call s:EVL108(a:vl, a:node, 2, a:fname, '"e" or "n"')
+        call s:EVL108(a:vl, a:node, 2, a:fname, 'either "e" or "n"')
       elseif str =~# '\(.\).*\1'
         call s:EVL108(a:vl, a:node, 2, a:fname, 'once')
       endif
