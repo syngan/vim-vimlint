@@ -7,6 +7,6 @@ script:
     - grep "ng=0" /tmp/vimlint_test.log
     - grep "skip=1" /tmp/vimlint_test.log
     - sh ./bin/vimlint.sh -p /tmp/vimlparser autoload
-after_failure:
+after_faulure:
     - cat /tmp/vimlint_test.log
  
