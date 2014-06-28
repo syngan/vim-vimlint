@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#PATH=/usr/local/bin:/bin:/usr/bin
+PATH=/usr/local/bin:/bin:/usr/bin
 
 usage()
 {
@@ -46,12 +46,8 @@ while [ $# -gt 0 ]; do
 			-c "call vimlint#vimlint('$1', {'quiet':  1, 'output': '$TF'})" \
 			-c 'qall!' >/dev/null 2>&1
 		egrep -w 'Error|Warning' "$TF" && RET=2
-	else
-		echo "${0##*/}: $1 not found" >&2
 	fi
 	shift
 done
 
 exit $RET
-
-# EOF
