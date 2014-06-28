@@ -63,20 +63,22 @@ VOPT="${VOPT} -c 'set rtp+=`pwd`'"
 
 for file in "$@"
 do
+	echo "$0: start ${file}"
 	VIM="vim ${VOPT} -c 'call vimlint#vimlint(\"'${file}'\", {\"output\" : \"'${FILE}'\"})' -c 'qall!'"
 	eval ${VIM} > /dev/null 2>&1
 	if [ -f ${FILE} ]; then
 		if [ `cat ${FILE} | wc -l` -gt 0 ]; then
-			grep Error "${FILE}"
-			if [ $? -eq 0 ]; then
-				RET=1
-			fi
 			cat ${FILE}
+			if [ `cat ${FILE} | grep Error | wc -l` -gt 0 ]; then
+				RET=2
+			fi
 		fi
 		rm -f ${FILE}
 	fi
+	echo "$0: end ${file}"
 done
 
+echo "exit ${RET}"
 exit ${RET}
 
 
