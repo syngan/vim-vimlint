@@ -30,7 +30,7 @@ before_script:
     - git clone https://github.com/ynkdir/vim-vimlparser /tmp/vim-vimlparser
 
 script:
-  - sh /tmp/vim-vimlint/bin/vimlint.sh -l /tmp/vim-vimlint -p /tmp/vim-vimlparser autoload
+  - sh /tmp/vim-vimlint/bin/vimlint.sh -l /tmp/vim-vimlint -p /tmp/vim-vimlparser -v autoload
 ```
 
 - [vim-vimlint で Travis-CI 連携](http://d.hatena.ne.jp/syngan/20140321/1395411106)
