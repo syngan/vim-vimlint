@@ -1112,7 +1112,7 @@ function s:VimlLint.compile_comment(node) " {{{
   endif
 
   if !has_key(self.param, l[1])
-    if vimlint#debug > 1
+    if g:vimlint#debug > 1
       echo "vimlint: unknown error code: " . l[1]
     endif
     return
