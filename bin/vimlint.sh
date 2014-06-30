@@ -6,7 +6,7 @@
 usage()
 {
 	cat <<EOF >&2
-Usage ${0##*/} [-p <dir>] [-l <dir>] [-h] {<file>|<dir>} ...
+Usage ${0##*/} [-p <dir>] [-l <dir>] [-h] [--EVLxxx=n|--EVLxxx.var=n] {<file>|<dir>} ...
  -p <dir>	look for vim-vimlparser in <dir>
  -l <dir>	look for vim-vimlint in <dir>
  -h		print this message and exit
@@ -43,7 +43,7 @@ RET=0
 while [ $# -gt 0 ]; do
 	if [ -n "$1" -a \( -f "$1" -o -d "$1" \) ]; then
 		cat /dev/null >"$TF" || exit 1
-		VIM="vim $VOPT -c 'call vimlint#vimlint(\"'$1'\", {\"quiet\":  1, \"output\": \"${TF}\"})' -c 'qall!'"
+		VIM="vim $VOPT -c 'call vimlint#vimlint(\"$1\", {\"quiet\":  1, \"output\": \"${TF}\"})' -c 'qall!'"
 		eval ${VIM} > /dev/null 2>&1
 		egrep -w 'Error|Warning' "$TF" && RET=2
 	fi
