@@ -46,6 +46,9 @@ let s:default_errlevel.EVL102 = s:DEF_NON
 let s:default_errlevel.EVL103 = s:DEF_NON
 let s:default_errlevel.EVL104 = s:DEF_NON
 let s:default_errlevel.EVL105 = s:DEF_WRN
+let s:default_errlevel.EVL107 = s:DEF_NON
+let s:default_errlevel.EVL108 = s:DEF_NON
+let s:default_errlevel.EVL109 = s:DEF_NON
 let s:default_errlevel.EVL201 = s:DEF_NON
 let s:default_errlevel.EVL202 = s:DEF_ERR
 let s:default_errlevel.EVL203 = s:DEF_WRN
@@ -55,7 +58,12 @@ let s:default_errlevel.EVL901 = s:DEF_ERR
 let s:default_errlevel.EVL902 = s:DEF_ERR
 let s:def_var_name = ':'
 
+
 function! s:bak_param(param, key, var) " {{{
+  if !has_key(a:param.bak, a:key)
+    " 一度もセットされていない
+    return
+  endif
   let dict = a:param.bak[a:key]
   if has_key(dict, a:var)
     let elv = dict[a:var]
@@ -80,6 +88,10 @@ function! s:set_param(param, key, errlv, var) " {{{
     let param[key] = {s:def_var_name : s:DEF_ERR}
   endif
 
+  if !has_key(s:default_errlevel, key)
+    " unknown error code
+    return
+  endif
   if a:errlv < s:default_errlevel[key]
     let elv = s:default_errlevel[key]
   elseif a:errlv > s:DEF_ERR
@@ -297,10 +309,19 @@ function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
 
   if !has_key(self.param, a:eid)
     let lv = s:DEF_ERR
-  elseif has_key(self.param[a:eid], var)
-    let lv = self.param[a:eid][var]
   else
-    let lv = self.param[a:eid][s:def_var_name]
+    let dict = self.param[a:eid]
+    if type(dict) != type({})
+      let lv = s:DEF_ERR
+    else
+      let lv = dict[s:def_var_name]
+      for key in keys(dict)
+        if var =~# '^' . key . '$'
+          let lv = dict[key]
+          break
+        endif
+      endfor
+    endif
   endif
   if lv > s:DEF_NON
     let filename = get(self, 'filename', '...')
@@ -1102,20 +1123,21 @@ function s:VimlLint.compile_comment(node) " {{{
   " 0 は元に戻すを意味する.
   " 1 は, none. (:h vimlint-variables)
   let s = a:node.str
-  let m = '^\s*@vimlint\s*(\s*\(EVL\d\+\)\s*,\s*\(\d\+\)\(\s*,\s*\([A-Za-z_:#]\+\)\)\=\s*)\s*'
+  let m = '^\s*@vimlint\s*(\s*\(EVL\d\+\)\s*,\s*\(\d\+\)\(\s*,\s*\(.\+\)\)\=\s*)\s*'
   let l = matchlist(s, m)
   if len(l) == 0
     return
   endif
-  if !vimlint#util#isvarname(l[4]) && l[4] !=# s:def_var_name && l[4] != ''
-    return
-  endif
+  " if !vimlint#util#isvarname(l[4]) && l[4] !=# s:def_var_name && l[4] != ''
+  "   return
+  " endif
 
   if !has_key(self.param, l[1])
     if g:vimlint#debug > 1
       echo "vimlint: unknown error code: " . l[1]
     endif
     return
+"    let self.param[l[1]] = s:DEF_NON
   endif
 
   if l[3] == ''
