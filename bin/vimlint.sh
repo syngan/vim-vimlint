@@ -6,7 +6,7 @@
 usage()
 {
 	cat <<EOF >&2
-Usage ${0##*/} [-p <dir>] [-l <dir>] [-h] [--EVLxxx=n|--EVLxxx.var=n] {<file>|<dir>} ...
+Usage ${0##*/} [-p <dir>] [-l <dir>] [-h] {<file>|<dir>} ...
  -p <dir>	look for vim-vimlparser in <dir>
  -l <dir>	look for vim-vimlint in <dir>
  -h		print this message and exit
