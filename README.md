@@ -35,6 +35,12 @@ script:
 
 - [vim-vimlint で Travis-CI 連携](http://d.hatena.ne.jp/syngan/20140321/1395411106)
 
+# Recommended Plugin
+
+Since vim-vimlint is written in vim script, vim-vimlint is very slow.
+We recommend you to use vim-vimlint with [vim-watchdogs](https://github.com/osyo-manga/vim-watchdogs) which is an async syntax check plugin by using [vim-quickrun](https://github.com/thinca/vim-quickrun) and [vimproc](https://github.com/Shougo/vimproc.vim).
+
+
 
 # Example
 
