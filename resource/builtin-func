@@ -6,6 +6,8 @@ append( {lnum}, {string})	Number	append {string} below line {lnum}
 append( {lnum}, {list})		Number	append lines {list} below line {lnum}
 argc()				Number	number of files in the argument list
 argidx()			Number	current index in the argument list
+arglistid( [{winnr}, [ {tabnr}]])
+				Number	argument list id
 argv( {nr})			String	{nr} entry of the argument list
 argv( )				List	the argument list
 asin( {expr})			Float	arc sine of {expr}
@@ -96,10 +98,11 @@ getcharmod( )			Number	modifiers for the last typed character
 getcmdline()			String	return the current command-line
 getcmdpos()			Number	return cursor position in command-line
 getcmdtype()			String	return the current command-line type
+getcurpos()			List	position of the cursor
 getcwd()			String	the current working directory
+getfontname( [{name}])		String	name of font being used
 getfperm( {fname})		String	file permissions of file {fname}
 getfsize( {fname})		Number	size in bytes of file {fname}
-getfontname( [{name}])		String	name of font being used
 getftime( {fname})		Number	last modification time of file
 getftype( {fname})		String	description of type of file {fname}
 getline( {lnum})		String	line {lnum} of current buffer
@@ -174,6 +177,8 @@ match( {expr}, {pat}[, {start}[, {count}]])
 				Number	position where {pat} matches in {expr}
 matchadd( {group}, {pattern}[, {priority}[, {id}]])
 				Number	highlight {pattern} with {group}
+matchaddpos( {group}, {list}[, {priority}[, {id}]])
+				Number	highlight positions with {group}
 matcharg( {nr})			List	arguments of |:match|
 matchdelete( {id})		Number	delete match identified by {id}
 matchend( {expr}, {pat}[, {start}[, {count}]])
