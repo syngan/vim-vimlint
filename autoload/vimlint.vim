@@ -50,12 +50,12 @@ let s:default_errlevel.EVL107 = s:DEF_NON
 let s:default_errlevel.EVL108 = s:DEF_NON
 let s:default_errlevel.EVL109 = s:DEF_NON
 let s:default_errlevel.EVL201 = s:DEF_NON
-let s:default_errlevel.EVL202 = s:DEF_ERR
+let s:default_errlevel.EVL202 = s:DEF_WRN
 let s:default_errlevel.EVL203 = s:DEF_WRN
 let s:default_errlevel.EVL204 = s:DEF_NON
-let s:default_errlevel.EVL205 = s:DEF_ERR
-let s:default_errlevel.EVL901 = s:DEF_ERR
-let s:default_errlevel.EVL902 = s:DEF_ERR
+let s:default_errlevel.EVL205 = s:DEF_WRN
+let s:default_errlevel.EVL901 = s:DEF_WRN
+let s:default_errlevel.EVL902 = s:DEF_WRN
 let s:def_var_name = ':'
 
 
