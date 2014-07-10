@@ -33,9 +33,16 @@ function! s:test(file)
   endif
 
   for i in range(len(ret))
-    if ret[i][4] != err[i]
-      return 0
+    " ERROR
+    if ret[i][4] == err[i] && ret[i][3] == 'Error'
+      continue
     endif
+
+    " WARNING
+    if err[i][0] == 'W' && ret[i][4][1:] == err[i][1:] && ret[i][3] == 'Warning'
+      continue
+    endif
+    return 0
   endfor
 
   return 1
