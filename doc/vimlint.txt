@@ -27,7 +27,9 @@ CONTENTS						*vimlint-contents*
 
 INTRODUCTION						|vimlint-introduction|
 INTERFACE		 				|vimlint-interface|
+  VARIABLES						|vimlint-variables|
   FUNCTIONS						|vimlint-functions|
+  COMMENTS						|vimlint-comments|
 ERROR CODE						|vimlint-errorcode|
 
 ==============================================================================
@@ -43,16 +45,16 @@ VARIABLES 						*vimlint-variables*
 You can define default values by |g:vimlint#config|.
 |g:vimlint#config| is a |Dictionary| which contains the following items:
 
-	"output"		Default: None
+	"output"		Default: |vimlint#output_echo()|
 		The value is a |String|, a |List| or a |Funcref|.
 		If the value is a |String|, |vimlint| outputs the result to
-		the file by using vimlint#util#output_file().
+		the file by using |vimlint#util#output_file()|.
 		If the value is a |List|, |vimlint| returns the list of
-		the results by using vimlint#util#output_list().
+		the results by using |vimlint#util#output_list()|.
 
 	"recursive"		Default: 1
 	"quiet"			Default: 0
-	"EVLxxx"		Default: 5
+	"EVLxxx"		Default: 5	*g:vimlint#config.EVLxxx*
 		The value is a positive |Number| or a |Dictionary|.
 
 		1: none
@@ -74,9 +76,34 @@ FUNCTIONS 						*vimlint-functions*
 
 vimlint#vimlint({input} [, {param}])			*vimlint#vimlint()*
 
-{input} is a filename or a directory.
-{param} is a |Dictionary|. See |g:vimlint#config|.
+	{input} is a filename or a directory.
+	{param} is a |Dictionary|. See |g:vimlint#config|.
 
+vimlint#util#output_echo()			*vimlint#util#output_echo()*
+	Report error message by |:echo|. The format is the followings:
+	    "%f:%l:%c:%t{rror|arning}:%n:%m"
+	See |errorformat| for meaning of the % items.
+
+vimlint#util#output_file()			*vimlint#util#output_file()*
+	Output error message to a file. The format is same as
+	|vimlint#util#output_echo()|.
+
+vimlint#util#output_list()			*vimlint#util#output_list()*
+	Return a |List| of lists:
+		[%f,%l,%c,%t{rror|arning},%n,%m]
+
+vimlint#util#output_vimconsole()	*vimlint#util#output_vimconsole()*
+	Output error message by |vimconsole#log()|. The format is same as
+	|vimlint#util#output_echo()|.
+
+------------------------------------------------------------------------------
+COMMENTS 						*vimlint-comments*
+
+	You can change error level in the file by "@vimlint" comment.
+	" @vimlint(EVLxxx, 1)
+	" @vimlint(EVLxxx, 0)
+
+	(TODO)
 
 ==============================================================================
 ERROR CODE 						*vimlint-errorcode*
