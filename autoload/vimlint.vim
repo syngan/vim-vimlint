@@ -1152,6 +1152,8 @@ function s:VimlLint.compile_comment(node) " {{{
   endif
 endfunction " }}}
 
+let s:cmd_expr = {'cexpr':0,'lexpr':0,'cgetexpr':0,'lgetexpr':0,'caddexpr':0,'laddexpr':0}
+
 " @vimlint(EVL103, 1, a:refchk)
 function s:VimlLint.compile_excmd(node, refchk) " {{{
 " @TODO
@@ -1159,6 +1161,18 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 " e.g. a = 3   (let 漏れ)
   " lcd `=cwd`
   " edit/new `=file`
+
+  " issue#52
+  let name = a:node.ea.cmd.name
+  if has_key(s:cmd_expr, name)
+    let s = substitute(a:node.str, '^[a-z]\+!\=', '', '')
+    let s = s:escape_string(s)
+    call self.parse_string(s, a:node, name, 1)
+  endif
+
+
+
+
   let s = matchstr(a:node.str, '`=\zs.*\ze`')
   if '' != s
     call self.parse_string(s, a:node, 'ExCommand', 1)
