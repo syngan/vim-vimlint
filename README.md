@@ -39,8 +39,10 @@ script:
 
 # Recommended Plugin
 
+[syntastic.vim](https://github.com/scrooloose/syntastic) which is one of the most popular syntax checking plugin for Vim supports vim-vimlint as a syntax checker of vim script.
+
 Since vim-vimlint is written in vim script, vim-vimlint is very slow.
-We recommend you to use vim-vimlint with [vim-watchdogs](https://github.com/osyo-manga/vim-watchdogs) which is an async syntax check plugin based on [vim-quickrun](https://github.com/thinca/vim-quickrun) and [vimproc](https://github.com/Shougo/vimproc.vim).
+We recommend you to use vim-vimlint with [vim-watchdogs](https://github.com/osyo-manga/vim-watchdogs) which is an async syntax checking plugin based on [vim-quickrun](https://github.com/thinca/vim-quickrun) and [vimproc](https://github.com/Shougo/vimproc.vim).
 
 # Example
 
