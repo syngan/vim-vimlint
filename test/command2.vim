@@ -1,0 +1,4 @@
+" @ERR []
+function! Hoge()
+  "
+endfunction
