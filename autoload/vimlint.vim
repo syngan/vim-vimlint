@@ -1162,16 +1162,15 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   " lcd `=cwd`
   " edit/new `=file`
 
-  " issue#52
-  let name = a:node.ea.cmd.name
-  if has_key(s:cmd_expr, name)
-    let s = substitute(a:node.str, '^[a-z]\+!\=', '', '')
-    let s = s:escape_string(s)
-    call self.parse_string(s, a:node, name, 1)
+  if has_key(a:node.ea.cmd, "name")
+    " issue#52
+    let name = a:node.ea.cmd.name
+    if has_key(s:cmd_expr, name)
+      let s = substitute(a:node.str, '^[a-z]\+!\=', '', '')
+      let s = s:escape_string(s)
+      call self.parse_string(s, a:node, name, 1)
+    endif
   endif
-
-
-
 
   let s = matchstr(a:node.str, '`=\zs.*\ze`')
   if '' != s
