@@ -490,9 +490,14 @@ function! s:VimlLint.append_var(env, var, val, pos)
   endif
   let ret = {}
 
-  if a:var.type == s:NODE_IDENTIFIER
-    let node = a:var
-    let v = a:var.value
+  if a:var.type == s:NODE_IDENTIFIER || a:var.type == s:NODE_SLICE
+    if a:var.type == s:NODE_IDENTIFIER
+      let node = a:var
+      let v = a:var.value
+    else
+      let node = a:var.left
+      let v = a:var.left.value
+    endif
     if v =~# "^[0-9]*$"
       echo "in append_var: invalid input: type=" . type(a:var) . ",pos=" . a:pos
       echo a:var
@@ -512,7 +517,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
         " global area で l:
         call self.error_mes(a:var, 'EVL109', 'local variable `' . v . '` is used outside of a function', v)
       endif
-    elseif v !~# '^[gbwtslv]:' && v !~# '#'
+    elseif v !~# '^[gbwtslva]:' && v !~# '#'
       if a:env.global == a:env
         call self.error_mes(a:var, 'EVL105', 'global variable `' . v . '` is defined without g:', v)
         let v = 'g:' . v
@@ -1285,10 +1290,10 @@ function s:VimlLint.compile_excall(node, refchk) " {{{
 endfunction " }}}
 
 function s:VimlLint.compile_let(node, refchk) " {{{
-  if type(a:node.right) != type({})
-    echo "compile_let. right is invalid"
-    echo a:node
-  endif
+  " if type(a:node.right) != type({})
+  "   echo "compile_let. right is invalid"
+  "   echo a:node
+  " endif
   let right = self.compile(a:node.right, 1)
 
   if a:node.left isnot s:NIL
