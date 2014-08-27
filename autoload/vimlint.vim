@@ -159,102 +159,103 @@ function s:VimlLint.new(param) " {{{
 endfunction " }}}
 
 " for debug " {{{
+
+let s:node_label = {}
+let s:node_label[1] = 'TOPLEVEL'
+let s:node_label[2] = 'COMMENT'
+let s:node_label[3] = 'EXCMD'
+let s:node_label[4] = 'FUNCTION'
+let s:node_label[5] = 'ENDFUNCTION'
+let s:node_label[6] = 'DELFUNCTION'
+let s:node_label[7] = 'RETURN'
+let s:node_label[8] = 'EXCALL'
+let s:node_label[9] = 'LET'
+let s:node_label[10] = 'UNLET'
+let s:node_label[11] = 'LOCKVAR'
+let s:node_label[12] = 'UNLOCKVAR'
+let s:node_label[13] = 'IF'
+let s:node_label[14] = 'ELSEIF'
+let s:node_label[15] = 'ELSE'
+let s:node_label[16] = 'ENDIF'
+let s:node_label[17] = 'WHILE'
+let s:node_label[18] = 'ENDWHILE'
+let s:node_label[19] = 'FOR'
+let s:node_label[20] = 'ENDFOR'
+let s:node_label[21] = 'CONTINUE'
+let s:node_label[22] = 'BREAK'
+let s:node_label[23] = 'TRY'
+let s:node_label[24] = 'CATCH'
+let s:node_label[25] = 'FINALLY'
+let s:node_label[26] = 'ENDTRY'
+let s:node_label[27] = 'THROW'
+let s:node_label[28] = 'ECHO'
+let s:node_label[29] = 'ECHON'
+let s:node_label[30] = 'ECHOHL'
+let s:node_label[31] = 'ECHOMSG'
+let s:node_label[32] = 'ECHOERR'
+let s:node_label[33] = 'EXECUTE'
+let s:node_label[34] = 'TERNARY'
+let s:node_label[35] = 'OR'
+let s:node_label[36] = 'AND'
+let s:node_label[37] = 'EQUAL'
+let s:node_label[38] = 'EQUALCI'
+let s:node_label[39] = 'EQUALCS'
+let s:node_label[40] = 'NEQUAL'
+let s:node_label[41] = 'NEQUALCI'
+let s:node_label[42] = 'NEQUALCS'
+let s:node_label[43] = 'GREATER'
+let s:node_label[44] = 'GREATERCI'
+let s:node_label[45] = 'GREATERCS'
+let s:node_label[46] = 'GEQUAL'
+let s:node_label[47] = 'GEQUALCI'
+let s:node_label[48] = 'GEQUALCS'
+let s:node_label[49] = 'SMALLER'
+let s:node_label[50] = 'SMALLERCI'
+let s:node_label[51] = 'SMALLERCS'
+let s:node_label[52] = 'SEQUAL'
+let s:node_label[53] = 'SEQUALCI'
+let s:node_label[54] = 'SEQUALCS'
+let s:node_label[55] = 'MATCH'
+let s:node_label[56] = 'MATCHCI'
+let s:node_label[57] = 'MATCHCS'
+let s:node_label[58] = 'NOMATCH'
+let s:node_label[59] = 'NOMATCHCI'
+let s:node_label[60] = 'NOMATCHCS'
+let s:node_label[61] = 'IS'
+let s:node_label[62] = 'ISCI'
+let s:node_label[63] = 'ISCS'
+let s:node_label[64] = 'ISNOT'
+let s:node_label[65] = 'ISNOTCI'
+let s:node_label[66] = 'ISNOTCS'
+let s:node_label[67] = 'ADD'
+let s:node_label[68] = 'SUBTRACT'
+let s:node_label[69] = 'CONCAT'
+let s:node_label[70] = 'MULTIPLY'
+let s:node_label[71] = 'DIVIDE'
+let s:node_label[72] = 'REMAINDER'
+let s:node_label[73] = 'NOT'
+let s:node_label[74] = 'MINUS'
+let s:node_label[75] = 'PLUS'
+let s:node_label[76] = 'SUBSCRIPT'
+let s:node_label[77] = 'SLICE'
+let s:node_label[78] = 'CALL'
+let s:node_label[79] = 'DOT'
+let s:node_label[80] = 'NUMBER'
+let s:node_label[81] = 'STRING'
+let s:node_label[82] = 'LIST'
+let s:node_label[83] = 'DICT'
+let s:node_label[85] = 'OPTION'
+let s:node_label[86] = 'IDENTIFIER'
+let s:node_label[87] = 'CURLYNAME'
+let s:node_label[88] = 'ENV'
+let s:node_label[89] = 'REG'
 function! s:node2str(node) " {{{
-  let a = {}
-  let a[1] = 'TOPLEVEL'
-  let a[2] = 'COMMENT'
-  let a[3] = 'EXCMD'
-  let a[4] = 'FUNCTION'
-  let a[5] = 'ENDFUNCTION'
-  let a[6] = 'DELFUNCTION'
-  let a[7] = 'RETURN'
-  let a[8] = 'EXCALL'
-  let a[9] = 'LET'
-  let a[10] = 'UNLET'
-  let a[11] = 'LOCKVAR'
-  let a[12] = 'UNLOCKVAR'
-  let a[13] = 'IF'
-  let a[14] = 'ELSEIF'
-  let a[15] = 'ELSE'
-  let a[16] = 'ENDIF'
-  let a[17] = 'WHILE'
-  let a[18] = 'ENDWHILE'
-  let a[19] = 'FOR'
-  let a[20] = 'ENDFOR'
-  let a[21] = 'CONTINUE'
-  let a[22] = 'BREAK'
-  let a[23] = 'TRY'
-  let a[24] = 'CATCH'
-  let a[25] = 'FINALLY'
-  let a[26] = 'ENDTRY'
-  let a[27] = 'THROW'
-  let a[28] = 'ECHO'
-  let a[29] = 'ECHON'
-  let a[30] = 'ECHOHL'
-  let a[31] = 'ECHOMSG'
-  let a[32] = 'ECHOERR'
-  let a[33] = 'EXECUTE'
-  let a[34] = 'TERNARY'
-  let a[35] = 'OR'
-  let a[36] = 'AND'
-  let a[37] = 'EQUAL'
-  let a[38] = 'EQUALCI'
-  let a[39] = 'EQUALCS'
-  let a[40] = 'NEQUAL'
-  let a[41] = 'NEQUALCI'
-  let a[42] = 'NEQUALCS'
-  let a[43] = 'GREATER'
-  let a[44] = 'GREATERCI'
-  let a[45] = 'GREATERCS'
-  let a[46] = 'GEQUAL'
-  let a[47] = 'GEQUALCI'
-  let a[48] = 'GEQUALCS'
-  let a[49] = 'SMALLER'
-  let a[50] = 'SMALLERCI'
-  let a[51] = 'SMALLERCS'
-  let a[52] = 'SEQUAL'
-  let a[53] = 'SEQUALCI'
-  let a[54] = 'SEQUALCS'
-  let a[55] = 'MATCH'
-  let a[56] = 'MATCHCI'
-  let a[57] = 'MATCHCS'
-  let a[58] = 'NOMATCH'
-  let a[59] = 'NOMATCHCI'
-  let a[60] = 'NOMATCHCS'
-  let a[61] = 'IS'
-  let a[62] = 'ISCI'
-  let a[63] = 'ISCS'
-  let a[64] = 'ISNOT'
-  let a[65] = 'ISNOTCI'
-  let a[66] = 'ISNOTCS'
-  let a[67] = 'ADD'
-  let a[68] = 'SUBTRACT'
-  let a[69] = 'CONCAT'
-  let a[70] = 'MULTIPLY'
-  let a[71] = 'DIVIDE'
-  let a[72] = 'REMAINDER'
-  let a[73] = 'NOT'
-  let a[74] = 'MINUS'
-  let a[75] = 'PLUS'
-  let a[76] = 'SUBSCRIPT'
-  let a[77] = 'SLICE'
-  let a[78] = 'CALL'
-  let a[79] = 'DOT'
-  let a[80] = 'NUMBER'
-  let a[81] = 'STRING'
-  let a[82] = 'LIST'
-  let a[83] = 'DICT'
-  let a[85] = 'OPTION'
-  let a[86] = 'IDENTIFIER'
-  let a[87] = 'CURLYNAME'
-  let a[88] = 'ENV'
-  let a[89] = 'REG'
-  if type(a:node) == type({}) &&
-  \  has_key(a:node, 'type') && has_key(a, a:node.type)
-    return a[a:node.type]
-  else
-    return "unknown"
-  endif
+if type(a:node) == type({}) &&
+\  has_key(a:node, 'type') && has_key(s:node_label, a:node.type)
+  return s:node_label[a:node.type]
+else
+  return "unknown"
+endif
 endfunction " }}}
 
 function! s:tostring_varstack_n(v)
@@ -343,6 +344,7 @@ function! s:exists_var(self, env, node, funcref)
   endif
 
   if var !~# '^[gbwtslva]:'
+    " prefix なし
     let append_prefix = 1
     if a:env.global == a:env
       let var = 'g:' . var
@@ -938,13 +940,13 @@ function s:VimlLint.compile(node, refchk) " {{{
 "    echo a:node
   endif
 
-  try
-    let a:node.sg_type_str = s:node2str(a:node)
-  catch
-    echo v:exception
-    echo a:node
-    throw "stop"
-  endtry
+  " try
+  "   let a:node.sg_type_str = s:node2str(a:node)
+  " catch
+  "   echo v:exception
+  "   echo a:node
+  "   throw "stop"
+  " endtry
 
   return call(self.compile_funcs[a:node.type], [a:node, a:refchk], self)
 
