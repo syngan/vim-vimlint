@@ -925,6 +925,9 @@ function! s:echonode(node, refchk) " {{{
     \  ", ref=" . a:refchk
 endfunction " }}}
 
+
+let s:VimlLint.compile_funcs = repeat([0], 90)
+
 function s:VimlLint.compile(node, refchk) " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
     if a:node.type != 2 && g:vimlint#debug > 2 || g:vimlint#debug >= 5
@@ -943,167 +946,8 @@ function s:VimlLint.compile(node, refchk) " {{{
     throw "stop"
   endtry
 
-  if a:node.type == s:NODE_TOPLEVEL " {{{
-    return self.compile_toplevel(a:node, a:refchk)
-  elseif a:node.type == s:NODE_COMMENT
-    return self.compile_comment(a:node)
-  elseif a:node.type == s:NODE_EXCMD
-    return self.compile_excmd(a:node, a:refchk)
-  elseif a:node.type == s:NODE_FUNCTION
-    return self.compile_function(a:node, a:refchk)
-  elseif a:node.type == s:NODE_DELFUNCTION
-    return self.compile_delfunction(a:node, a:refchk)
-  elseif a:node.type == s:NODE_RETURN
-    return self.compile_return(a:node, a:refchk)
-  elseif a:node.type == s:NODE_EXCALL
-    return self.compile_excall(a:node, a:refchk)
-  elseif a:node.type == s:NODE_LET
-    return self.compile_let(a:node, a:refchk)
-  elseif a:node.type == s:NODE_UNLET
-    return self.compile_unlet(a:node, a:refchk)
-  elseif a:node.type == s:NODE_LOCKVAR
-    return self.compile_lockvar(a:node, a:refchk)
-  elseif a:node.type == s:NODE_UNLOCKVAR
-    return self.compile_unlockvar(a:node, a:refchk)
-  elseif a:node.type == s:NODE_IF
-    return self.compile_if(a:node, a:refchk)
-  elseif a:node.type == s:NODE_WHILE
-    return self.compile_while(a:node, a:refchk)
-  elseif a:node.type == s:NODE_FOR
-    return self.compile_for(a:node, a:refchk)
-  elseif a:node.type == s:NODE_CONTINUE
-    return self.compile_continue(a:node, a:refchk)
-  elseif a:node.type == s:NODE_BREAK
-    return self.compile_break(a:node, a:refchk)
-  elseif a:node.type == s:NODE_TRY
-    return self.compile_try(a:node, a:refchk)
-  elseif a:node.type == s:NODE_THROW
-    return self.compile_throw(a:node, a:refchk)
-  elseif a:node.type == s:NODE_ECHO
-    return self.compile_echo(a:node, a:refchk)
-  elseif a:node.type == s:NODE_ECHON
-    return self.compile_echon(a:node, a:refchk)
-  elseif a:node.type == s:NODE_ECHOHL
-"    return self.compile_echohl(a:node, a:refchk)
-  elseif a:node.type == s:NODE_ECHOMSG
-    return self.compile_echomsg(a:node, a:refchk)
-  elseif a:node.type == s:NODE_ECHOERR
-    return self.compile_echoerr(a:node, a:refchk)
-  elseif a:node.type == s:NODE_EXECUTE
-    return self.compile_execute(a:node, a:refchk)
-  elseif a:node.type == s:NODE_TERNARY
-    return self.compile_ternary(a:node, a:refchk)
-  elseif a:node.type == s:NODE_OR
-    return self.compile_or(a:node)
-  elseif a:node.type == s:NODE_AND
-    return self.compile_and(a:node)
-  elseif a:node.type == s:NODE_EQUAL
-    return self.compile_equal(a:node)
-  elseif a:node.type == s:NODE_EQUALCI
-    return self.compile_equalci(a:node)
-  elseif a:node.type == s:NODE_EQUALCS
-    return self.compile_equalcs(a:node)
-  elseif a:node.type == s:NODE_NEQUAL
-    return self.compile_nequal(a:node)
-  elseif a:node.type == s:NODE_NEQUALCI
-    return self.compile_nequalci(a:node)
-  elseif a:node.type == s:NODE_NEQUALCS
-    return self.compile_nequalcs(a:node)
-  elseif a:node.type == s:NODE_GREATER
-    return self.compile_greater(a:node)
-  elseif a:node.type == s:NODE_GREATERCI
-    return self.compile_greaterci(a:node)
-  elseif a:node.type == s:NODE_GREATERCS
-    return self.compile_greatercs(a:node)
-  elseif a:node.type == s:NODE_GEQUAL
-    return self.compile_gequal(a:node)
-  elseif a:node.type == s:NODE_GEQUALCI
-    return self.compile_gequalci(a:node)
-  elseif a:node.type == s:NODE_GEQUALCS
-    return self.compile_gequalcs(a:node)
-  elseif a:node.type == s:NODE_SMALLER
-    return self.compile_smaller(a:node)
-  elseif a:node.type == s:NODE_SMALLERCI
-    return self.compile_smallerci(a:node)
-  elseif a:node.type == s:NODE_SMALLERCS
-    return self.compile_smallercs(a:node)
-  elseif a:node.type == s:NODE_SEQUAL
-    return self.compile_sequal(a:node)
-  elseif a:node.type == s:NODE_SEQUALCI
-    return self.compile_sequalci(a:node)
-  elseif a:node.type == s:NODE_SEQUALCS
-    return self.compile_sequalcs(a:node)
-  elseif a:node.type == s:NODE_MATCH
-    return self.compile_match(a:node)
-  elseif a:node.type == s:NODE_MATCHCI
-    return self.compile_matchci(a:node)
-  elseif a:node.type == s:NODE_MATCHCS
-    return self.compile_matchcs(a:node)
-  elseif a:node.type == s:NODE_NOMATCH
-    return self.compile_nomatch(a:node)
-  elseif a:node.type == s:NODE_NOMATCHCI
-    return self.compile_nomatchci(a:node)
-  elseif a:node.type == s:NODE_NOMATCHCS
-    return self.compile_nomatchcs(a:node)
-  elseif a:node.type == s:NODE_IS
-    return self.compile_is(a:node)
-  elseif a:node.type == s:NODE_ISCI
-    return self.compile_isci(a:node)
-  elseif a:node.type == s:NODE_ISCS
-    return self.compile_iscs(a:node)
-  elseif a:node.type == s:NODE_ISNOT
-    return self.compile_isnot(a:node)
-  elseif a:node.type == s:NODE_ISNOTCI
-    return self.compile_isnotci(a:node)
-  elseif a:node.type == s:NODE_ISNOTCS
-    return self.compile_isnotcs(a:node)
-  elseif a:node.type == s:NODE_ADD
-    return self.compile_add(a:node)
-  elseif a:node.type == s:NODE_SUBTRACT
-    return self.compile_subtract(a:node)
-  elseif a:node.type == s:NODE_CONCAT
-    return self.compile_concat(a:node)
-  elseif a:node.type == s:NODE_MULTIPLY
-    return self.compile_multiply(a:node)
-  elseif a:node.type == s:NODE_DIVIDE
-    return self.compile_divide(a:node)
-  elseif a:node.type == s:NODE_REMAINDER
-    return self.compile_remainder(a:node)
-  elseif a:node.type == s:NODE_NOT
-    return self.compile_not(a:node)
-  elseif a:node.type == s:NODE_PLUS
-    return self.compile_plus(a:node)
-  elseif a:node.type == s:NODE_MINUS
-    return self.compile_minus(a:node)
-  elseif a:node.type == s:NODE_SUBSCRIPT
-    return self.compile_subscript(a:node)
-  elseif a:node.type == s:NODE_SLICE
-    return self.compile_slice(a:node, a:refchk)
-  elseif a:node.type == s:NODE_DOT
-    return self.compile_dot(a:node, a:refchk)
-  elseif a:node.type == s:NODE_CALL
-    return self.compile_call(a:node, a:refchk)
-  elseif a:node.type == s:NODE_NUMBER
-    return self.compile_number(a:node)
-  elseif a:node.type == s:NODE_STRING
-    return self.compile_string(a:node)
-  elseif a:node.type == s:NODE_LIST
-    return self.compile_list(a:node, a:refchk)
-  elseif a:node.type == s:NODE_DICT
-    return self.compile_dict(a:node, a:refchk)
-  elseif a:node.type == s:NODE_OPTION
-    return self.compile_option(a:node)
-  elseif a:node.type == s:NODE_IDENTIFIER
-    return self.compile_identifier(a:node, a:refchk)
-  elseif a:node.type == s:NODE_CURLYNAME
-    return self.compile_curlyname(a:node, a:refchk)
-  elseif a:node.type == s:NODE_ENV
-    return self.compile_env(a:node, a:refchk)
-  elseif a:node.type == s:NODE_REG
-    return self.compile_reg(a:node)
-  else
-    throw self.err('Compiler: unknown node: %s', string(a:node))
-  endif " }}}
+  return call(self.compile_funcs[a:node.type], [a:node, a:refchk], self)
+
 endfunction " }}}
 
 function s:VimlLint.compile_body(body, refchk) " {{{
@@ -1122,7 +966,7 @@ function s:VimlLint.compile_toplevel(node, refchk) " {{{
   return self.lines
 endfunction " }}}
 
-function s:VimlLint.compile_comment(node) " {{{
+function s:VimlLint.compile_comment(node, ...) " {{{
   " コメント部に @vimlint(EVLxxx, number [, var]) な形式があれば
   " それを元にエラーレベルを修正する
   " 0 は元に戻すを意味する.
@@ -1762,169 +1606,169 @@ function s:VimlLint.compile_ternary(node, refchk) "{{{
 endfunction "}}}
 
 " op2 {{{
-function s:VimlLint.compile_or(node)
+function s:VimlLint.compile_or(node, ...)
   return self.compile_op2(a:node, 'or')
 endfunction
 
-function s:VimlLint.compile_and(node)
+function s:VimlLint.compile_and(node, ...)
   return self.compile_op2(a:node, 'and')
 endfunction
 
-function s:VimlLint.compile_equal(node)
+function s:VimlLint.compile_equal(node, ...)
   return self.compile_op2(a:node, '==')
 endfunction
 
-function s:VimlLint.compile_equalci(node)
+function s:VimlLint.compile_equalci(node, ...)
   return self.compile_op2(a:node, '==?')
 endfunction
 
-function s:VimlLint.compile_equalcs(node)
+function s:VimlLint.compile_equalcs(node, ...)
   return self.compile_op2(a:node, '==#')
 endfunction
 
-function s:VimlLint.compile_nequal(node)
+function s:VimlLint.compile_nequal(node, ...)
   return self.compile_op2(a:node, '!=')
 endfunction
 
-function s:VimlLint.compile_nequalci(node)
+function s:VimlLint.compile_nequalci(node, ...)
   return self.compile_op2(a:node, '!=?')
 endfunction
 
-function s:VimlLint.compile_nequalcs(node)
+function s:VimlLint.compile_nequalcs(node, ...)
   return self.compile_op2(a:node, '!=#')
 endfunction
 
-function s:VimlLint.compile_greater(node)
+function s:VimlLint.compile_greater(node, ...)
   return self.compile_op2(a:node, '>')
 endfunction
 
-function s:VimlLint.compile_greaterci(node)
+function s:VimlLint.compile_greaterci(node, ...)
   return self.compile_op2(a:node, '>?')
 endfunction
 
-function s:VimlLint.compile_greatercs(node)
+function s:VimlLint.compile_greatercs(node, ...)
   return self.compile_op2(a:node, '>#')
 endfunction
 
-function s:VimlLint.compile_gequal(node)
+function s:VimlLint.compile_gequal(node, ...)
   return self.compile_op2(a:node, '>=')
 endfunction
 
-function s:VimlLint.compile_gequalci(node)
+function s:VimlLint.compile_gequalci(node, ...)
   return self.compile_op2(a:node, '>=?')
 endfunction
 
-function s:VimlLint.compile_gequalcs(node)
+function s:VimlLint.compile_gequalcs(node, ...)
   return self.compile_op2(a:node, '>=#')
 endfunction
 
-function s:VimlLint.compile_smaller(node)
+function s:VimlLint.compile_smaller(node, ...)
   return self.compile_op2(a:node, '<')
 endfunction
 
-function s:VimlLint.compile_smallerci(node)
+function s:VimlLint.compile_smallerci(node, ...)
   return self.compile_op2(a:node, '<?')
 endfunction
 
-function s:VimlLint.compile_smallercs(node)
+function s:VimlLint.compile_smallercs(node, ...)
   return self.compile_op2(a:node, '<#')
 endfunction
 
-function s:VimlLint.compile_sequal(node)
+function s:VimlLint.compile_sequal(node, ...)
   return self.compile_op2(a:node, '<=')
 endfunction
 
-function s:VimlLint.compile_sequalci(node)
+function s:VimlLint.compile_sequalci(node, ...)
   return self.compile_op2(a:node, '<=?')
 endfunction
 
-function s:VimlLint.compile_sequalcs(node)
+function s:VimlLint.compile_sequalcs(node, ...)
   return self.compile_op2(a:node, '<=#')
 endfunction
 
-function s:VimlLint.compile_match(node)
+function s:VimlLint.compile_match(node, ...)
   return self.compile_op2(a:node, 'match')
 endfunction
 
-function s:VimlLint.compile_matchci(node)
+function s:VimlLint.compile_matchci(node, ...)
   return self.compile_op2(a:node, 'matchci')
 endfunction
 
-function s:VimlLint.compile_matchcs(node)
+function s:VimlLint.compile_matchcs(node, ...)
   return self.compile_op2(a:node, 'matchcs')
 endfunction
 
-function s:VimlLint.compile_nomatch(node)
+function s:VimlLint.compile_nomatch(node, ...)
   return self.compile_op2(a:node, 'nomatch')
 endfunction
 
-function s:VimlLint.compile_nomatchci(node)
+function s:VimlLint.compile_nomatchci(node, ...)
   return self.compile_op2(a:node, 'nomatchci')
 endfunction
 
-function s:VimlLint.compile_nomatchcs(node)
+function s:VimlLint.compile_nomatchcs(node, ...)
   return self.compile_op2(a:node, 'nomatchcs')
 endfunction
 
-function s:VimlLint.compile_is(node)
+function s:VimlLint.compile_is(node, ...)
   return self.compile_op2(a:node, 'is')
 endfunction
 
-function s:VimlLint.compile_isci(node)
+function s:VimlLint.compile_isci(node, ...)
   return self.compile_op2(a:node, 'is?')
 endfunction
 
-function s:VimlLint.compile_iscs(node)
+function s:VimlLint.compile_iscs(node, ...)
   return self.compile_op2(a:node, 'is#')
 endfunction
 
-function s:VimlLint.compile_isnot(node)
+function s:VimlLint.compile_isnot(node, ...)
   return self.compile_op2(a:node, 'is not')
 endfunction
 
-function s:VimlLint.compile_isnotci(node)
+function s:VimlLint.compile_isnotci(node, ...)
   return self.compile_op2(a:node, 'isnot?')
 endfunction
 
-function s:VimlLint.compile_isnotcs(node)
+function s:VimlLint.compile_isnotcs(node, ...)
   return self.compile_op2(a:node, 'isnot#')
 endfunction
 
-function s:VimlLint.compile_add(node)
+function s:VimlLint.compile_add(node, ...)
   return self.compile_op2(a:node, '+')
 endfunction
 
-function s:VimlLint.compile_subtract(node)
+function s:VimlLint.compile_subtract(node, ...)
   return self.compile_op2(a:node, '-')
 endfunction
 
-function s:VimlLint.compile_concat(node)
+function s:VimlLint.compile_concat(node, ...)
   return self.compile_op2(a:node, '+')
 endfunction
 
-function s:VimlLint.compile_multiply(node)
+function s:VimlLint.compile_multiply(node, ...)
   return self.compile_op2(a:node, '*')
 endfunction
 
-function s:VimlLint.compile_divide(node)
+function s:VimlLint.compile_divide(node, ...)
   return self.compile_op2(a:node, '/')
 endfunction
 
-function s:VimlLint.compile_remainder(node)
+function s:VimlLint.compile_remainder(node, ...)
   return self.compile_op2(a:node, '%')
 endfunction
 " }}}
 
 " op1 {{{
-function s:VimlLint.compile_not(node)
+function s:VimlLint.compile_not(node, ...)
   return self.compile_op1(a:node, 'not ')
 endfunction
 
-function s:VimlLint.compile_plus(node)
+function s:VimlLint.compile_plus(node, ...)
   return self.compile_op1(a:node, '+')
 endfunction
 
-function s:VimlLint.compile_minus(node)
+function s:VimlLint.compile_minus(node, ...)
   return self.compile_op1(a:node, '-')
 endfunction
 " }}}
@@ -2035,7 +1879,7 @@ function s:VimlLint.compile_slice(node, refchk) " {{{
 "  return {'type' : 'slice', 'l' : left, 'r' : [r0,r1], 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_subscript(node) " {{{
+function s:VimlLint.compile_subscript(node, ...) " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
   if a:node.right.type == s:NODE_IDENTIFIER
@@ -2057,13 +1901,13 @@ function s:VimlLint.compile_dot(node, refchk) " {{{
 "  return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_number(node) " {{{
+function s:VimlLint.compile_number(node, ...) " {{{
   return a:node
 "  return { 'type' : 'integer', 'val' : a:node.value, 'node' : a:node}
 endfunction " }}}
 
 " map の引数などをどう処理するか?
-function s:VimlLint.compile_string(node) " {{{
+function s:VimlLint.compile_string(node, ...) " {{{
   return a:node
 "  return { 'type' : 'string', 'val' : a:node.value, 'node' : a:node}
 endfunction " }}}
@@ -2085,7 +1929,7 @@ function s:VimlLint.compile_dict(node, refchk) " {{{
 "  return { 'type' : 'dict', 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_option(node) " {{{
+function s:VimlLint.compile_option(node, ...) " {{{
   return a:node
 "  return { 'type' : 'option', 'node' : a:node}
 endfunction " }}}
@@ -2149,7 +1993,7 @@ endfunction " }}}
 " @vimlint(EVL103, 0, a:refchk)
 
 " register
-function s:VimlLint.compile_reg(node) " {{{
+function s:VimlLint.compile_reg(node, ...) " {{{
   return a:node
 "  return {'type' : 'reg', 'val' : a:node.value, 'node' : a:node}
 "  echo a:node
@@ -2378,6 +2222,88 @@ function! s:numtoname(num) " {{{
   endfor
   return a:num
 endfunction " }}}
+
+
+let s:VimlLint.compile_funcs[s:NODE_TOPLEVEL] = s:VimlLint.compile_toplevel
+let s:VimlLint.compile_funcs[s:NODE_COMMENT] = s:VimlLint.compile_comment
+let s:VimlLint.compile_funcs[s:NODE_EXCMD] = s:VimlLint.compile_excmd
+let s:VimlLint.compile_funcs[s:NODE_FUNCTION] = s:VimlLint.compile_function
+let s:VimlLint.compile_funcs[s:NODE_DELFUNCTION] = s:VimlLint.compile_delfunction
+let s:VimlLint.compile_funcs[s:NODE_RETURN] = s:VimlLint.compile_return
+let s:VimlLint.compile_funcs[s:NODE_EXCALL] = s:VimlLint.compile_excall
+let s:VimlLint.compile_funcs[s:NODE_LET] = s:VimlLint.compile_let
+let s:VimlLint.compile_funcs[s:NODE_UNLET] = s:VimlLint.compile_unlet
+let s:VimlLint.compile_funcs[s:NODE_LOCKVAR] = s:VimlLint.compile_lockvar
+let s:VimlLint.compile_funcs[s:NODE_UNLOCKVAR] = s:VimlLint.compile_unlockvar
+let s:VimlLint.compile_funcs[s:NODE_IF] = s:VimlLint.compile_if
+let s:VimlLint.compile_funcs[s:NODE_WHILE] = s:VimlLint.compile_while
+let s:VimlLint.compile_funcs[s:NODE_FOR] = s:VimlLint.compile_for
+let s:VimlLint.compile_funcs[s:NODE_CONTINUE] = s:VimlLint.compile_continue
+let s:VimlLint.compile_funcs[s:NODE_BREAK] = s:VimlLint.compile_break
+let s:VimlLint.compile_funcs[s:NODE_TRY] = s:VimlLint.compile_try
+let s:VimlLint.compile_funcs[s:NODE_THROW] = s:VimlLint.compile_throw
+let s:VimlLint.compile_funcs[s:NODE_ECHO] = s:VimlLint.compile_echo
+let s:VimlLint.compile_funcs[s:NODE_ECHON] = s:VimlLint.compile_echon
+"let s:VimlLint.compile_funcs[s:NODE_ECHOHL] = s:VimlLint.compile_echohl
+let s:VimlLint.compile_funcs[s:NODE_ECHOMSG] = s:VimlLint.compile_echomsg
+let s:VimlLint.compile_funcs[s:NODE_ECHOERR] = s:VimlLint.compile_echoerr
+let s:VimlLint.compile_funcs[s:NODE_EXECUTE] = s:VimlLint.compile_execute
+let s:VimlLint.compile_funcs[s:NODE_TERNARY] = s:VimlLint.compile_ternary
+let s:VimlLint.compile_funcs[s:NODE_OR] = s:VimlLint.compile_or
+let s:VimlLint.compile_funcs[s:NODE_AND] = s:VimlLint.compile_and
+let s:VimlLint.compile_funcs[s:NODE_EQUAL] = s:VimlLint.compile_equal
+let s:VimlLint.compile_funcs[s:NODE_EQUALCI] = s:VimlLint.compile_equalci
+let s:VimlLint.compile_funcs[s:NODE_EQUALCS] = s:VimlLint.compile_equalcs
+let s:VimlLint.compile_funcs[s:NODE_NEQUAL] = s:VimlLint.compile_nequal
+let s:VimlLint.compile_funcs[s:NODE_NEQUALCI] = s:VimlLint.compile_nequalci
+let s:VimlLint.compile_funcs[s:NODE_NEQUALCS] = s:VimlLint.compile_nequalcs
+let s:VimlLint.compile_funcs[s:NODE_GREATER] = s:VimlLint.compile_greater
+let s:VimlLint.compile_funcs[s:NODE_GREATERCI] = s:VimlLint.compile_greaterci
+let s:VimlLint.compile_funcs[s:NODE_GREATERCS] = s:VimlLint.compile_greatercs
+let s:VimlLint.compile_funcs[s:NODE_GEQUAL] = s:VimlLint.compile_gequal
+let s:VimlLint.compile_funcs[s:NODE_GEQUALCI] = s:VimlLint.compile_gequalci
+let s:VimlLint.compile_funcs[s:NODE_GEQUALCS] = s:VimlLint.compile_gequalcs
+let s:VimlLint.compile_funcs[s:NODE_SMALLER] = s:VimlLint.compile_smaller
+let s:VimlLint.compile_funcs[s:NODE_SMALLERCI] = s:VimlLint.compile_smallerci
+let s:VimlLint.compile_funcs[s:NODE_SMALLERCS] = s:VimlLint.compile_smallercs
+let s:VimlLint.compile_funcs[s:NODE_SEQUAL] = s:VimlLint.compile_sequal
+let s:VimlLint.compile_funcs[s:NODE_SEQUALCI] = s:VimlLint.compile_sequalci
+let s:VimlLint.compile_funcs[s:NODE_SEQUALCS] = s:VimlLint.compile_sequalcs
+let s:VimlLint.compile_funcs[s:NODE_MATCH] = s:VimlLint.compile_match
+let s:VimlLint.compile_funcs[s:NODE_MATCHCI] = s:VimlLint.compile_matchci
+let s:VimlLint.compile_funcs[s:NODE_MATCHCS] = s:VimlLint.compile_matchcs
+let s:VimlLint.compile_funcs[s:NODE_NOMATCH] = s:VimlLint.compile_nomatch
+let s:VimlLint.compile_funcs[s:NODE_NOMATCHCI] = s:VimlLint.compile_nomatchci
+let s:VimlLint.compile_funcs[s:NODE_NOMATCHCS] = s:VimlLint.compile_nomatchcs
+let s:VimlLint.compile_funcs[s:NODE_IS] = s:VimlLint.compile_is
+let s:VimlLint.compile_funcs[s:NODE_ISCI] = s:VimlLint.compile_isci
+let s:VimlLint.compile_funcs[s:NODE_ISCS] = s:VimlLint.compile_iscs
+let s:VimlLint.compile_funcs[s:NODE_ISNOT] = s:VimlLint.compile_isnot
+let s:VimlLint.compile_funcs[s:NODE_ISNOTCI] = s:VimlLint.compile_isnotci
+let s:VimlLint.compile_funcs[s:NODE_ISNOTCS] = s:VimlLint.compile_isnotcs
+let s:VimlLint.compile_funcs[s:NODE_ADD] = s:VimlLint.compile_add
+let s:VimlLint.compile_funcs[s:NODE_SUBTRACT] = s:VimlLint.compile_subtract
+let s:VimlLint.compile_funcs[s:NODE_CONCAT] = s:VimlLint.compile_concat
+let s:VimlLint.compile_funcs[s:NODE_MULTIPLY] = s:VimlLint.compile_multiply
+let s:VimlLint.compile_funcs[s:NODE_DIVIDE] = s:VimlLint.compile_divide
+let s:VimlLint.compile_funcs[s:NODE_REMAINDER] = s:VimlLint.compile_remainder
+let s:VimlLint.compile_funcs[s:NODE_NOT] = s:VimlLint.compile_not
+let s:VimlLint.compile_funcs[s:NODE_PLUS] = s:VimlLint.compile_plus
+let s:VimlLint.compile_funcs[s:NODE_MINUS] = s:VimlLint.compile_minus
+let s:VimlLint.compile_funcs[s:NODE_SUBSCRIPT] = s:VimlLint.compile_subscript
+let s:VimlLint.compile_funcs[s:NODE_SLICE] = s:VimlLint.compile_slice
+let s:VimlLint.compile_funcs[s:NODE_DOT] = s:VimlLint.compile_dot
+let s:VimlLint.compile_funcs[s:NODE_CALL] = s:VimlLint.compile_call
+let s:VimlLint.compile_funcs[s:NODE_NUMBER] = s:VimlLint.compile_number
+let s:VimlLint.compile_funcs[s:NODE_STRING] = s:VimlLint.compile_string
+let s:VimlLint.compile_funcs[s:NODE_LIST] = s:VimlLint.compile_list
+let s:VimlLint.compile_funcs[s:NODE_DICT] = s:VimlLint.compile_dict
+let s:VimlLint.compile_funcs[s:NODE_OPTION] = s:VimlLint.compile_option
+let s:VimlLint.compile_funcs[s:NODE_IDENTIFIER] = s:VimlLint.compile_identifier
+let s:VimlLint.compile_funcs[s:NODE_CURLYNAME] = s:VimlLint.compile_curlyname
+let s:VimlLint.compile_funcs[s:NODE_ENV] = s:VimlLint.compile_env
+let s:VimlLint.compile_funcs[s:NODE_REG] = s:VimlLint.compile_reg
+
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
