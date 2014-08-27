@@ -1949,17 +1949,9 @@ function! s:readonly_var(var) " {{{
 endfunction " }}}
 
 function! s:reserved_name(name) " {{{
-  if a:name == 'a:000' || a:name == 'v:val' || a:name == 's:'
-    return 1
-  endif
-  if a:name =~# '^[gbwtsl]:$'
-    return 1
-  endif
-  if a:name == 'self'
-    " @TODO if a function is defined with the "dict" attribute
-    return 1
-  endif
-  if a:name =~# '^a:\d*$'
+  if a:name =~# '^\(a:\d\|[gbwtsl]:$\)' ||
+  \  a:name ==# 'v:val' || a:name ==# 's:' || a:name == 'self'
+    " @TODO 'self' if a function is defined with the "dict" attribute
     return 1
   endif
 
