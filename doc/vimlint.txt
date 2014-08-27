@@ -91,10 +91,13 @@ vimlint#util#output_file()			*vimlint#util#output_file()*
 vimlint#util#output_list()			*vimlint#util#output_list()*
 	Return a |List| of lists:
 		[%f,%l,%c,%t{rror|arning},%n,%m]
+	See |errorformat| for meaning of the % items.
 
 vimlint#util#output_vimconsole()	*vimlint#util#output_vimconsole()*
 	Output error message by |vimconsole#log()|. The format is same as
 	|vimlint#util#output_echo()|.
+	You can download vimconsole.vim from
+	https://github.com/rbtnn/vimconsole.vim.
 
 ------------------------------------------------------------------------------
 COMMENTS 						*vimlint-comments*
