@@ -347,57 +347,60 @@ function! s:exists_var(self, env, node, funcref)
     " prefix なし
     let append_prefix = 1
     if a:env.global == a:env
-      let var = 'g:' . var
+      " global
+      " check できない
+      "let var = 'g:' . var
+      return 1
     else
+      " local
       if var ==# "count"
         call a:self.error_mes(a:node, 'EVL106', 'local variable `' . var . '` is used withoug l:', var)
       endif
       let var = 'l:' . var
     endif
-  else
-    let append_prefix = 0
-  endif
-
-  if var =~# '^[gbwt]:'
+  elseif var =~# '^[gbwtv]:'
     " check できない
     " 型くらいは保存してみる?
+    "
+    " v:
+    " @TODO :help v:
+    " @TODO map 内などか?
     return 1
   elseif var =~# '^s:'
     " 存在していることにして先にすすむ.
     " どこで定義されるかわからない
     call s:append_var_(a:env.global, var, a:node, 0, -1)
     return 1
-  elseif var =~# '^v:'
-    " @TODO :help v:
-    " @TODO map 内などか?
-    return 1
   else
-    " ローカル変数
-    let env = a:env
-    while has_key(env, 'var')
-      if has_key(env.var, var)
-        " カウンタをアップデード
-        let stat = env.var[var].stat
-        call s:append_var_(env, var, a:node, 0, -1)
-
-        if stat == 0
-          return 1
-        endif
-
-        " 警告
-        call a:self.error_mes(a:node, 'EVL104', 'variable may not be initialized on some execution path: `' . var . '`', var)
-        return 0
-      endif
-      let env = env.outer
-    endwhile
-
-    " 存在しなかった
-    if !append_prefix || !a:funcref
-      " prefix なしの場合は、builtin-func 
-      call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', var)
-    endif
-    return 0
+    let append_prefix = 0
   endif
+
+  " ローカル変数
+  let env = a:env
+  while has_key(env, 'var')
+    let vv = env['var']
+    if has_key(vv, var)
+      " カウンタをアップデード
+      let stat = vv[var].stat
+      call s:append_var_(env, var, a:node, 0, -1)
+
+      if stat == 0
+        return 1
+      endif
+
+      " 警告
+      call a:self.error_mes(a:node, 'EVL104', 'variable may not be initialized on some execution path: `' . var . '`', var)
+      return 0
+    endif
+    let env = env.outer
+  endwhile
+
+  " 存在しなかった
+  if !append_prefix || !a:funcref
+    " prefix なしの場合は、builtin-func
+    call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', var)
+  endif
+  return 0
 endfunction " }}}
 
 function! s:push_varstack(env, dict) " {{{
