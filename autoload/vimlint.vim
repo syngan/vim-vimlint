@@ -1962,8 +1962,7 @@ endfunction " }}}
 
 function s:VimlLint.compile_identifier(node, refchk) " {{{
   let name = a:node.value
-  if s:reserved_name(name)
-  elseif a:refchk
+  if a:refchk && !s:reserved_name(name)
     call s:exists_var(self, self.env, a:node, 0)
 "    call self.error_mes(a:node, 'EVLx', 'undefined variable: ' . name, 1)
   endif
