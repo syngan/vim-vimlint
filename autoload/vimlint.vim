@@ -1587,9 +1587,9 @@ function s:VimlLint.compile_echon(node, refchk) "{{{
   call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
-" function s:VimlLint.compile_echohl(node, refchk) "{{{
+function s:VimlLint.compile_echohl(...) "{{{
 "   " @TODO
-" endfunction "}}}
+endfunction "}}}
 
 function s:VimlLint.compile_echomsg(node, refchk) "{{{
   call map(a:node.list, 'self.compile(v:val, 1)')
@@ -2242,7 +2242,7 @@ let s:VimlLint.compile_funcs[s:NODE_TRY] = s:VimlLint.compile_try
 let s:VimlLint.compile_funcs[s:NODE_THROW] = s:VimlLint.compile_throw
 let s:VimlLint.compile_funcs[s:NODE_ECHO] = s:VimlLint.compile_echo
 let s:VimlLint.compile_funcs[s:NODE_ECHON] = s:VimlLint.compile_echon
-"let s:VimlLint.compile_funcs[s:NODE_ECHOHL] = s:VimlLint.compile_echohl
+let s:VimlLint.compile_funcs[s:NODE_ECHOHL] = s:VimlLint.compile_echohl
 let s:VimlLint.compile_funcs[s:NODE_ECHOMSG] = s:VimlLint.compile_echomsg
 let s:VimlLint.compile_funcs[s:NODE_ECHOERR] = s:VimlLint.compile_echoerr
 let s:VimlLint.compile_funcs[s:NODE_EXECUTE] = s:VimlLint.compile_execute
