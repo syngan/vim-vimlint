@@ -2122,7 +2122,7 @@ function! s:vimlint_dir(dir, param) " {{{
   if a:param.recursive
     let filess = expand(a:dir . "/**/*.vim")
   else
-    let filess = expand(a:dir . "/*/*.vim")
+    let filess = expand(a:dir . "/*.vim")
   endif
   let ret = []
   for f in split(filess, "\n")
