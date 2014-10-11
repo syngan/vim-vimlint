@@ -2050,7 +2050,7 @@ function! s:echo_progress(param, msg) " {{{
   endif
 endfunction " }}}
 
-function! s:vimlint_file(filename, param) " {{{
+function! s:vimlint_file(filename, param, progress) " {{{
   let vimfile = a:filename
   let p = s:VimLParser.new()
   let c = s:VimlLint.new(a:param)
@@ -2063,11 +2063,11 @@ function! s:vimlint_file(filename, param) " {{{
         let c.filename = vimfile
     endif
 
-    call s:echo_progress(a:param, '.... ' . c.filename . ' start')
+    call s:echo_progress(a:param, a:progress . c.filename . ' start')
 
     let vp = p.parse(r)
 
-    call s:echo_progress(a:param, '.... ' . c.filename . ' check')
+    call s:echo_progress(a:param, a:progress . c.filename . ' check')
 
     call c.compile(vp, 1)
 
@@ -2112,7 +2112,7 @@ function! s:vimlint_file(filename, param) " {{{
       call writefile(lines, c.param.output.filename)
     endif
 
-    call s:echo_progress(a:param, '.... ' . c.filename . ' end')
+    call s:echo_progress(a:param, a:progress . c.filename . ' end')
     return c.error
   endtry
 
@@ -2120,16 +2120,14 @@ endfunction " }}}
 
 function! s:vimlint_dir(dir, param) " {{{
   if a:param.recursive
-    let filess = expand(a:dir . "/**/*.vim")
+    let filess = glob(a:dir . "/**/*.vim")
   else
-    let filess = expand(a:dir . "/*/*.vim")
+    let filess = glob(a:dir . "/*/*.vim")
   endif
+  let fs = split(filess, "\n")
   let ret = []
-  for f in split(filess, "\n")
-    if filereadable(f)
-      let p = s:vimlint_file(f, a:param)
-      let ret += p
-    endif
+  for i in range(len(fs))
+    let ret += s:vimlint_file(fs[i], a:param, printf("(%2d/%d) ", i+1, len(fs)))
   endfor
 
   return ret
@@ -2195,11 +2193,11 @@ function! vimlint#vimlint(file, ...) " {{{
   for f in files
 
     if param.type == "string"
-      let ret += s:vimlint_file(f, param)
+      let ret += s:vimlint_file(f, param, ".... ")
     elseif isdirectory(f)
       let ret += s:vimlint_dir(f, param)
     elseif filereadable(f)
-      let ret += s:vimlint_file(f, param)
+      let ret += s:vimlint_file(f, param, ".... ")
     else
       echoerr "vimlint: cannot readfile: " . f
     endif
