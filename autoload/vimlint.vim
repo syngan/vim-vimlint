@@ -558,7 +558,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
   return ret
 endfunction " }}}
 
-function! s:delete_var(self, env, var, chk) " {{{
+function! s:delete_var(env, var) " {{{
   if a:var.type == s:NODE_IDENTIFIER
     let name = a:var.value
     if name !~# '^[gbwtslv]:' && name !~# '#'
@@ -572,9 +572,6 @@ function! s:delete_var(self, env, var, chk) " {{{
     if has_key(a:env.var, name)
       let e = a:env
       let v = e.var[name]
-      if a:chk == 1 && v.ref == 1
-        call a:self.error_mes(v.node, 'EVL102', 'unused variable `' . name . '`', name)
-      endif
       unlet a:env.var[name]
     elseif has_key(a:env.global.var, name)
       let e = a:env.global
@@ -807,7 +804,7 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
     let z = vardict[k]
     if z[2]  + N_lp == N
       " すべてのルートで delete
-      call s:delete_var(a:self, a:env, z[0].node, -1)
+      call s:delete_var(a:env, z[0].node) " -1
     else
       try
         " あるルートでは delete されなかった.
@@ -1174,7 +1171,7 @@ function s:VimlLint.compile_unlet(node, refchk) "{{{
   let list = map(a:node.list, 'self.compile(v:val, ' . f . ')')
   for v in list
     " unlet
-    call s:delete_var(self, self.env, v, f)
+    call s:delete_var(self.env, v) " f
   endfor
 endfunction "}}}
 
