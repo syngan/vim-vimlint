@@ -87,6 +87,7 @@ let s:builtin_func.getcharmod = {'min' : 0, 'max': 0}
 let s:builtin_func.getcmdline = {'min' : 0, 'max': 0}
 let s:builtin_func.getcmdpos = {'min' : 0, 'max': 0}
 let s:builtin_func.getcmdtype = {'min' : 0, 'max': 0}
+let s:builtin_func.getcmdwintype = {'min' : 0, 'max': 0}
 let s:builtin_func.getcurpos = {'min' : 0, 'max': 0}
 let s:builtin_func.getcwd = {'min' : 0, 'max': 0}
 let s:builtin_func.getfontname = {'min' : 0, 'max': 1}

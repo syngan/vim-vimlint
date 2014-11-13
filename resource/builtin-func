@@ -41,7 +41,7 @@ confirm( {msg} [, {choices} [, {default} [, {type}]]])
 copy( {expr})			any	make a shallow copy of {expr}
 cos( {expr})			Float	cosine of {expr}
 cosh( {expr})			Float	hyperbolic cosine of {expr}
-count( {list}, {expr} [, {start} [, {ic}]])
+count( {list}, {expr} [, {ic} [, {start}]])
 				Number	 count how many {expr} are in {list}
 cscope_connection( [{num} , {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
@@ -97,7 +97,8 @@ getchar( [expr])		Number	get one character from the user
 getcharmod( )			Number	modifiers for the last typed character
 getcmdline()			String	return the current command-line
 getcmdpos()			Number	return cursor position in command-line
-getcmdtype()			String	return the current command-line type
+getcmdtype()			String	return current command-line type
+getcmdwintype()			String	return current command-line window type
 getcurpos()			List	position of the cursor
 getcwd()			String	the current working directory
 getfontname( [{name}])		String	name of font being used
@@ -330,6 +331,6 @@ winrestcmd()			String	returns command to restore window sizes
 winrestview( {dict})		none	restore view of current window
 winsaveview()			Dict	save view of current window
 winwidth( {nr})			Number	width of window {nr}
-writefile( {list}, {fname} [, {binary}])
+writefile( {list}, {fname} [, {flags}])
 				Number	write list of lines to file {fname}
 xor( {expr}, {expr})		Number  bitwise XOR
