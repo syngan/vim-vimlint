@@ -534,7 +534,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
         let v = 'l:' . v
       endif
     endif
-    if v =~# '^[sgbwt]:'
+    if v =~# '^[sgbwtv]:'
       let ret = s:append_var_(a:env.global, v, node, a:val, 1)
     elseif v !~# '#'
       let ret = s:append_var_(a:env, v, node, a:val, 1)
