@@ -99,6 +99,24 @@ function! s:funcs.substitute(vl, fname, node) " {{{
   endif
 endfunction " }}}
 
+function! s:funcs.writefile(vl, fname, node)
+  let rlist = a:node.rlist
+  if vimlint#util#notlist_type(rlist[0])
+      call s:EVL108(a:vl, a:node, 1, a:fname, 'a list')
+  endif
+  if vimlint#util#notstr_type(rlist[1])
+      call s:EVL108(a:vl, a:node, 2, a:fname, 'a string')
+  endif
+  if len(rlist) >= 3
+    if vimlint#util#isstr_type(rlist[2])
+      let str = vimlint#util#str_value(rlist[2])
+      if str =~# '[^ba]'
+        call s:EVL108(a:vl, a:node, 3, a:fname, '"ba"')
+      endif
+    endif
+  endif
+endfunction
+
 function! vimlint#builtin_arg#check(vl, fname, node) " {{{
   if has_key(s:funcs, a:fname)
     return s:funcs[a:fname](a:vl, a:fname, a:node)
