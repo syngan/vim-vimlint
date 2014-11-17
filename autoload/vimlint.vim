@@ -27,6 +27,7 @@ let s:default_param = {} " {{{
 let s:default_param.recursive = 1
 let s:default_param.quiet = 0
 let s:default_param.type = 'file'
+let s:default_param.func_abort = 0
 
 let s:default_param_output = {
 \   'append' : 0,
@@ -1085,6 +1086,11 @@ function s:VimlLint.compile_function(node, refchk) "{{{
     "  script-local.  Something like abc:def() was never intended to work.
     call self.error_mes(left, 'EVL107', 'A function name does not allowed to contain a colon: `' . funcname . '`', 1)
   endif
+
+  if self.param.func_abort && !a:node.attr.abort
+    call self.error_mes(a:node, 'EVL110', 'function ' . funcname . ' does not have the abort argument', 1)
+  endif
+
   let rlist = map(a:node.rlist, 'self.compile(v:val, 0)')  " list of argument string
 
   let self.env = s:env(self.env, left)

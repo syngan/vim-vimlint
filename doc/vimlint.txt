@@ -71,6 +71,8 @@ You can define default values by |g:vimlint#config|.
 		'hoge', then >
 		let g:vimlint#config.EVL103 = {'hoge' : 1}
 <
+	"func_abort"		Default: 0
+
 ------------------------------------------------------------------------------
 FUNCTIONS 						*vimlint-functions*
 
@@ -225,6 +227,7 @@ EVL108: `n`th argument of `v` should be `xxx`			*EVL108*
 
 EVL109: local variable `v` is used outside of a function	*EVL109*
 
+EVL110: function `v` does not have `x` argument.		*EVL110*
 
 code
 EVL201: unreachable code `return/throw`				*EVL201*
