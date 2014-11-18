@@ -1084,7 +1084,7 @@ function s:VimlLint.compile_function(node, refchk) "{{{
     "  The intention, as mentioned in the quoted docs,  is only alphanumeric
     "  characters and '_', while prepending s: is allowed to make the function
     "  script-local.  Something like abc:def() was never intended to work.
-    call self.error_mes(left, 'EVL107', 'A function name does not allowed to contain a colon: `' . funcname . '`', 1)
+    call self.error_mes(left, 'EVL107', 'A function name is not allowed to contain a colon: `' . funcname . '`', 1)
   endif
 
   if self.param.func_abort && !a:node.attr.abort
