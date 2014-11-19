@@ -25,10 +25,13 @@ EOF
 }
 
 
+VF=$( mktemp -t "${0##*/}"-$$.XXXXXXXX ) || exit 1
+trap 'rm -f "$TF"' EXIT HUP INT QUIT TERM
+
 VERBOSE=0
 VOPT="-c 'set rtp+=`pwd`'"
-CONFIG="-c 'call has_key(g:, \"vimlint#config\") | let g:vimlint#config = {}'"
-CONFIG="${CONFIG} -c 'let g:vimlint#config.quiet = 1'"
+echo "call has_key(g:, \"vimlint#config\") | let g:vimlint#config = {}" > ${VF}
+echo "let g:vimlint#config.quiet = 1" >> ${VF}
 ERRGREP='Error|Warning'
 while getopts 'hl:p:e:vc:E' OPT; do
 	case "$OPT" in
@@ -50,14 +53,14 @@ while getopts 'hl:p:e:vc:E' OPT; do
 		if [ `echo ${OPTARG} | grep '^EVL[0-9]\+=[135]$' | wc -l` = 1 ]; then
 			E=`echo ${OPTARG} | sed 's/=.*//'`
 			L=`echo ${OPTARG} | sed 's/.*=//'`
-			CONFIG="$CONFIG -c 'call has_key(g:vimlint#config, \"$E\") | let g:vimlint#config.$E={}'"
-			CONFIG="$CONFIG -c 'let g:vimlint#config.$E={\":\" : $L}'"
+			echo "call has_key(g:vimlint#config, \"$E\") | let g:vimlint#config.$E={}" >> ${VF}
+			echo "let g:vimlint#config.$E={\":\" : $L}" >> ${VF}
 		elif [ `echo ${OPTARG} | grep '^EVL[0-9]\+\.[gbwtslva]:.\+=[135]$' | wc -l` = 1 ]; then
 			E=`echo ${OPTARG} | sed 's/\..*//'`
 			V=`echo ${OPTARG} | sed 's/EVL[0-9]*\.//;s/=.$//'`
 			L=`echo ${OPTARG} | sed 's/.*=//'`
-			CONFIG="$CONFIG -c 'call has_key(g:vimlint#config, \"$E\") | let g:vimlint#config.$E={}'"
-			CONFIG="$CONFIG -c 'let g:vimlint#config.$E={\"$V\" : $L}'"
+			echo "call has_key(g:vimlint#config, \"$E\") | let g:vimlint#config.$E={}" >> ${VF}
+			echo "let g:vimlint#config.$E={\"$V\" : $L}" >> ${VF}
 		else
 			usage
 		fi
@@ -66,7 +69,7 @@ while getopts 'hl:p:e:vc:E' OPT; do
 		if [ `echo ${OPTARG} | grep '^[a-z0-9_]\+=' | wc -l` = 1 ]; then
 			K=`echo ${OPTARG} | sed 's/=.*//'`
 			V=`echo ${OPTARG} | sed 's/^[a-z0-9_]\+=//'`
-			CONFIG="$CONFIG -c 'let g:vimlint#config.$K=$V'"
+			echo "let g:vimlint#config.$K=$V" >> ${VF}
 		else
 			usage
 		fi
@@ -83,10 +86,11 @@ TF=$( mktemp -t "${0##*/}"-$$.XXXXXXXX ) || exit 1
 trap 'rm -f "$TF"' EXIT HUP INT QUIT TERM
 
 RET=0
+VOPT="${VOPT} -c 'source ${VF}'"
 while [ $# -gt 0 ]; do
 	if [ -n "$1" -a \( -f "$1" -o -d "$1" \) ]; then
 		cat /dev/null >"$TF" || exit 1
-		VIM="vim $VOPT $CONFIG -c 'call vimlint#vimlint(\"$1\", {\"output\": \"${TF}\"})' -c 'qall!'"
+		VIM="vim $VOPT -c 'call vimlint#vimlint(\"$1\", {\"output\": \"${TF}\"})' -c 'qall!'"
 		eval ${VIM} > /dev/null 2>&1
 		if [ ${VERBOSE} = 0 ]; then
 			egrep -w "${ERRGREP}" "$TF" && RET=2
