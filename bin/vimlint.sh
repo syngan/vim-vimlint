@@ -6,15 +6,16 @@
 usage()
 {
 	cat <<EOF >&2
-Usage ${0##*/} [-p <dir>] [-l <dir>] [-e <EVLxxx=n>] [-v] [-h] {<file>|<dir>} ...
- -p <dir>	look for vim-vimlparser in <dir>
- -l <dir>	look for vim-vimlint in <dir>
- -h		print this message and exit
- -e EVLxxx=n	set error level
-                n=1: none
-                n=3: warning
-                n=5: error
+Usage ${0##*/} [-p <dir>][-l <dir>][-e <EVLxxx=n>][-v][-E][-h] {<file>|<dir>} ...
+ -p <dir>           look for vim-vimlparser in <dir>
+ -l <dir>           look for vim-vimlint in <dir>
+ -h                 print this message and exit
+ -e EVLxxx=n        set error level
+                      n=1: none
+                      n=3: warning
+                      n=5: error
  -e EVLxxx.var=n	set error level for variable "var"
+ -E                 report only error messages
 EOF
 	exit 1
 }
@@ -74,10 +75,10 @@ while [ $# -gt 0 ]; do
 		VIM="vim $VOPT $CONFIG -c 'call vimlint#vimlint(\"$1\", {\"quiet\":  1, \"output\": \"${TF}\"})' -c 'qall!'"
 		eval ${VIM} > /dev/null 2>&1
 		if [ ${VERBOSE} = 0 ]; then
-			egrep -w 'Error|Warning' "$TF" && RET=2
+			egrep -w "${ERRGREP}" "$TF" && RET=2
 		else
 			cat "${TF}"
-			egrep -w 'Error|Warning' "$TF" > /dev/null 2>&1
+			egrep -w "${ERRGREP}" "$TF" > /dev/null 2>&1
 			if [ $? = 0 ]; then
 				RET=2
 			fi
