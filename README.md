@@ -57,6 +57,14 @@ We recommend you to use vim-vimlint with [vim-watchdogs](https://github.com/osyo
 - https://github.com/vim-jp/vital.vim/commit/d4e9ff07b6e37fd96e2d10857bd4fdae522983a0
 - https://github.com/scrooloose/syntastic/commit/f3240e600121f164e276e86fe4e53f8e4ab010f0#diff-bf91089ab4d5be349efb653e97bcaed4
 
+# Related Plugin
+
+- [Kuniwak/vint](https://github.com/Kuniwak/vint)
+- [ujihisa/vimlint](https://github.com/ujihisa/vimlint)
+- [dbakker/vim-lint](https://github.com/dbakker/vim-lint)
+- [dahu/VimLint](https://github.com/dahu/VimLint)
+
+
 # Blog in Japanese
 
 - [vimlint category](http://d.hatena.ne.jp/syngan/searchdiary?word=*[vim-vimlint])
