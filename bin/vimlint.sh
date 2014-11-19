@@ -47,7 +47,7 @@ while getopts 'hl:p:e:vE' OPT; do
 			L=`echo ${OPTARG} | sed 's/.*=//'`
 			CONFIG="$CONFIG -c 'call has_key(g:vimlint#config, \"$E\") | let g:vimlint#config.$E={}'"
 			CONFIG="$CONFIG -c 'let g:vimlint#config.$E={\":\" : $L}'"
-		elif [ `echo ${OPTARG} | grep '^EVL[0-9]\+\..\+=[135]$' | wc -l` = 1 ]; then
+		elif [ `echo ${OPTARG} | grep '^EVL[0-9]\+\.[gbwtslva]:.\+=[135]$' | wc -l` = 1 ]; then
 			E=`echo ${OPTARG} | sed 's/\..*//'`
 			V=`echo ${OPTARG} | sed 's/EVL[0-9]*\.//;s/=.$//'`
 			L=`echo ${OPTARG} | sed 's/.*=//'`
