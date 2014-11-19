@@ -10,6 +10,11 @@ Usage ${0##*/} [-p <dir>] [-l <dir>] [-e <EVLxxx=n>] [-v] [-h] {<file>|<dir>} ..
  -p <dir>	look for vim-vimlparser in <dir>
  -l <dir>	look for vim-vimlint in <dir>
  -h		print this message and exit
+ -e EVLxxx=n	set error level
+                n=1: none
+                n=3: warning
+                n=5: error
+ -e EVLxxx.var=n	set error level for variable "var"
 EOF
 	exit 1
 }
