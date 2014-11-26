@@ -1066,6 +1066,9 @@ function! s:get_funcname(self, node) " {{{
   if a:node.type == s:NODE_DOT
     return "a" . '.' . s:get_funcname(a:self, a:node.right)
   endif
+  if a:node.type == s:NODE_SUBSCRIPT
+    return ''
+  endif
   if a:node.type == s:NODE_CURLYNAME
     return ''
   endif
