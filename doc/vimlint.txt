@@ -72,6 +72,9 @@ You can define default values by |g:vimlint#config|.
 		let g:vimlint#config.EVL103 = {'hoge' : 1}
 <
 	"func_abort"		Default: 0
+		If the value is non-zero, |vimlint| reports |EVL110| if
+		a function does not have the abort argument.
+		See |:func-abort|.
 
 ------------------------------------------------------------------------------
 FUNCTIONS 						*vimlint-functions*
