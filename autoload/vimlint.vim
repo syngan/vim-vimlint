@@ -292,6 +292,8 @@ function! s:env(outer, funcname) " {{{
   let env.varstack = []
   let env.ret = 0
   let env.loopb = 0
+  let env.is_dic_func = type(a:funcname) == type({}) && (
+  \ a:funcname.type == s:NODE_DOT || a:funcname.type == s:NODE_SUBSCRIPT)
   if has_key(a:outer, 'global')
     let env.global = a:outer.global
   else
@@ -1059,6 +1061,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 
 endfunction "}}}
 
+" 関数名. よくわからんのは '' を返す
 function! s:get_funcname(self, node) " {{{
   if a:node.type == s:NODE_IDENTIFIER
     return a:node.value
@@ -1959,9 +1962,10 @@ function! s:readonly_var(var) " {{{
   endif
 endfunction " }}}
 
-function! s:reserved_name(name) " {{{
+function! s:reserved_name(name, is_dic_func) " {{{
   if a:name =~# '^\(a:\d\|[gbwtsla]:$\)' ||
-  \  a:name ==# 'v:val' || a:name ==# 's:' || a:name == 'self'
+  \  a:name ==# 'v:val' || a:name ==# 's:' ||
+  \  (a:name ==# 'self' && a:is_dic_func)
     " @TODO 'self' if a function is defined with the "dict" attribute
     return 1
   endif
@@ -1971,7 +1975,7 @@ endfunction " }}}
 
 function s:VimlLint.compile_identifier(node, refchk) " {{{
   let name = a:node.value
-  if a:refchk && !s:reserved_name(name)
+  if a:refchk && !s:reserved_name(name, self.env.is_dic_func)
     call s:exists_var(self, self.env, a:node, 0)
 "    call self.error_mes(a:node, 'EVLx', 'undefined variable: ' . name, 1)
   endif
