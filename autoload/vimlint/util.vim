@@ -100,6 +100,19 @@ function! vimlint#util#output_file(filename, pos, ev, eid, mes, obj) " {{{
   let a:obj.error += [a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ': ' . a:eid . ': ' . a:mes]
 endfunction " }}}
 
+" @vimlint(EVL103, 1, a:param)
+function! vimlint#util#hook_after_file(filename, param, c) " {{{
+  let c = a:c
+  if filewritable(c.param.output.filename)
+    let lines = extend(readfile(c.param.output.filename), c.error)
+  else
+    let lines = c.error
+  endif
+  let lines = extend([a:filename . ' start'], lines)
+  call writefile(lines, c.param.output.filename)
+endfunction " }}}
+" @vimlint(EVL103, 0, a:param)
+
 function! vimlint#util#output_list(filename, pos, ev, eid, mes, obj) " {{{
   let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:ev, a:eid, a:mes]]
 endfunction " }}}

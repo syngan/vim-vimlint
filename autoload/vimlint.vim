@@ -2112,15 +2112,9 @@ function! s:vimlint_file(filename, param, progress) " {{{
     call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : i}}, i, msg, 1)
   finally
 
-    if a:param.outfunc == function('vimlint#util#output_file')
-      if filewritable(c.param.output.filename)
-        let lines = extend(readfile(c.param.output.filename), c.error)
-      else
-        let lines = c.error
-      endif
-      let lines = extend([a:filename . ' start'], lines)
-      call writefile(lines, c.param.output.filename)
-    endif
+    for Hook in c.param.hook_after_0
+      call Hook(a:filename, a:param, c)
+    endfor
 
     call s:echo_progress(a:param, a:progress . c.filename . ' end')
     return c.error
@@ -2164,7 +2158,6 @@ function! s:get_param(p) " {{{
       let param.outfunc = function('vimlint#util#output_list')
     elseif type(param.output) == type(function('tr'))
       let out_type = "function"
-
       let param.outfunc = param.output
       unlet param.output
     elseif type(param.output) != type({})
@@ -2181,9 +2174,15 @@ function! s:get_param(p) " {{{
     endif
   endif
 
+
+  if has_key(param, 'hook_after_0')
+    unlet param.hook_after_0
+  endif
+  let param.hook_after_0 = []
   if out_type == "file"
     " file
     let param.outfunc = function('vimlint#util#output_file')
+    let param.hook_after_0 = [function('vimlint#util#hook_after_file')]
     if !param.output.append
       call writefile([], param.output.filename)
     endif
