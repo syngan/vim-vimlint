@@ -47,6 +47,8 @@ You can define default values by |g:vimlint#config|.
 
 	"output"		Default: |vimlint#output_echo()|
 		The value is a |String|, a |List| or a |Funcref|.
+		If the value is 'quickfix', |vimlint| outputs the result
+		to the quickfix by using |vimlint#util#output_quickfix()|.
 		If the value is a |String|, |vimlint| outputs the result to
 		the file by using |vimlint#util#output_file()|.
 		If the value is a |List|, |vimlint| returns the list of

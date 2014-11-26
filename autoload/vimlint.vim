@@ -2151,7 +2151,14 @@ function! s:get_param(p) " {{{
   let out_type = "echo"
   if has_key(param, 'output') " {{{
     if type(param.output) == type("")
-      let param.output = {'filename' : param.output}
+      if param.output ==# 'quickfix'
+        unlet param.output
+        let out_type = "quickfix"
+        let param.outfunc = function('vimlint#util#output_quickfix')
+        call setqflist([], ' ')
+      else
+        let param.output = {'filename' : param.output}
+      endif
     elseif type(param.output) == type([])
       let out_type = "list"
       unlet param.output

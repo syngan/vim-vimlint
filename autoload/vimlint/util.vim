@@ -117,6 +117,20 @@ function! vimlint#util#output_list(filename, pos, ev, eid, mes, obj) " {{{
   let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:ev, a:eid, a:mes]]
 endfunction " }}}
 
+function! vimlint#util#output_quickfix(filename, pos, ev, eid, mes, obj) " {{{
+  let d = {}
+  let d.filename = a:filename
+  let d.lnum = a:pos.lnum
+  let d.col = a:pos.col
+  let d.vcol = 0
+  let d.nr = a:eid
+  let d.text = a:mes
+  let d.type = a:ev[0]
+		    " bufnr	buffer number; must be the number of a valid buffer
+		    " pattern	search pattern used to locate the error
+  call setqflist([d], 'a')
+endfunction " }}}
+
 function! vimlint#util#isvarname(s)"{{{
   return a:s =~# '^[vgslabwt]:$\|^\([vgslabwt]:\)\?[A-Za-z_][0-9A-Za-z_#]*$'
 endfunction"}}}
