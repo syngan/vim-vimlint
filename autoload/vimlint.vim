@@ -771,7 +771,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
       elseif v.type == 'append' || v.type == 'update'
         let vi[v.var] = [v, 1, 0, 0, 0]
       elseif v.type != 'nop'
-        call self.error_mes(v.v, 'EVL901', 'unknown type `' . v.type . '`', 1)
+        call a:self.error_mes(v.v, 'EVL901', 'unknown type `' . v.type . '`', 1)
       endif
     endfor
 
