@@ -284,7 +284,7 @@ endfunction
 
 " }}}
 
-function! s:env(outer, funcname) " {{{
+function! s:env(outer, funcname, ...) " {{{
   let env = {}
   let env.outer = a:outer
   let env.function = a:funcname
@@ -292,8 +292,7 @@ function! s:env(outer, funcname) " {{{
   let env.varstack = []
   let env.ret = 0
   let env.loopb = 0
-  let env.is_dic_func = type(a:funcname) == type({}) && (
-  \ a:funcname.type == s:NODE_DOT || a:funcname.type == s:NODE_SUBSCRIPT)
+  let env.is_dic_func = a:0 > 0 && a:1
   if has_key(a:outer, 'global')
     let env.global = a:outer.global
   else
@@ -1099,7 +1098,8 @@ function s:VimlLint.compile_function(node, refchk) "{{{
 
   let rlist = map(a:node.rlist, 'self.compile(v:val, 0)')  " list of argument string
 
-  let self.env = s:env(self.env, left)
+  let self.env = s:env(self.env, left, a:node.attr.dict ||
+        \ left.type == s:NODE_DOT || left.type == s:NODE_SUBSCRIPT)
   if a:node.attr.range
     call s:append_var_(self.env, "a:firstline", a:node, a:node, 1)
     call s:append_var_(self.env, "a:lastline", a:node, a:node, 1)
