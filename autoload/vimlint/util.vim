@@ -121,7 +121,7 @@ function! vimlint#util#output_quickfix(filename, pos, ev, eid, mes, ...) " {{{
   let d.col = a:pos.col
   let d.vcol = 0
   let d.nr = a:eid
-  let d.text = a:mes
+  let d.text = a:eid . ":" . a:mes
   let d.type = a:ev[0]
 		    " bufnr	buffer number; must be the number of a valid buffer
 		    " pattern	search pattern used to locate the error
