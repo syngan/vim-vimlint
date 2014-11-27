@@ -41,7 +41,6 @@ function! s:funcs.keys(vl, fname, node) " {{{
       call s:EVL108(a:vl, a:node, i+1, a:fname, 'a dictionary')
     endif
   endfor
-
 endfunction " }}}
 
 let s:funcs.max = s:funcs.List1
@@ -78,6 +77,19 @@ function! s:funcs.search(vl, fname, node) " {{{
 endfunction " }}}
 
 let s:funcs.searchpos = s:funcs.search
+
+function! s:funcs.setqflist(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  if len(rlist) >= 2
+    let flag = rlist[1]
+    if vimlint#util#isstr_type(flag)
+      let str = vimlint#util#str_value(flag)
+      if str !~# '^[ar ]$'
+        call s:EVL108(a:vl, a:node, 2, a:fname, 'either "a", "r" or " "')
+      endif
+    endif
+  endif
+endfunction " }}}
 
 function! s:funcs.substitute(vl, fname, node) " {{{
 " substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
