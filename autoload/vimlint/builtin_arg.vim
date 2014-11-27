@@ -94,12 +94,12 @@ function! s:funcs.substitute(vl, fname, node) " {{{
   if vimlint#util#isstr_type(flag)
     let str = vimlint#util#str_value(flag)
     if str != "" && str != "g"
-      call s:EVL108(a:vl, a:node, 4, a:fname, '"g" or ""')
+      call s:EVL108(a:vl, a:node, 4, a:fname, 'either "g" or ""')
     endif
   endif
 endfunction " }}}
 
-function! s:funcs.writefile(vl, fname, node)
+function! s:funcs.writefile(vl, fname, node) " {{{
   let rlist = a:node.rlist
   if vimlint#util#notlist_type(rlist[0])
       call s:EVL108(a:vl, a:node, 1, a:fname, 'a list')
@@ -115,7 +115,7 @@ function! s:funcs.writefile(vl, fname, node)
       endif
     endif
   endif
-endfunction
+endfunction " }}}
 
 function! vimlint#builtin_arg#check(vl, fname, node) " {{{
   if has_key(s:funcs, a:fname)
