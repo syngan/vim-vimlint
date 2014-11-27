@@ -76,6 +76,36 @@ function! s:funcs.search(vl, fname, node) " {{{
   endif
 endfunction " }}}
 
+function! s:funcs.searchpair(vl, fname, node) " {{{
+" searchpair({start}, {middle}, {end} [, {flags} [, {skip} [, {stopline} [, {timeout}]]]])
+" flags は "" or "g"
+  let rlist = a:node.rlist
+
+  for i in range(min([4, len(rlist)]))
+    if vimlint#util#notstr_type(rlist[i])
+      call s:EVL108(a:vl, a:node, i+1, a:fname, 'a string')
+    endif
+  endfor
+
+  if len(rlist) >= 4
+    let flag = rlist[3]
+    if vimlint#util#isstr_type(flag)
+      let str = vimlint#util#str_value(flag)
+      if str =~# '[^bcnswWrm]'
+        call s:EVL108(a:vl, a:node, 2, a:fname, '"bcnswWrm"')
+      elseif str =~# 'w' && str =~# 'W'
+        call s:EVL108(a:vl, a:node, 2, a:fname, 'either "w" or "W"')
+      elseif str =~# 's' && str =~# 'n'
+        call s:EVL108(a:vl, a:node, 2, a:fname, 'either "s" or "n"')
+      elseif str =~# '\(.\).*\1'
+        call s:EVL108(a:vl, a:node, 2, a:fname, 'once')
+      endif
+    endif
+  endif
+endfunction " }}}
+
+let s:funcs.searchpairpos = s:funcs.searchpair
+
 let s:funcs.searchpos = s:funcs.search
 
 function! s:funcs.setqflist(vl, fname, node) " {{{
