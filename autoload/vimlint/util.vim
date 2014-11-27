@@ -1,5 +1,4 @@
 scriptencoding utf-8
-" ユーティリティ
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -86,15 +85,13 @@ function! vimlint#util#get_pos(node) " {{{
   endif
 endfunction " }}}
 
-" @vimlint(EVL103, 1, a:obj)
-function! vimlint#util#output_echo(filename, pos, ev, eid, mes, obj) " {{{
+function! vimlint#util#output_echo(filename, pos, ev, eid, mes, ...) " {{{
   echo a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ": " . a:eid . ': ' . a:mes
 endfunction " }}}
 
-function! vimlint#util#output_vimconsole(filename, pos, ev, eid, mes, obj) " {{{
+function! vimlint#util#output_vimconsole(filename, pos, ev, eid, mes, ...) " {{{
   call vimconsole#log(a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ": " . a:eid . ': ' . a:mes)
 endfunction "}}}
-" @vimlint(EVL103, 0, a:obj)
 
 function! vimlint#util#output_file(filename, pos, ev, eid, mes, obj) " {{{
   let a:obj.error += [a:filename . ":" . a:pos.lnum . ":" . a:pos.col . ":" . a:ev . ': ' . a:eid . ': ' . a:mes]
@@ -117,7 +114,7 @@ function! vimlint#util#output_list(filename, pos, ev, eid, mes, obj) " {{{
   let a:obj.error += [[a:filename, a:pos.lnum, a:pos.col, a:ev, a:eid, a:mes]]
 endfunction " }}}
 
-function! vimlint#util#output_quickfix(filename, pos, ev, eid, mes, obj) " {{{
+function! vimlint#util#output_quickfix(filename, pos, ev, eid, mes, ...) " {{{
   let d = {}
   let d.filename = a:filename
   let d.lnum = a:pos.lnum
@@ -138,4 +135,4 @@ endfunction"}}}
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
-" vim:set et ts=2 sts=2 sw=2 tw=0 foldmethod=marker:
+" vim:set et ts=2 sts=2 sw=2 tw=0 fdm=marker:
