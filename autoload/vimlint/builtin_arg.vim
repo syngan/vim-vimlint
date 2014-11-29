@@ -43,6 +43,17 @@ function! s:funcs.keys(vl, fname, node) " {{{
   endfor
 endfunction " }}}
 
+function! s:funcs.line(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  let flag = rlist[0]
+  if vimlint#util#isstr_type(flag)
+    let str = vimlint#util#str_value(flag)
+    if str !~# '^[.$v]$' && str !~# '^''[a-zA-Z0-9<>''`"^.(){}[\]]$' && str !~# '^w[0$]$'
+      call s:EVL108(a:vl, a:node, 2, a:fname, 'the accepted positions')
+    endif
+  endif
+endfunction " }}}
+
 let s:funcs.max = s:funcs.List1
 let s:funcs.min = s:funcs.List1
 
