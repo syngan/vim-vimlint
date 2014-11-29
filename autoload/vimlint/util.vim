@@ -40,7 +40,7 @@ endfunction " }}}
 function! vimlint#util#str_value(node) " {{{
   " node が str と一致するか.
   " isstr_type() で判定済みと仮定
-  return a:node.value[1 : -2]
+  return eval(a:node.value)
 endfunction " }}}
 
 function! s:valid_pos(pos) "{{{
