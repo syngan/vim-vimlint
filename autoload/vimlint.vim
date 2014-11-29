@@ -1022,7 +1022,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
     let name = a:node.ea.cmd.name
     if has_key(s:cmd_expr, name)
       let s = substitute(a:node.str, '^[a-z]\+!\=', '', '')
-      let s = s:escape_string(s)
+"     let s = s:escape_string(s)
       call self.parse_string(s, a:node, name, 1)
     endif
   endif
@@ -1790,11 +1790,7 @@ endfunction
 " }}}
 
 function! s:escape_string(str) "{{{
-  if a:str[0] == "'"
-      return substitute(a:str, "''", "'", 'g')
-  endif
-
-  return a:str
+  return eval(a:str)
 endfunction "}}}
 
 function s:VimlLint.parse_string(str, node, cmd, ref) "{{{
@@ -1841,21 +1837,21 @@ function s:VimlLint.compile_call(node, refchk) "{{{
       if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'value')
         if rlist[1].type == s:NODE_STRING
           let s = s:escape_string(rlist[1].value)
-          call self.parse_string(s[1:-2], left, left.value, 1)
+          call self.parse_string(s, left, left.value, 1)
         endif
       endif
     elseif left.value == 'eval'
       if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'value')
         if rlist[0].type == s:NODE_STRING
           let s = s:escape_string(rlist[0].value)
-          call self.parse_string(s[1:-2], left, left.value, 1)
+          call self.parse_string(s, left, left.value, 1)
         endif
       endif
     elseif left.value == 'substitute'
       if len(rlist) >= 3 && type(rlist[2]) == type({})
-      \ && has_key(rlist[2], 'value') && rlist[2].value[1:] =~# '^\\='
+      \ && has_key(rlist[2], 'value') && rlist[2].value =~# '^[''"]\\='
         let s = s:escape_string(rlist[2].value)
-        call self.parse_string(s[3:-2], left, left.value, 1)
+        call self.parse_string(s[2:], left, left.value, 1)
       endif
     endif
 
