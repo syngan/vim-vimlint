@@ -25,6 +25,17 @@ function! s:funcs.List1(vl, fname, node) " {{{
   endif
 endfunction " }}}
 
+function! s:funcs.col(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  let flag = rlist[0]
+  if vimlint#util#isstr_type(flag)
+    let str = vimlint#util#str_value(flag)
+    if str !~# '^[.$]$' && str !~# '^''[a-zA-Z0-9<>''`"^.(){}[\]]$'
+      call s:EVL108(a:vl, a:node, 2, a:fname, 'the accepted positions')
+    endif
+  endif
+endfunction " }}}
+
 function! s:funcs.getregtype(vl, fname, node) " {{{
   let rlist = a:node.rlist
   for i in range(len(rlist))
