@@ -53,6 +53,7 @@ function! s:funcs.line(vl, fname, node) " {{{
     endif
   endif
 endfunction " }}}
+let s:funcs.getpos = s:funcs.line
 
 let s:funcs.max = s:funcs.List1
 let s:funcs.min = s:funcs.List1
