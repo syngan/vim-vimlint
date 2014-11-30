@@ -128,9 +128,13 @@ function! vimlint#util#output_quickfix(filename, pos, ev, eid, mes, ...) " {{{
   call setqflist([d], 'a')
 endfunction " }}}
 
-function! vimlint#util#isvarname(s)"{{{
+function! vimlint#util#isvarname(s) "{{{
   return a:s =~# '^[vgslabwt]:$\|^\([vgslabwt]:\)\?[A-Za-z_][0-9A-Za-z_#]*$'
-endfunction"}}}
+endfunction "}}}
+
+function! vimlint#util#is_mark(s)
+  return a:s =~# '^''[a-zA-Z0-9<>''`"^.(){}[\]]$'
+endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
