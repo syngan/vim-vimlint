@@ -52,19 +52,30 @@ You can define default values by |g:vimlint#config|.
 		For example: >
 			call vimlint#vimlint(filename, {'output': 'quickfix'})
 <
-		This following does the same: >
+		The following does the same: >
 			call setqflist([], ' ')
 			call vimlint#vimlint(filename, {'output':
 				function('vimlint#util#output_quickfix'})
 <
 		If the value is a |String|, |vimlint| outputs the result to
 		the file by using |vimlint#util#output_file()|.
+		For example: >
+			call vimlint#vimlint(input_filename, {'output':
+			output_filename})
+<
+		The following does the same: >
+			let a = vimlint#vimlint(filename, {'output':
+				function('vimlint#util#output_file'})
+			call writefile(a, output_filename)
+<
 		If the value is a |List|, |vimlint| returns the list of
 		the results by using |vimlint#util#output_list()|.
+
 
 	"recursive"		Default: 1
 		If the value is non-zero, |vimlint#vimlint()| recursively
 		is called.
+
 	"quiet"			Default: 0
 		If the value is Zero, vimlint reports like the following progress
 		messages: >
@@ -104,12 +115,12 @@ vimlint#vimlint({input} [, {param}])			*vimlint#vimlint()*
 	{param} is a |Dictionary|. See |g:vimlint#config|.
 
 vimlint#util#output_echo()			*vimlint#util#output_echo()*
-	Report error message by |:echo|. The format is the followings:
+	Report error messages by |:echo|. The format is the followings:
 	    "%f:%l:%c:%t{rror|arning}:%n:%m"
 	See |errorformat| for meaning of the % items.
 
 vimlint#util#output_file()			*vimlint#util#output_file()*
-	Output error message to a file. The format is same as
+	Output error messagew to a file. The format is same as
 	|vimlint#util#output_echo()|.
 
 vimlint#util#output_list()			*vimlint#util#output_list()*
