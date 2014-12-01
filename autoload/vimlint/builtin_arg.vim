@@ -131,6 +131,18 @@ let s:funcs.searchpairpos = s:funcs.searchpair
 
 let s:funcs.searchpos = s:funcs.search
 
+function! s:funcs.setpos(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  let flag = rlist[0]
+  if vimlint#util#isstr_type(flag)
+    let str = vimlint#util#str_value(flag)
+    if str !=# '.' && vimlint#util#is_mark(str)
+      call s:EVL108(a:vl, a:node, 2, a:fname, '"." or "''x"(mark x)')
+    endif
+  endif
+
+endfunction " }}}
+
 function! s:funcs.setqflist(vl, fname, node) " {{{
   let rlist = a:node.rlist
   if len(rlist) >= 2
