@@ -49,13 +49,30 @@ You can define default values by |g:vimlint#config|.
 		The value is a |String|, a |List| or a |Funcref|.
 		If the value is 'quickfix', |vimlint| outputs the result
 		to the quickfix by using |vimlint#util#output_quickfix()|.
+		For example: >
+			call vimlint#vimlint(filename, {'output': 'quickfix'})
+<
+		This following does the same: >
+			call setqflist([], ' ')
+			call vimlint#vimlint(filename, {'output':
+				function('vimlint#util#output_quickfix'})
+<
 		If the value is a |String|, |vimlint| outputs the result to
 		the file by using |vimlint#util#output_file()|.
 		If the value is a |List|, |vimlint| returns the list of
 		the results by using |vimlint#util#output_list()|.
 
 	"recursive"		Default: 1
+		If the value is non-zero, |vimlint#vimlint()| recursively
+		is called.
 	"quiet"			Default: 0
+		If the value is Zero, vimlint reports like the following progress
+		messages: >
+		01:12:23 .... filename.vim start
+		01:12:23 .... filename.vim check
+		01:12:23 .... filename.vim end
+		<
+
 	"EVLxxx"		Default: 5	*g:vimlint#config.EVLxxx*
 		The value is a positive |Number| or a |Dictionary|.
 
@@ -98,6 +115,22 @@ vimlint#util#output_file()			*vimlint#util#output_file()*
 vimlint#util#output_list()			*vimlint#util#output_list()*
 	Return a |List| of lists:
 		[%f,%l,%c,%t{rror|arning},%n,%m]
+	See |errorformat| for meaning of the % items.
+
+vimlint#util#output_quickfix()			*vimlint#util#output_quickfix()*
+	Report error to the current quickfix list.  Each item is the
+	following:
+>
+		{
+			'filename' : %f,
+			'lnum' :     %l,
+			'col' :      %c,
+			'vcol' :     0,
+			'nr' :       %n,
+			'text' :     "%n: %m",
+			'type' :     %t,
+		}
+<
 	See |errorformat| for meaning of the % items.
 
 vimlint#util#output_vimconsole()	*vimlint#util#output_vimconsole()*
