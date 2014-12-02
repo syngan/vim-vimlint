@@ -26,7 +26,7 @@ License: MIT license  {{{
 CONTENTS						*vimlint-contents*
 
 INTRODUCTION						|vimlint-introduction|
-INTERFACE		 				|vimlint-interface|
+INTERFACE						|vimlint-interface|
   VARIABLES						|vimlint-variables|
   FUNCTIONS						|vimlint-functions|
   COMMENTS						|vimlint-comments|
@@ -39,7 +39,7 @@ INTRODUCTION						*vimlint-introduction*
 INTERFACE						*vimlint-interface*
 
 ------------------------------------------------------------------------------
-VARIABLES 						*vimlint-variables*
+VARIABLES						*vimlint-variables*
 							*g:vimlint#config*
 
 You can define default values by |g:vimlint#config|.
@@ -64,7 +64,7 @@ You can define default values by |g:vimlint#config|.
 			output_filename})
 <
 		The following does the same: >
-			let a = vimlint#vimlint(filename, {'output':
+			let a = vimlint#vimlint(input_filename, {'output':
 				function('vimlint#util#output_file'})
 			call writefile(a, output_filename)
 <
@@ -73,8 +73,8 @@ You can define default values by |g:vimlint#config|.
 
 
 	"recursive"		Default: 1
-		If the value is non-zero, |vimlint#vimlint()| recursively
-		is called.
+		If the value is non-zero, |vimlint#vimlint()| is recursively
+		called.
 
 	"quiet"			Default: 0
 		If the value is Zero, vimlint reports like the following progress
@@ -82,7 +82,7 @@ You can define default values by |g:vimlint#config|.
 		01:12:23 .... filename.vim start
 		01:12:23 .... filename.vim check
 		01:12:23 .... filename.vim end
-		<
+<
 
 	"EVLxxx"		Default: 5	*g:vimlint#config.EVLxxx*
 		The value is a positive |Number| or a |Dictionary|.
@@ -107,7 +107,7 @@ You can define default values by |g:vimlint#config|.
 		See |:func-abort|.
 
 ------------------------------------------------------------------------------
-FUNCTIONS 						*vimlint-functions*
+FUNCTIONS						*vimlint-functions*
 
 vimlint#vimlint({input} [, {param}])			*vimlint#vimlint()*
 
@@ -120,7 +120,7 @@ vimlint#util#output_echo()			*vimlint#util#output_echo()*
 	See |errorformat| for meaning of the % items.
 
 vimlint#util#output_file()			*vimlint#util#output_file()*
-	Output error messagew to a file. The format is same as
+	Output error messages to a file. The format is same as
 	|vimlint#util#output_echo()|.
 
 vimlint#util#output_list()			*vimlint#util#output_list()*
@@ -151,16 +151,20 @@ vimlint#util#output_vimconsole()	*vimlint#util#output_vimconsole()*
 	https://github.com/rbtnn/vimconsole.vim.
 
 ------------------------------------------------------------------------------
-COMMENTS 						*vimlint-comments*
+COMMENTS						*vimlint-comments*
 
 	You can change error level in the file by "@vimlint" comment.
 	" @vimlint(EVLxxx, 1)
 	" @vimlint(EVLxxx, 0)
 
+	or
+	" @vimlint(EVLxxx, 1, var)
+	" @vimlint(EVLxxx, 0, var)
+
 	(TODO)
 
 ==============================================================================
-ERROR CODE 						*vimlint-errorcode*
+ERROR CODE						*vimlint-errorcode*
 
 EVPxxx:          error message by |vim-vimplarser|.
 EVLxxx and Exxx: error message by |vim-vimlint|.
@@ -250,8 +254,18 @@ EVL104: variable may not be initialized on some execution path: `v`
 	    endif
 	    " @vimlint(EVL104, 0, l:v)
 <
-								*EVL105*
-EVL105: global variable `v` is defined without g:
+EVL105: global variable `v` is defined without g:		*EVL105*
+>
+	    for i in range(5)
+		echo "incorrect" . i
+	    endfor
+	    for s:i in range(5)
+		echo "correct_script" . s:i
+	    endfor
+	    for g:i in range(5)
+		echo "correct_global" . g:i
+	    endfor
+<
 EVL106: local variable `v` is used without l:			*EVL106*
 	See |v:count| and |local-variable|.
 >
