@@ -30,7 +30,7 @@ function! s:parse_test(vl, fname, node, i) " {{{
   if vimlint#util#isstr_type(flag)
     let str = vimlint#util#str_value(flag)
     call a:vl.parse_string(str, a:node, a:fname, 1)
-  elseif vimlint#util#notdict_type(a:node.rlist[a:i])
+  elseif vimlint#util#notstr_type(a:node.rlist[a:i])
     call s:EVL108(a:vl, a:node, a:i+1, a:fname, 'a string')
   endif
 endfunction " }}}
