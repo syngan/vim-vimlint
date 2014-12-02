@@ -1837,45 +1837,20 @@ function s:VimlLint.compile_call(node, refchk) "{{{
 "        for i in range(len(rlist))
           " 型チェック
 "        endfor
+        call vimlint#builtin_arg#check(self, left.value, a:node)
       endif
-    endif
-
-    call vimlint#builtin_arg#check(self, left.value, a:node)
-
-    " 例外で, map と filter と,
-    " @TODO vital... はどうしよう
-    " 引数誤りはチェック済, にする.
-    if left.value == 'map' || left.value == 'filter'
-      if len(rlist) == 2 && type(rlist[1]) == type({}) && has_key(rlist[1], 'value')
-        if rlist[1].type == s:NODE_STRING
-          let s = s:escape_string(rlist[1].value)
-          call self.parse_string(s, left, left.value, 1)
-        endif
-      endif
-    elseif left.value == 'eval'
-      if len(rlist) == 1 && type(rlist[0]) == type({}) && has_key(rlist[0], 'value')
-        if rlist[0].type == s:NODE_STRING
-          let s = s:escape_string(rlist[0].value)
-          call self.parse_string(s, left, left.value, 1)
-        endif
-      endif
-    elseif left.value == 'substitute'
-      if len(rlist) >= 3 && type(rlist[2]) == type({})
-      \ && has_key(rlist[2], 'value') && rlist[2].value =~# '^[''"]\\='
-        let s = s:escape_string(rlist[2].value)
-        call self.parse_string(s[2:], left, left.value, 1)
-      endif
-    endif
-
-    if left.value =~# '^[gl]:[a-z][A-Za-z0-9_]\+$'
+    elseif left.value =~# '^[gl]:[a-z][A-Za-z0-9_]\+$'
       call self.error_mes(left, 'E117', 'Unknown function: `' . left.value . '`', 1)
     elseif left.value =~# '^\%([la]:\)\?[A-Za-z0-9_]\+$'
-      \ && left.value !~ '^[a-z0-9_]\+$'
       " variable? 参照しましたよ.
       " 新しい関数がでたらどうする？
       " @TODO local function が EVL101 になってしまうので gbwtsla にしない
       call s:exists_var(self, self.env, left, 1)
     endif
+
+    " @TODO vital... はどうしよう
+    " 引数誤りはチェック済, にする.
+
   endif
 
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')

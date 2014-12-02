@@ -25,6 +25,16 @@ function! s:funcs.List1(vl, fname, node) " {{{
   endif
 endfunction " }}}
 
+function! s:parse_test(vl, fname, node, i) " {{{
+  let flag = a:node.rlist[a:i]
+  if vimlint#util#isstr_type(flag)
+    let str = vimlint#util#str_value(flag)
+    call a:vl.parse_string(str, a:node, a:fname, 1)
+  elseif vimlint#util#notdict_type(a:node.rlist[a:i])
+    call s:EVL108(a:vl, a:node, a:i+1, a:fname, 'a string')
+  endif
+endfunction " }}}
+
 function! s:funcs.col(vl, fname, node) " {{{
   let rlist = a:node.rlist
   let flag = rlist[0]
@@ -34,6 +44,14 @@ function! s:funcs.col(vl, fname, node) " {{{
       call s:EVL108(a:vl, a:node, 2, a:fname, 'the accepted positions')
     endif
   endif
+endfunction " }}}
+
+function! s:funcs.eval(vl, fname, node) " {{{
+  call s:parse_test(a:vl, a:fname, a:node, 0)
+endfunction " }}}
+
+function! s:funcs.filter(vl, fname, node) " {{{
+  call s:parse_test(a:vl, a:fname, a:node, 1)
 endfunction " }}}
 
 function! s:funcs.getregtype(vl, fname, node) " {{{
@@ -52,6 +70,10 @@ function! s:funcs.keys(vl, fname, node) " {{{
       call s:EVL108(a:vl, a:node, i+1, a:fname, 'a dictionary')
     endif
   endfor
+endfunction " }}}
+
+function! s:funcs.map(vl, fname, node) " {{{
+  call s:parse_test(a:vl, a:fname, a:node, 1)
 endfunction " }}}
 
 function! s:funcs.line(vl, fname, node) " {{{
@@ -164,14 +186,22 @@ function! s:funcs.substitute(vl, fname, node) " {{{
   for i in range(4)
     if vimlint#util#notstr_type(rlist[i])
       call s:EVL108(a:vl, a:node, i+1, a:fname, 'a string')
+      return
     endif
   endfor
+
+  if type(rlist[2]) == type({})
+  \ && has_key(rlist[2], 'value') && rlist[2].value =~# '^[''"]\\='
+    let str = vimlint#util#str_value(rlist[2])
+    call a:vl.parse_string(str[2:], a:node, a:fname, 1)
+  endif
 
   let flag = rlist[3]
   if vimlint#util#isstr_type(flag)
     let str = vimlint#util#str_value(flag)
     if str != "" && str != "g"
       call s:EVL108(a:vl, a:node, 4, a:fname, 'either "g" or ""')
+      return
     endif
   endif
 endfunction " }}}
@@ -180,15 +210,18 @@ function! s:funcs.writefile(vl, fname, node) " {{{
   let rlist = a:node.rlist
   if vimlint#util#notlist_type(rlist[0])
       call s:EVL108(a:vl, a:node, 1, a:fname, 'a list')
+      return
   endif
   if vimlint#util#notstr_type(rlist[1])
       call s:EVL108(a:vl, a:node, 2, a:fname, 'a string')
+      return
   endif
   if len(rlist) >= 3
     if vimlint#util#isstr_type(rlist[2])
       let str = vimlint#util#str_value(rlist[2])
       if str =~# '[^ba]'
         call s:EVL108(a:vl, a:node, 3, a:fname, '"ba"')
+        return
       endif
     endif
   endif
