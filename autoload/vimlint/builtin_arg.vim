@@ -41,7 +41,7 @@ function! s:funcs.col(vl, fname, node) " {{{
   if vimlint#util#isstr_type(flag)
     let str = vimlint#util#str_value(flag)
     if str !~# '^[.$]$' && !vimlint#util#is_mark(str)
-      call s:EVL108(a:vl, a:node, 2, a:fname, 'the accepted positions')
+      call s:EVL108(a:vl, a:node, 1, a:fname, 'the accepted positions')
     endif
   endif
 endfunction " }}}
@@ -82,7 +82,7 @@ function! s:funcs.line(vl, fname, node) " {{{
   if vimlint#util#isstr_type(flag)
     let str = vimlint#util#str_value(flag)
     if str !~# '^[.$v]$' && !vimlint#util#is_mark(str) && str !~# '^w[0$]$'
-      call s:EVL108(a:vl, a:node, 2, a:fname, 'the accepted positions')
+      call s:EVL108(a:vl, a:node, 1, a:fname, 'the accepted positions')
     endif
   endif
 endfunction " }}}
