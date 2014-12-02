@@ -23,6 +23,17 @@ call extend(s:, vimlparser#import())
 
 let s:VimlLint = {}
 
+" statistics
+" let g:VimLint__stat = {}
+" function! s:__called(f)
+"   if !has_key(g:VimLint__stat, a:f)
+"     let g:VimLint__stat[a:f] = 1
+"   else
+"     let g:VimLint__stat[a:f] += 1
+"   endif
+" endfunction
+
+
 let s:default_param = {} " {{{
 let s:default_param.recursive = 1
 let s:default_param.quiet = 0
@@ -1817,6 +1828,7 @@ function s:VimlLint.compile_call(node, refchk) "{{{
   if has_key(left, 'value') && type(left.value) == type("")
     let d = vimlint#builtin#get_func_inf(left.value)
     if d != {}
+"     call s:__called(left.value)
       if len(rlist) < d.min
         call self.error_mes(left, 'E119', 'Not enough arguments for function: ' . left.value, 1)
       elseif len(rlist) > d.max
@@ -2046,6 +2058,7 @@ endfunction " }}}
 function! s:echo_progress(param, msg) " {{{
   if !a:param.quiet
     if has_key(a:param, 'output')
+      " ファイル出力なら
       redraw!
     endif
     if exists("*strftime")
