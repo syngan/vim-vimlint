@@ -25,7 +25,7 @@ function! s:funcs.List1(vl, fname, node) " {{{
   endif
 endfunction " }}}
 
-function! s:parse_test(vl, fname, node, i) " {{{
+function! s:eval_test(vl, fname, node, i) " {{{
   let flag = a:node.rlist[a:i]
   if vimlint#util#isstr_type(flag)
     let str = vimlint#util#str_value(flag)
@@ -47,11 +47,11 @@ function! s:funcs.col(vl, fname, node) " {{{
 endfunction " }}}
 
 function! s:funcs.eval(vl, fname, node) " {{{
-  call s:parse_test(a:vl, a:fname, a:node, 0)
+  call s:eval_test(a:vl, a:fname, a:node, 0)
 endfunction " }}}
 
 function! s:funcs.filter(vl, fname, node) " {{{
-  call s:parse_test(a:vl, a:fname, a:node, 1)
+  call s:eval_test(a:vl, a:fname, a:node, 1)
 endfunction " }}}
 
 function! s:funcs.getregtype(vl, fname, node) " {{{
@@ -73,7 +73,7 @@ function! s:funcs.keys(vl, fname, node) " {{{
 endfunction " }}}
 
 function! s:funcs.map(vl, fname, node) " {{{
-  call s:parse_test(a:vl, a:fname, a:node, 1)
+  call s:eval_test(a:vl, a:fname, a:node, 1)
 endfunction " }}}
 
 function! s:funcs.line(vl, fname, node) " {{{
