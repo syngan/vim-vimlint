@@ -155,7 +155,7 @@ let s:funcs.searchpos = s:funcs.search
 
 function! s:funcs.setpos(vl, fname, node) " {{{
   let rlist = a:node.rlist
-  let flag = rlist[0]
+  let flag = rlist[1]
   if vimlint#util#isstr_type(flag)
     let str = vimlint#util#str_value(flag)
     if str !=# '.' && vimlint#util#is_mark(str)
