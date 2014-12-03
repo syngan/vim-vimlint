@@ -54,6 +54,17 @@ function! s:funcs.filter(vl, fname, node) " {{{
   call s:eval_test(a:vl, a:fname, a:node, 1)
 endfunction " }}}
 
+function! s:funcs.get(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  " l: は参照したことにしてください (issue60)
+  if vimlint#util#isid_type(rlist[0]) && rlist[0].value ==# 'l:'
+    if vimlint#util#isstr_type(rlist[1])
+      let str = vimlint#util#str_value(rlist[1])
+      call vimlint#exists_var(a:vl, a:vl.env, rlist[1], 0, str)
+    endif
+  endif
+endfunction " }}}
+
 function! s:funcs.getregtype(vl, fname, node) " {{{
   let rlist = a:node.rlist
   for i in range(len(rlist))

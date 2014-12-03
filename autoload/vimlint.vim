@@ -349,8 +349,8 @@ endfunction " }}}
 " @param var string
 " @param node dict: return value of compile
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
-function! s:exists_var(self, env, node, funcref)
-  let var = a:node.value
+function! vimlint#exists_var(self, env, node, funcref, refonly)
+  let var = (a:refonly is 0) ? a:node.value : a:refonly
   if var =~# '#'
     " cannot support
     return 1
@@ -396,8 +396,7 @@ function! s:exists_var(self, env, node, funcref)
       " カウンタをアップデード
       let stat = vv[var].stat
       call s:append_var_(env, var, a:node, 0, -1)
-
-      if stat == 0
+      if stat == 0 || a:refonly isnot# 0
         return 1
       endif
 
@@ -409,7 +408,7 @@ function! s:exists_var(self, env, node, funcref)
   endwhile
 
   " 存在しなかった
-  if !append_prefix || !a:funcref
+  if (!append_prefix || !a:funcref) && a:refonly is 0
     " prefix なしの場合は、builtin-func
     call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', var)
   endif
@@ -826,7 +825,7 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
         let z[0].v.v = a:self.append_var(z[0].env, z[0].node, z[0].var, 'reconstruct')
         " ref 情報を追加しないと.
         if z[3] > 0
-          call s:exists_var(a:self, a:self.env, z[0].node, 0)
+          call vimlint#exists_var(a:self, a:self.env, z[0].node, 0, 0)
         endif
 
       catch
@@ -1203,7 +1202,7 @@ function s:VimlLint.compile_lockvar(node, refchk) "{{{
     if var.type != s:NODE_IDENTIFIER
 "      call self.error_mes(a:node, "Ex#, 'lockvar: internal variable is required: ' . var, 1)
     else
-      call s:exists_var(self, self.env, var, 0)
+      call vimlint#exists_var(self, self.env, var, 0, 0)
 "      call self.error_mes(a:node, "Ex#, 'undefined variable: ' . var, 1)
     endif
   endfor
@@ -1214,7 +1213,7 @@ function s:VimlLint.compile_unlockvar(node, refchk) "{{{
     if var.type != s:NODE_IDENTIFIER
 "      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
     else
-      call s:exists_var(self, self.env, var, 0)
+      call vimlint#exists_var(self, self.env, var, 0, 0)
 "      call self.error_mes(a:node, 'undefined variable: ' . var, 1)
     endif
   endfor
@@ -1845,7 +1844,7 @@ function s:VimlLint.compile_call(node, refchk) "{{{
       " variable? 参照しましたよ.
       " 新しい関数がでたらどうする？
       " @TODO local function が EVL101 になってしまうので gbwtsla にしない
-      call s:exists_var(self, self.env, left, 1)
+      call vimlint#exists_var(self, self.env, left, 1, 0)
     endif
 
     " @TODO vital... はどうしよう
@@ -1953,7 +1952,7 @@ endfunction " }}}
 function s:VimlLint.compile_identifier(node, refchk) " {{{
   let name = a:node.value
   if a:refchk && !s:reserved_name(name, self.env.is_dic_func)
-    call s:exists_var(self, self.env, a:node, 0)
+    call vimlint#exists_var(self, self.env, a:node, 0, 0)
 "    call self.error_mes(a:node, 'EVLx', 'undefined variable: ' . name, 1)
   endif
   return a:node

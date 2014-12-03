@@ -19,6 +19,10 @@ function! vimlint#util#isdict_type(node) " {{{
   return a:node.type == 83
 endfunction " }}}
 
+function! vimlint#util#isid_type(node) " {{{
+  return a:node.type == 86
+endfunction " }}}
+
 function! vimlint#util#notstr_type(node) " {{{
   " 変数などは判定できないので isstr_type() ではエラー判定できないため.
   return vimlint#util#islist_type(a:node) ||
