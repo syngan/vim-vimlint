@@ -1853,12 +1853,6 @@ function s:VimlLint.compile_call(node, refchk) "{{{
 
   endif
 
-  let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
-  let left = self.compile(a:node.left, 0)
-
-  let a:node.rlist = rlist
-  let a:node.left = left
-
   return a:node
 "  return {'type' : 'call', 'l' : left, 'r' : rlist, 'node' : a:node}
 endfunction "}}}
