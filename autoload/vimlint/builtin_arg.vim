@@ -54,6 +54,7 @@ function! s:funcs.filter(vl, fname, node) " {{{
   call s:eval_test(a:vl, a:fname, a:node, 1)
 endfunction " }}}
 
+" @vimlint(EVL103, 1, a:fname)
 function! s:funcs.get(vl, fname, node) " {{{
   let rlist = a:node.rlist
   " l: は参照したことにしてください (issue60)
@@ -64,6 +65,7 @@ function! s:funcs.get(vl, fname, node) " {{{
     endif
   endif
 endfunction " }}}
+" @vimlint(EVL103, 0, a:fname)
 
 function! s:funcs.getregtype(vl, fname, node) " {{{
   let rlist = a:node.rlist
