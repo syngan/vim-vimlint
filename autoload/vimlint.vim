@@ -411,9 +411,6 @@ function! vimlint#exists_var(self, env, node, funcref, refonly)
   if (!append_prefix || !a:funcref) && a:refonly is 0
     " prefix なしの場合は、builtin-func
     call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', var)
-    " ついでに再度エラー出力しないように定義しておく
-    " @TODO 1 は変数の値をちゃんとみるようになったら修正する必要がある
-    call a:self.append_var(a:self.env, a:node, 1, "dummy")
   endif
   return 0
 endfunction " }}}
