@@ -35,16 +35,18 @@ function! s:eval_test(vl, fname, node, i) " {{{
   endif
 endfunction " }}}
 
-function! s:funcs.col(vl, fname, node) " {{{
-  let rlist = a:node.rlist
-  let flag = rlist[0]
-  if vimlint#util#isstr_type(flag)
-    let str = vimlint#util#str_value(flag)
-    if str !~# '^[.$]$' && !vimlint#util#is_mark(str)
-      call s:EVL108(a:vl, a:node, 1, a:fname, 'the accepted positions')
-    endif
-  endif
-endfunction " }}}
+" help によるとこのチェックが必要だけど,
+" ソースからして, line() と同じものを受け入れる様子 (#63)
+" function! s:funcs.col(vl, fname, node) " {{{
+"   let rlist = a:node.rlist
+"   let flag = rlist[0]
+"   if vimlint#util#isstr_type(flag)
+"     let str = vimlint#util#str_value(flag)
+"     if str !~# '^[.$]$' && !vimlint#util#is_mark(str)
+"       call s:EVL108(a:vl, a:node, 1, a:fname, 'the accepted positions')
+"     endif
+"   endif
+" endfunction " }}}
 
 function! s:funcs.eval(vl, fname, node) " {{{
   call s:eval_test(a:vl, a:fname, a:node, 0)
@@ -100,6 +102,7 @@ function! s:funcs.line(vl, fname, node) " {{{
   endif
 endfunction " }}}
 let s:funcs.getpos = s:funcs.line
+let s:funcs.col = s:funcs.line
 
 let s:funcs.max = s:funcs.List1
 let s:funcs.min = s:funcs.List1
