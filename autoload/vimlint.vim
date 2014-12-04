@@ -1954,7 +1954,12 @@ function s:VimlLint.compile_identifier(node, refchk) " {{{
   if a:refchk && !s:reserved_name(name, self.env.is_dic_func)
     call vimlint#exists_var(self, self.env, a:node, 0, 0)
 "    call self.error_mes(a:node, 'EVLx', 'undefined variable: ' . name, 1)
+  elseif name ==# 'l:' && self.env.global == self.env
+    " 予約語なので定義済みチェックは不要なため
+    " exist_var を呼び出さないため例外処理
+    call self.error_mes(a:node, 'EVL109', 'local variable `l:` is used outside of a function', name)
   endif
+
   return a:node
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
 endfunction " }}}
