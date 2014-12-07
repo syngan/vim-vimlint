@@ -303,6 +303,7 @@ function! s:env(outer, funcname, ...) " {{{
   let env.varstack = []
   let env.ret = 0
   let env.loopb = 0
+  let env.has_break = 0
   let env.is_dic_func = a:0 > 0 && a:1
   if has_key(a:outer, 'global')
     let env.global = a:outer.global
@@ -1499,20 +1500,29 @@ function s:VimlLint.compile_for(node, refchk) "{{{
   endif
 
   let self.env.global.loop += 1
+  let bak_has_break = self.env.has_break
+  let self.env.has_break = 0
 
-  " for 文の中
-  let p = len(self.env.varstack)
-  call self.compile_body(a:node.body, 1)
+  try
 
-
-  call s:restore_varstack(self.env, p, "for")
-  let pos = [s:gen_pos_cntl(self.env, p)]
-  call s:reset_env_cntl(self.env)
-  if right.type != s:NODE_LIST
-    " for にはいらなかった場合
+    " for 文の中
     let p = len(self.env.varstack)
-    let pos += [s:gen_pos_cntl(self.env, p)]
-  endif
+    call self.compile_body(a:node.body, 1)
+
+
+    call s:restore_varstack(self.env, p, "for")
+    let pos = [s:gen_pos_cntl(self.env, p)]
+    call s:reset_env_cntl(self.env)
+
+    if right.type != s:NODE_LIST || self.env.has_break
+      " for にはいらなかった場合
+      let p = len(self.env.varstack)
+      let pos += [s:gen_pos_cntl(self.env, p)]
+    endif
+
+  finally
+    let self.env.has_break = bak_has_break
+  endtry
   "call s:decho("call reconstruct _fors: " . string(a:node.pos))
   call s:reconstruct_varstack(self, self.env, pos, 1)
   "call s:decho("call reconstruct _fore: " . string(a:node.pos))
@@ -1525,6 +1535,7 @@ function s:VimlLint.compile_continue(node, refchk) "{{{
     call self.error_mes(a:node, 'E586', ':continue without :while or :for: continue', 1)
   else
     let self.env.loopb = 1
+    let self.env.has_break = 1
   endif
 endfunction "}}}
 
@@ -1533,6 +1544,7 @@ function s:VimlLint.compile_break(node, refchk) "{{{
     call self.error_mes(a:node, 'E587', ':break without :while or :for: break', 1)
   else
     let self.env.loopb = 1
+    let self.env.has_break = 1
   endif
 endfunction "}}}
 
