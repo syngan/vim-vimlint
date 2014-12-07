@@ -103,6 +103,7 @@ function! s:funcs.line(vl, fname, node) " {{{
 endfunction " }}}
 let s:funcs.getpos = s:funcs.line
 let s:funcs.col = s:funcs.line
+let s:funcs.virtcol = s:funcs.col
 
 let s:funcs.max = s:funcs.List1
 let s:funcs.min = s:funcs.List1
