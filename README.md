@@ -56,6 +56,8 @@ We recommend you to use vim-vimlint with [vim-watchdogs](https://github.com/osyo
 - [fix vimlint error: by syngan ? Pull Request #111 ? Shougo/vimshell.vim ? GitHub](https://github.com/Shougo/vimshell.vim/pull/111)
 - https://github.com/vim-jp/vital.vim/commit/d4e9ff07b6e37fd96e2d10857bd4fdae522983a0
 - https://github.com/scrooloose/syntastic/commit/f3240e600121f164e276e86fe4e53f8e4ab010f0#diff-bf91089ab4d5be349efb653e97bcaed4
+- https://github.com/google/vim-maktaba/pull/106
+- https://github.com/junegunn/vim-easy-align/issues/47
 
 # Related Plugin
 
