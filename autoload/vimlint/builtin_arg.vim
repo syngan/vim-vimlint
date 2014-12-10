@@ -108,6 +108,79 @@ let s:funcs.virtcol = s:funcs.col
 let s:funcs.max = s:funcs.List1
 let s:funcs.min = s:funcs.List1
 
+function! s:funcs.printf(vl, fname, node) " {{{
+  if !vimlint#util#isstr_type(a:node.rlist[0])
+    return
+  endif
+  let str = vimlint#util#str_value(a:node.rlist[0])
+  let len = strlen(str)
+  let idx = 0
+  let num = 0
+
+  while idx < len
+    let pct = match(str, '%', idx)
+    if pct < 0
+      break
+    endif
+
+    let idx = pct + 1
+
+    " flags
+    while idx < len && str[idx] =~# '^[-+ #0]$'
+      let idx += 1
+    endwhile
+
+    " field-width
+    if idx < len && str[idx] == '*'
+      let idx += 1
+      let num += 1
+    else
+      while idx < len && str[idx] =~# '^[0-9]'
+        let idx += 1
+      endwhile
+    endif
+
+    " .precision
+    if idx < len && str[idx] == '.'
+      let idx += 1
+      if idx == len
+        call s:EVL108(a:vl, a:node, 1, a:fname, 'the valid format (invalid precision' . pct . ')')
+        return
+      endif
+      if str[idx] == '*'
+        let idx += 1
+        let num += 1
+      else
+        while idx < len && str[idx] =~# '^[0-9]'
+          let idx += 1
+        endwhile
+      endif
+    endif
+
+    " type
+    if idx == len
+      call s:EVL108(a:vl, a:node, 1, a:fname, 'the valid format (missing type, pos=' . pct . ')')
+    elseif str[idx] == '%'
+      let idx += 1
+    elseif str[idx] =~# '^[doxXcsSfeEgG%]'
+      " %O, %D are not documented
+      let idx += 1
+      let num += 1
+    else
+      call s:EVL108(a:vl, a:node, 1, a:fname, 'the valid format (unknown type, pos=' . pct . ')')
+      return
+    endif
+  endwhile
+
+  if num != len(a:node.rlist) - 1
+    if num > len(a:node.rlist) - 1
+      call a:vl.error_mes(a:node, 'E119', 'Not enough arguments for function: ' . a:node.left.value, 1)
+    else
+      call a:vl.error_mes(a:node, 'E118', 'Too many arguments for function: ' . a:node.left.value, 1)
+    endif
+  endif
+endfunction " }}}
+
 function! s:funcs.search(vl, fname, node) " {{{
 " search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
 " flags は "" or "g"
