@@ -46,7 +46,7 @@ We recommend you to use vim-vimlint with [vim-watchdogs](https://github.com/osyo
 
 # Example
 
-## Pull Requests
+## Pull Requests / Issues
 
 - [fixed vimlint error by syngan ? Pull Request #18 ? Shougo/unite-outline](https://github.com/Shougo/unite-outline/pull/18)
 - [remove unnecessary global variables by syngan ? Pull Request #14 ? Shougo/unite-outline ? GitHub](https://github.com/Shougo/unite-outline/pull/14)
@@ -54,22 +54,24 @@ We recommend you to use vim-vimlint with [vim-watchdogs](https://github.com/osyo
 - [fix s:validate() by syngan ? Pull Request #35 ? thinca/vim-ref ? GitHub](https://github.com/thinca/vim-ref/pull/35)
 - [undefined variable: bundle_names ? Issue #142 ? Shougo/neobundle.vim ? GitHub](https://github.com/Shougo/neobundle.vim/issues/142)
 - [fix vimlint error: by syngan ? Pull Request #111 ? Shougo/vimshell.vim ? GitHub](https://github.com/Shougo/vimshell.vim/pull/111)
-- https://github.com/vim-jp/vital.vim/commit/d4e9ff07b6e37fd96e2d10857bd4fdae522983a0
-- https://github.com/scrooloose/syntastic/commit/f3240e600121f164e276e86fe4e53f8e4ab010f0#diff-bf91089ab4d5be349efb653e97bcaed4
-- https://github.com/google/vim-maktaba/pull/106
-- https://github.com/junegunn/vim-easy-align/issues/47
-- https://github.com/mattn/emmet-vim/issues/236
-- https://github.com/suy/vim-lastnextprevious/issues/1
-- https://github.com/gcmt/wildfire.vim/issues/21
-- https://github.com/gcmt/wildfire.vim/issues/22
-- https://github.com/ctrlpvim/ctrlp.vim/issues/56
-- https://github.com/benekastah/neomake/issues/9
-- https://github.com/davidhalter/jedi-vim/pull/328
-- https://github.com/davidhalter/jedi-vim/pull/329
-- https://github.com/chrisbra/NrrwRgn/issues/32
-- https://github.com/tpope/vim-rails/issues/369
-- https://github.com/Lokaltog/vim-easymotion/issues/201
-- https://github.com/junegunn/vim-plug/issues/131
+- [vim-jp/vital.vim/commit/d4e9ff0](https://github.com/vim-jp/vital.vim/commit/d4e9ff07b6e37fd96e2d10857bd4fdae522983a0)
+- [scrooloose/syntastic/commit/bf91089](https://github.com/scrooloose/syntastic/commit/f3240e600121f164e276e86fe4e53f8e4ab010f0#diff-bf91089ab4d5be349efb653e97bcaed4)
+- [google/vim-maktaba/pull/106](https://github.com/google/vim-maktaba/pull/106) (missing comma)
+- [junegunn/vim-easy-align/issues/47](https://github.com/junegunn/vim-easy-align/issues/47)
+- [mattn/emmet-vim/issues/236](https://github.com/mattn/emmet-vim/issues/236)
+- [suy/vim-lastnextprevious/issues/1](https://github.com/suy/vim-lastnextprevious/issues/1) (`EVL105` use global variables)
+- [gcmt/wildfire.vim/issues/21](https://github.com/gcmt/wildfire.vim/issues/21) (`EVL105` use global variables)
+- [gcmt/wildfire.vim/issues/22](https://github.com/gcmt/wildfire.vim/issues/22)
+- [ctrlpvim/ctrlp.vim/issues/56](https://github.com/ctrlpvim/ctrlp.vim/issues/56) (missing `endif`)
+- [benekastah/neomake/issues/9](https://github.com/benekastah/neomake/issues/9)
+- [davidhalter/jedi-vim/pull/328](https://github.com/davidhalter/jedi-vim/pull/328) (`EVL105` use global variables)
+- [davidhalter/jedi-vim/pull/329](https://github.com/davidhalter/jedi-vim/pull/329) (`EVL205` missing scriptencoding)
+- [chrisbra/NrrwRgn/issues/32](https://github.com/chrisbra/NrrwRgn/issues/32)
+- [tpope/vim-rails/issues/369](https://github.com/tpope/vim-rails/issues/369)
+- [Lokaltog/vim-easymotion/issues/201](https://github.com/Lokaltog/vim-easymotion/issues/201) (`EVL101` undefined variable, missing `a:`)
+- [junegunn/vim-plug/issues/131](https://github.com/junegunn/vim-plug/issues/131) (missing dot)
+- [osyo-manga/vim-anzu/issues/14](https://github.com/osyo-manga/vim-anzu/issues/14) (`EVL106` missing `l:` for a count variable)
+- [Shougo/vimshell.vim/issues/177](https://github.com/Shougo/vimshell.vim/issues/177) (`EVL108` invalid format of 1st arg of printf)
 
 # Related Plugin
 
