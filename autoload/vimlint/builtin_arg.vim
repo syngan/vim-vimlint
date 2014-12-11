@@ -52,6 +52,40 @@ function! s:funcs.eval(vl, fname, node) " {{{
   call s:eval_test(a:vl, a:fname, a:node, 0)
 endfunction " }}}
 
+function! s:funcs.extend(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  if vimlint#util#islist_type(rlist[0])
+    if !vimlint#util#notlist_type(rlist[1])
+      call s:EVL108(a:vl, a:node, 2, a:fname, 'a list')
+      return
+    endif
+  elseif !vimlint#util#isdict_type(rlist[0])
+    return
+  endif
+
+  if vimlint#util#notdict_type(rlist[1])
+    call s:EVL108(a:vl, a:node, 2, a:fname, 'a dictionary')
+    return
+  endif
+
+  if len(rlist) > 2
+    if vimlint#util#isstr_type(rlist[2])
+      let str = vimlint#util#str_value(rlist[2])
+      if str !=# 'keep' && str !=# 'force' && str !=# 'error'
+        call s:EVL108(a:vl, a:node, 3, a:fname, 'either "keep", "force" or "error"')
+        return
+      endif
+    endif
+  endif
+
+  if vimlint#util#isid_type(rlist[0]) && rlist[0].value =~# '^[ls]:$'
+    " l: とか s: が展開された場合は,
+    " 未定義(EVL101)とは言えなくなる.
+    " @TODO rlist[1] が具体的な場合はどうするか.
+    let a:vl.env.extend = 1
+  endif
+endfunction " }}}
+
 function! s:funcs.filter(vl, fname, node) " {{{
   call s:eval_test(a:vl, a:fname, a:node, 1)
 endfunction " }}}

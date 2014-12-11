@@ -305,6 +305,7 @@ function! s:env(outer, funcname, ...) " {{{
   let env.loopb = 0
   let env.has_break = 0
   let env.is_dic_func = a:0 > 0 && a:1
+  let env.extend = 0
   if has_key(a:outer, 'global')
     let env.global = a:outer.global
   else
@@ -409,7 +410,7 @@ function! vimlint#exists_var(self, env, node, funcref, refonly)
   endwhile
 
   " 存在しなかった
-  if (!append_prefix || !a:funcref) && a:refonly is 0
+  if (!append_prefix || !a:funcref) && a:refonly is 0 && !a:self.env.extend
     " prefix なしの場合は、builtin-func
     call a:self.error_mes(a:node, 'EVL101', 'undefined variable `' . var . '`', var)
   endif
@@ -2078,7 +2079,7 @@ function! s:vimlint_file(filename, param, progress) " {{{
     " global 変数のチェック
     let env = c.env
     for v in keys(env.var)
-      if env.var[v].subs == 0
+      if env.var[v].subs == 0 && env.extend == 0
         call c.error_mes(env.var[v].node, 'EVL101', 'undefined variable `' . v . '`', v)
       endif
     endfor

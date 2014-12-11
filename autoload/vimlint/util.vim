@@ -16,7 +16,8 @@ function! vimlint#util#islist_type(node) " {{{
 endfunction " }}}
 
 function! vimlint#util#isdict_type(node) " {{{
-  return a:node.type == 83
+  return a:node.type == 83 ||
+        \ vimlint#util#isid_type(a:node) && a:node.value =~# '^[gbwtslva]:$'
 endfunction " }}}
 
 function! vimlint#util#isid_type(node) " {{{
@@ -56,7 +57,7 @@ function! s:get_pos(node, depth) " {{{
     return {}
   endif
 
-  if type(a:node) != type({}) 
+  if type(a:node) != type({})
     return {}
   endif
 
