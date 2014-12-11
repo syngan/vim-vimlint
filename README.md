@@ -58,6 +58,18 @@ We recommend you to use vim-vimlint with [vim-watchdogs](https://github.com/osyo
 - https://github.com/scrooloose/syntastic/commit/f3240e600121f164e276e86fe4e53f8e4ab010f0#diff-bf91089ab4d5be349efb653e97bcaed4
 - https://github.com/google/vim-maktaba/pull/106
 - https://github.com/junegunn/vim-easy-align/issues/47
+- https://github.com/mattn/emmet-vim/issues/236
+- https://github.com/suy/vim-lastnextprevious/issues/1
+- https://github.com/gcmt/wildfire.vim/issues/21
+- https://github.com/gcmt/wildfire.vim/issues/22
+- https://github.com/ctrlpvim/ctrlp.vim/issues/56
+- https://github.com/benekastah/neomake/issues/9
+- https://github.com/davidhalter/jedi-vim/pull/328
+- https://github.com/davidhalter/jedi-vim/pull/329
+- https://github.com/chrisbra/NrrwRgn/issues/32
+- https://github.com/tpope/vim-rails/issues/369
+- https://github.com/Lokaltog/vim-easymotion/issues/201
+- https://github.com/junegunn/vim-plug/issues/131
 
 # Related Plugin
 
