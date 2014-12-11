@@ -55,7 +55,7 @@ endfunction " }}}
 function! s:funcs.extend(vl, fname, node) " {{{
   let rlist = a:node.rlist
   if vimlint#util#islist_type(rlist[0])
-    if !vimlint#util#notlist_type(rlist[1])
+    if vimlint#util#notlist_type(rlist[1])
       call s:EVL108(a:vl, a:node, 2, a:fname, 'a list')
       return
     endif
