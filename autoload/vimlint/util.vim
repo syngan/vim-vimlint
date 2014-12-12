@@ -162,6 +162,14 @@ function! vimlint#util#stol(str) " {{{
   return list
 endfunction " }}}
 
+function! vimlint#util#parse_cmdline(str, conf) " {{{
+  let s = vimlint#util#stol(a:str)
+  let s = filter(s, 'v:val != ""')
+  if s == []
+    let s = [expand('%')]
+  endif
+  return [s, a:conf]
+endfunction " }}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

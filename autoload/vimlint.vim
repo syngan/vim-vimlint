@@ -2230,6 +2230,12 @@ function! s:numtoname(num) " {{{
   return a:num
 endfunction " }}}
 
+function! vimlint#command(config) " {{{
+  let config = {}
+  let [file, config] = vimlint#util#parse_cmdline(a:config, config)
+  return vimlint#vimlint(file, config)
+endfunction " }}}
+
 
 let s:VimlLint.compile_funcs[s:NODE_TOPLEVEL] = s:VimlLint.compile_toplevel
 let s:VimlLint.compile_funcs[s:NODE_COMMENT] = s:VimlLint.compile_comment
