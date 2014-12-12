@@ -141,6 +141,28 @@ function! vimlint#util#is_mark(s) " {{{
   return a:s =~# '^''[a-zA-Z0-9<>''`"^.(){}[\]]$'
 endfunction " }}}
 
+function! vimlint#util#stol(str) " {{{
+  let list = []
+  let str = a:str
+  while str !~# '^\s*$'
+    let str = matchstr(str, '^\s*\zs.*$')
+    if str[0] == "'"
+      let arg = matchstr(str, '\v''\zs[^'']*\ze''')
+      let str = str[strlen(arg) + 2 :]
+    elseif str[0] == '"'
+      let arg = matchstr(str, '\v"\zs[^"]*\ze"')
+      let str = str[strlen(arg) + 2 :]
+    else
+      let arg = matchstr(str, '\S\+')
+      let str = str[strlen(arg) + 0 :]
+    endif
+    call add(list, arg)
+  endwhile
+
+  return list
+endfunction " }}}
+
+
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
