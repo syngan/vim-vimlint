@@ -1,6 +1,9 @@
 before_script:
     - uname -a
     - git clone https://github.com/ynkdir/vim-vimlparser.git /tmp/vimlparser
+    - git clone https://github.com/thinca/vim-themis --branch v1.4 --single-branch --depth 1 /tmp/vim-themis
+    - vim --version
+
 script:
     - rm -f /tmp/vimlint_test.log
     - vim -c 'set rtp+=.,/tmp/vimlparser' -c 'source test/vimlint-test.vim' -c 'call Vimlint_test("test", "/tmp/vimlint_test.log")' -c 'qall!'
@@ -9,4 +12,4 @@ script:
 #   - grep "skip=1" /tmp/vimlint_test.log
     - sh ./bin/vimlint.sh -p /tmp/vimlparser -v autoload
     - sh ./test/err.sh -p /tmp/vimlparser test/test-ok.vim test/test-ng.vim
- 
+    - /tmp/vim-themis/bin/themis themis
