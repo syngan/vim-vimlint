@@ -165,8 +165,23 @@ endfunction " }}}
 function! vimlint#util#parse_cmdline(str, conf) " {{{
   let s = vimlint#util#stol(a:str)
   let s = filter(s, 'v:val != ""')
-  if s == []
+  let brk = -1
+  for i in range(len(s))
+    if s[i] == '--'
+      let brk = i + 1
+      break
+    endif
+    let l = matchlist(s[i], '^-\([a-z]\+\)=\(.\+\)$')
+    if l == []
+      let brk = i
+      break
+    endif
+    let a:conf[l[1]] = l[2]
+  endfor
+  if brk == -1
     let s = [expand('%')]
+  else
+    let s = s[brk : ]
   endif
   return [s, a:conf]
 endfunction " }}}
