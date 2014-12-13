@@ -162,6 +162,52 @@ function! vimlint#util#stol(str) " {{{
   return list
 endfunction " }}}
 
+function! vimlint#util#parse_cmdline(str, conf) " {{{
+  let s = vimlint#util#stol(a:str)
+  let s = filter(s, 'v:val != ""')
+  let brk = -1
+  for i in range(len(s))
+    if s[i] == '--'
+      let brk = i + 1
+      break
+    endif
+    let l = matchlist(s[i], '^-\([a-z]\+\)=\(.\+\)$')
+    if l == []
+      let brk = i
+      break
+    endif
+    let a:conf[l[1]] = l[2]
+  endfor
+  if brk == -1
+    let s = [expand('%')]
+  else
+    let s = s[brk : ]
+  endif
+  return [s, a:conf]
+endfunction " }}}
+
+function! vimlint#util#complete(A, ...) " {{{
+  " コマンドオプション
+  if len(a:A) > 0 && a:A[0] == '-'
+    let ret = ['-output=', '-quiet=', '-recursive=', '-EVL']
+    let ret = filter(ret, printf('v:val =~# ''^%s''', a:A))
+    return ret
+  endif
+
+  " ファイル
+  if len(a:A) == 0
+    let dir = "."
+  else
+    let dir = a:A
+  endif
+  if isdirectory(dir) && dir[len(dir)-1] != '/'
+    let dir .= '/'
+  endif
+  let list = split(glob(dir . '*'), "\n")
+  let list = filter(list, 'isdirectory(v:val) || v:val =~# ''.vim$''')
+  let list = map(list, 'isdirectory(v:val) ? v:val . "/" : v:val')
+  return list
+endfunction " }}}
 
 let &cpo = s:save_cpo
 unlet s:save_cpo

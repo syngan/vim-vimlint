@@ -29,6 +29,7 @@ INTRODUCTION						|vimlint-introduction|
 INTERFACE						|vimlint-interface|
   VARIABLES						|vimlint-variables|
   FUNCTIONS						|vimlint-functions|
+  COMMANDS						|vimlint-commands|
   COMMENTS						|vimlint-comments|
 ERROR CODE						|vimlint-errorcode|
 
@@ -149,6 +150,17 @@ vimlint#util#output_vimconsole()	*vimlint#util#output_vimconsole()*
 	|vimlint#util#output_echo()|.
 	You can download vimconsole.vim from
 	https://github.com/rbtnn/vimconsole.vim.
+
+------------------------------------------------------------------------------
+COMMANDS						*vimlint-commands*
+
+:VimLint [-option=value] [file1 ...]
+	For example: >
+		" call vimlint#vimlint(expand('%'), {'output': 'quickfix'})
+		:VimLint -output=quickfix
+		" call vimlint#vimlint('autoload/vimlint.vim', {'quiet': 1})
+		:VimLint -quiet=1 autload/vimlint.vim
+<
 
 ------------------------------------------------------------------------------
 COMMENTS						*vimlint-comments*
