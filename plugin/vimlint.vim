@@ -8,8 +8,8 @@ set cpo&vim
 
 "-nargs=*    Any number of arguments are allowed (0, 1, or many),
 command! -nargs=*
+\ -complete=customlist,vimlint#util#complete
 \ VimLint call vimlint#command(<q-args>)
-"\ -complete=customlist,vimlint#complete
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
