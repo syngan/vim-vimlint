@@ -2039,20 +2039,6 @@ function! s:check_scriptencoding(c, lines) " {{{
   endfor
 endfunction " }}}
 
-function! s:echo_progress(param, msg) " {{{
-  if !a:param.quiet
-    if has_key(a:param, 'output')
-      " ファイル出力なら
-      redraw!
-    endif
-    if exists("*strftime")
-      echo strftime("%H:%M:%S ") . a:msg
-    else
-      echo a:msg
-    endif
-  endif
-endfunction " }}}
-
 function! s:vimlint_file(filename, param, progress) " {{{
   let vimfile = a:filename
   let p = s:vlp.VimLParser.new()
@@ -2066,11 +2052,11 @@ function! s:vimlint_file(filename, param, progress) " {{{
         let c.filename = vimfile
     endif
 
-    call s:echo_progress(a:param, a:progress . c.filename . ' start')
+    call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' start')
 
     let vp = p.parse(r)
 
-    call s:echo_progress(a:param, a:progress . c.filename . ' check')
+    call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' check')
 
     call c.compile(vp, 1)
 
@@ -2109,7 +2095,7 @@ function! s:vimlint_file(filename, param, progress) " {{{
       call Hook(a:filename, a:param, c)
     endfor
 
-    call s:echo_progress(a:param, a:progress . c.filename . ' end')
+    call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' end')
     return c.error
   endtry
 

@@ -209,6 +209,22 @@ function! vimlint#util#complete(A, ...) " {{{
   return list
 endfunction " }}}
 
+function! vimlint#util#echo_progress(param, msg) " {{{
+  if !a:param.quiet
+    if has_key(a:param, 'output')
+      " ファイル出力なら
+      redraw!
+    endif
+    if exists("*strftime")
+      echo strftime("%H:%M:%S ") . a:msg
+    else
+      echo a:msg
+    endif
+  endif
+endfunction " }}}
+
+
+
 let &cpo = s:save_cpo
 unlet s:save_cpo
 
