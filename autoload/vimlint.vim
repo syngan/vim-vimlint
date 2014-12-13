@@ -19,7 +19,7 @@ set cpo&vim
 let g:vimlint#debug = get(g:, 'vimlint#debug', 0)
 " }}}
 
-call extend(s:, vimlparser#import())
+let s:vlp = vimlparser#import()
 
 let s:VimlLint = {}
 
@@ -509,8 +509,8 @@ function! s:VimlLint.append_var(env, var, val, pos)
   endif
   let ret = {}
 
-  if a:var.type == s:NODE_IDENTIFIER || a:var.type == s:NODE_SLICE
-    if a:var.type == s:NODE_IDENTIFIER
+  if a:var.type == s:vlp.NODE_IDENTIFIER || a:var.type == s:vlp.NODE_SLICE
+    if a:var.type == s:vlp.NODE_IDENTIFIER
       let node = a:var
       let v = a:var.value
     else
@@ -553,17 +553,17 @@ function! s:VimlLint.append_var(env, var, val, pos)
     elseif v !~# '#'
       let ret = s:append_var_(a:env, v, node, a:val, 1)
     endif
-  elseif a:var.type == s:NODE_REG
+  elseif a:var.type == s:vlp.NODE_REG
     " do nothing
     return ret
-  elseif a:var.type == s:NODE_SUBSCRIPT
-  elseif a:var.type == s:NODE_DOT
+  elseif a:var.type == s:vlp.NODE_SUBSCRIPT
+  elseif a:var.type == s:vlp.NODE_DOT
     " let f.f = xxxx, let f["a"] = xxxx
-  elseif a:var.type == s:NODE_OPTION
+  elseif a:var.type == s:vlp.NODE_OPTION
     " do nothing
-  elseif a:var.type == s:NODE_CURLYNAME
+  elseif a:var.type == s:vlp.NODE_CURLYNAME
     " ???
-  elseif a:var.type == s:NODE_ENV
+  elseif a:var.type == s:vlp.NODE_ENV
     " $xxxx
   else
     " @TODO
@@ -573,7 +573,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
 endfunction " }}}
 
 function! s:delete_var(env, var) " {{{
-  if a:var.type == s:NODE_IDENTIFIER
+  if a:var.type == s:vlp.NODE_IDENTIFIER
     let name = a:var.value
     if name !~# '^[gbwtslv]:' && name !~# '#'
       if a:env.global == a:env
@@ -944,8 +944,6 @@ function! s:echonode(node, refchk) " {{{
 endfunction " }}}
 
 
-let s:VimlLint.compile_funcs = repeat([0], 90)
-
 function s:VimlLint.compile(node, refchk) " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
     if a:node.type != 2 && g:vimlint#debug > 2 || g:vimlint#debug >= 5
@@ -970,7 +968,7 @@ endfunction " }}}
 
 function s:VimlLint.compile_body(body, refchk) " {{{
   for node in a:body
-    if self.env.ret + self.env.loopb > 0 && node.type != s:NODE_COMMENT
+    if self.env.ret + self.env.loopb > 0 && node.type != s:vlp.NODE_COMMENT
       call self.error_mes(node, 'EVL201', "unreachable code: " .
       \ (self.env.ret > 0 ? "return/throw" : "continue/break"), 1)
       break
@@ -1048,9 +1046,9 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   "  redir => res, redir =>> res
   let s = matchstr(a:node.str, '\s*redi[r]\?\s\+=>[>]\?\s*\zs.*\ze\s*')
   if s != '' && s != 'END'
-    let a:node.type = s:NODE_IDENTIFIER
+    let a:node.type = s:vlp.NODE_IDENTIFIER
     let a:node.value = s
-    call self.append_var(self.env, a:node, s:NIL, 'redir')
+    call self.append_var(self.env, a:node, s:vlp.NIL, 'redir')
     return
   endif
 
@@ -1074,16 +1072,16 @@ endfunction "}}}
 
 " 関数名. よくわからんのは '' を返す
 function! s:get_funcname(self, node) " {{{
-  if a:node.type == s:NODE_IDENTIFIER
+  if a:node.type == s:vlp.NODE_IDENTIFIER
     return a:node.value
   endif
-  if a:node.type == s:NODE_DOT
+  if a:node.type == s:vlp.NODE_DOT
     return "a" . '.' . s:get_funcname(a:self, a:node.right)
   endif
-  if a:node.type == s:NODE_SUBSCRIPT
+  if a:node.type == s:vlp.NODE_SUBSCRIPT
     return ''
   endif
-  if a:node.type == s:NODE_CURLYNAME
+  if a:node.type == s:vlp.NODE_CURLYNAME
     return ''
   endif
 
@@ -1111,14 +1109,14 @@ function s:VimlLint.compile_function(node, refchk) "{{{
   let rlist = map(a:node.rlist, 'self.compile(v:val, 0)')  " list of argument string
 
   let self.env = s:env(self.env, left, a:node.attr.dict ||
-        \ left.type == s:NODE_DOT || left.type == s:NODE_SUBSCRIPT)
+        \ left.type == s:vlp.NODE_DOT || left.type == s:vlp.NODE_SUBSCRIPT)
   if a:node.attr.range
     call s:append_var_(self.env, "a:firstline", a:node, a:node, 1)
     call s:append_var_(self.env, "a:lastline", a:node, a:node, 1)
   endif
   for v in rlist
     " E853 if Duplicate argument
-    call self.append_var(self.env, v, s:NIL, "a:")
+    call self.append_var(self.env, v, s:vlp.NIL, "a:")
     unlet v
   endfor
   call self.compile_body(a:node.body, 1)
@@ -1149,7 +1147,7 @@ function s:VimlLint.compile_return(node, refchk) " {{{
 
   if self.env == self.env.global
     call self.error_mes(a:node, 'E133', ':return not inside a function', 1)
-  elseif a:node.left is s:NIL
+  elseif a:node.left is s:vlp.NIL
     let self.env.ret = 1
   else
     call self.compile(a:node.left, 1)
@@ -1168,7 +1166,7 @@ function s:VimlLint.compile_let(node, refchk) " {{{
   " endif
   let right = self.compile(a:node.right, 1)
 
-  if a:node.left isnot s:NIL
+  if a:node.left isnot s:vlp.NIL
     let left = self.compile(a:node.left, 0)
     if s:readonly_var(left)
       call self.error_mes(left, 'E46', 'Cannot change read-only variable ' . left.value, 1)
@@ -1178,7 +1176,7 @@ function s:VimlLint.compile_let(node, refchk) " {{{
   else
     let list = map(a:node.list, 'self.compile(v:val, 0)')
     call map(list, 'self.append_var(self.env, v:val, right, "letn")')
-    if a:node.rest isnot s:NIL
+    if a:node.rest isnot s:vlp.NIL
       let v = self.compile(a:node.rest, 0)
       if s:readonly_var(v)
         call self.error_mes(v, 'E46', 'Cannot change read-only variable ' . v.value, 1)
@@ -1201,7 +1199,7 @@ endfunction "}}}
 
 function s:VimlLint.compile_lockvar(node, refchk) "{{{
   for var in a:node.list
-    if var.type != s:NODE_IDENTIFIER
+    if var.type != s:vlp.NODE_IDENTIFIER
 "      call self.error_mes(a:node, "Ex#, 'lockvar: internal variable is required: ' . var, 1)
     else
       call vimlint#exists_var(self, self.env, var, 0, 0)
@@ -1212,7 +1210,7 @@ endfunction "}}}
 
 function s:VimlLint.compile_unlockvar(node, refchk) "{{{
   for var in a:node.list
-    if var.type != s:NODE_IDENTIFIER
+    if var.type != s:vlp.NODE_IDENTIFIER
 "      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
     else
       call vimlint#exists_var(self, self.env, var, 0, 0)
@@ -1250,12 +1248,12 @@ function! s:VimlLint.extract_exists(cond) " {{{
   " exists != 0
   " exists == 0
   " call s:echonode(a:cond, 0)
-  if a:cond.type == s:NODE_EQUAL ||
-      \  a:cond.type == s:NODE_NEQUAL
+  if a:cond.type == s:vlp.NODE_EQUAL ||
+      \  a:cond.type == s:vlp.NODE_NEQUAL
     if a:cond.left == a:cond.right
       return []
     endif
-    if a:cond.left.type == s:NODE_NUMBER
+    if a:cond.left.type == s:vlp.NODE_NUMBER
       let l = a:cond.right
       let r = a:cond.left
     else
@@ -1263,48 +1261,48 @@ function! s:VimlLint.extract_exists(cond) " {{{
       let r = a:cond.right
     endif
 
-    if r.type != s:NODE_NUMBER || r.value != 0
+    if r.type != s:vlp.NODE_NUMBER || r.value != 0
       return []
     endif
 
-    if l.type != s:NODE_CALL
+    if l.type != s:vlp.NODE_CALL
       return []
     endif
     let a = s:VimlLint.extract_exists(l)
     if len(a) == 0
       return a
-    elseif a:cond.type == s:NODE_EQUAL
+    elseif a:cond.type == s:vlp.NODE_EQUAL
       let a[0] = !a[0]
       return a
     else
       return a
     endif
-  elseif a:cond.type == s:NODE_CALL
+  elseif a:cond.type == s:vlp.NODE_CALL
     let l = a:cond.left
-    if l.type != s:NODE_IDENTIFIER || l.value !=# "exists"
+    if l.type != s:vlp.NODE_IDENTIFIER || l.value !=# "exists"
       return []
     endif
 
     let r = a:cond.rlist[0]
-    if r.type != s:NODE_STRING
+    if r.type != s:vlp.NODE_STRING
       return []
     endif
     return [1, 'e', r.value]
-  elseif a:cond.type == s:NODE_AND ||
-        \ a:cond.type == s:NODE_OR
+  elseif a:cond.type == s:vlp.NODE_AND ||
+        \ a:cond.type == s:vlp.NODE_OR
     let a = []
     for lr in [s:VimlLint.extract_exists(a:cond.left),
             \ s:VimlLint.extract_exists(a:cond.right)]
       if len(lr) == 0
         continue
-      elseif lr[1] != 'e' && lr[0] == (a:cond.type == s:NODE_AND)
+      elseif lr[1] != 'e' && lr[0] == (a:cond.type == s:vlp.NODE_AND)
         let a += lr[2]
       else
         let a += [lr]
       endif
     endfor
-    return [a:cond.type == s:NODE_AND, 'ao', a]
-  elseif a:cond.type == s:NODE_NOT
+    return [a:cond.type == s:vlp.NODE_AND, 'ao', a]
+  elseif a:cond.type == s:vlp.NODE_NOT
     let a = s:VimlLint.extract_exists(a:cond.left)
     return s:neg_exists(a)
   endif
@@ -1345,7 +1343,7 @@ function s:VimlLint.compile_if(node, refchk) "{{{
   let tcond = cond
 
 
-  if cond.type == s:NODE_NUMBER
+  if cond.type == s:vlp.NODE_NUMBER
       call self.error_mes(a:node, 'EVL204', "constant in conditional context", 1)
   endif
 
@@ -1363,9 +1361,9 @@ function s:VimlLint.compile_if(node, refchk) "{{{
   for node in a:node.elseif
 
     let cond = self.compile(node.cond, 2) " if ()
-    let tcond = {'type' : s:NODE_OR, 'left' : tcond, 'right' : cond}
+    let tcond = {'type' : s:vlp.NODE_OR, 'left' : tcond, 'right' : cond}
 
-    if cond.type == s:NODE_NUMBER
+    if cond.type == s:vlp.NODE_NUMBER
         call self.error_mes(a:node, 'EVL204', "constant in conditional context", 1)
     endif
 
@@ -1384,7 +1382,7 @@ function s:VimlLint.compile_if(node, refchk) "{{{
 
   let p = len(self.env.varstack)
 
-  if a:node.else isnot s:NIL
+  if a:node.else isnot s:vlp.NIL
     " else
     let ex = filter(ex, 'len(v:val) > 0')
     if len(ex) == 0
@@ -1413,7 +1411,7 @@ endfunction "}}}
 function s:VimlLint.compile_while(node, refchk) "{{{
   let cond = self.compile(a:node.cond, 1)
 
-  if cond.type == s:NODE_NUMBER
+  if cond.type == s:vlp.NODE_NUMBER
     " while 0
     if str2nr(cond.value) == 0
       if len(a:node.body) > 0
@@ -1432,7 +1430,7 @@ function s:VimlLint.compile_while(node, refchk) "{{{
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
-  if cond.type != s:NODE_NUMBER
+  if cond.type != s:vlp.NODE_NUMBER
     " 通常ルート
     call s:restore_varstack(self.env, p, "whl")
     let pos = [s:gen_pos_cntl(self.env, p)]
@@ -1463,14 +1461,14 @@ function s:VimlLint.compile_for(node, refchk) "{{{
   "   BODy
   " endfor
   let right = self.compile(a:node.right, 1) " LIST
-  if right.type == s:NODE_NUMBER ||
-  \  right.type == s:NODE_DICT ||
-  \  right.type == s:NODE_STRING
+  if right.type == s:vlp.NODE_NUMBER ||
+  \  right.type == s:vlp.NODE_DICT ||
+  \  right.type == s:vlp.NODE_STRING
     call self.error_mes(right, 'E714', 'List required', 1)
     return
   endif
 
-  if right.type == s:NODE_LIST
+  if right.type == s:vlp.NODE_LIST
     if len(right.value) == 0
       if len(a:node.body) > 0
         let node = a:node.body[0]
@@ -1482,7 +1480,7 @@ function s:VimlLint.compile_for(node, refchk) "{{{
     endif
   endif
 
-  if a:node.left isnot s:NIL " for {var} in {list}
+  if a:node.left isnot s:vlp.NIL " for {var} in {list}
     let left = self.compile(a:node.left, 0)
     call self.append_var(self.env, left, right, "for")
     " append
@@ -1494,7 +1492,7 @@ function s:VimlLint.compile_for(node, refchk) "{{{
     call map(list, 'self.append_var(self.env, v:val, right, "forn")')
 
     " append
-    if a:node.rest isnot s:NIL
+    if a:node.rest isnot s:vlp.NIL
       let rest = self.compile(a:node.rest, 0)
       call self.append_var(self.env, rest, right, "forr")
     endif
@@ -1515,7 +1513,7 @@ function s:VimlLint.compile_for(node, refchk) "{{{
     let pos = [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
 
-    if right.type != s:NODE_LIST || self.env.has_break
+    if right.type != s:vlp.NODE_LIST || self.env.has_break
       " for にはいらなかった場合
       let p = len(self.env.varstack)
       let pos += [s:gen_pos_cntl(self.env, p)]
@@ -1554,7 +1552,7 @@ function s:VimlLint.compile_try(node, refchk) "{{{
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
-  if a:node.finally isnot s:NIL
+  if a:node.finally isnot s:vlp.NIL
     let self.env.global.fins += 1
   endif
 
@@ -1572,7 +1570,7 @@ function s:VimlLint.compile_try(node, refchk) "{{{
     " catch 部. error が起こるのは try 部の最初と仮定してしまって良いか?
     let p = len(self.env.varstack)
 
-    if node.pattern isnot s:NIL
+    if node.pattern isnot s:vlp.NIL
       call self.compile_body(node.body, a:refchk)
     else
       call self.compile_body(node.body, a:refchk)
@@ -1595,7 +1593,7 @@ function s:VimlLint.compile_try(node, refchk) "{{{
 
   call s:reset_env_cntl(self.env)
 
-  if a:node.finally isnot s:NIL
+  if a:node.finally isnot s:vlp.NIL
     let self.env.global.fins -= 1
     call self.compile_body(a:node.finally.body, a:refchk)
   endif
@@ -1818,13 +1816,13 @@ endfunction "}}}
 
 function s:VimlLint.parse_string(str, node, cmd, ref) "{{{
   try
-    let p = s:VimLParser.new()
+    let p = s:vlp.VimLParser.new()
     let c = s:VimlLint.new(self.param)
     let c.env = self.env
     if a:ref
-      let r = s:StringReader.new('echo ' . a:str)
+      let r = s:vlp.StringReader.new('echo ' . a:str)
     else
-      let r = s:StringReader.new('let ' . a:str)
+      let r = s:vlp.StringReader.new('let ' . a:str)
     endif
     call c.compile(p.parse(r), 1)
   catch
@@ -1875,7 +1873,7 @@ endfunction "}}}
 " :let l = mylist[:]              " shallow copy of a List
 function s:VimlLint.compile_slice(node, refchk) " {{{
   for i in range(len(a:node.rlist))
-    let r = a:node.rlist[i] is s:NIL ? s:NIL : self.compile(a:node.rlist[i], 1)
+    let r = a:node.rlist[i] is s:vlp.NIL ? s:vlp.NIL : self.compile(a:node.rlist[i], 1)
     let a:node.rlist[i] = r
     unlet r
   endfor
@@ -1887,7 +1885,7 @@ endfunction " }}}
 function s:VimlLint.compile_subscript(node, ...) " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
-  if a:node.right.type == s:NODE_IDENTIFIER
+  if a:node.right.type == s:vlp.NODE_IDENTIFIER
     if a:node.right.value =~# '^[gbwtslv]:$'
       call self.error_mes(a:node.right, 'E731', 'using Dictionary as a String', 1)
     endif
@@ -1940,7 +1938,7 @@ function s:VimlLint.compile_option(node, ...) " {{{
 endfunction " }}}
 
 function! s:readonly_var(var) " {{{
-  if a:var.type == s:NODE_IDENTIFIER
+  if a:var.type == s:vlp.NODE_IDENTIFIER
     if a:var.value =~# '^a:.*'
       return 1
     endif
@@ -2057,14 +2055,14 @@ endfunction " }}}
 
 function! s:vimlint_file(filename, param, progress) " {{{
   let vimfile = a:filename
-  let p = s:VimLParser.new()
+  let p = s:vlp.VimLParser.new()
   let c = s:VimlLint.new(a:param)
   try
     if a:param.type == 'string'
-        let r = s:StringReader.new(vimfile)
+        let r = s:vlp.StringReader.new(vimfile)
         let c.filename = ''
     else
-        let r = s:StringReader.new(readfile(vimfile))
+        let r = s:vlp.StringReader.new(readfile(vimfile))
         let c.filename = vimfile
     endif
 
@@ -2237,85 +2235,86 @@ function! vimlint#command(config) " {{{
 endfunction " }}}
 
 
-let s:VimlLint.compile_funcs[s:NODE_TOPLEVEL] = s:VimlLint.compile_toplevel
-let s:VimlLint.compile_funcs[s:NODE_COMMENT] = s:VimlLint.compile_comment
-let s:VimlLint.compile_funcs[s:NODE_EXCMD] = s:VimlLint.compile_excmd
-let s:VimlLint.compile_funcs[s:NODE_FUNCTION] = s:VimlLint.compile_function
-let s:VimlLint.compile_funcs[s:NODE_DELFUNCTION] = s:VimlLint.compile_delfunction
-let s:VimlLint.compile_funcs[s:NODE_RETURN] = s:VimlLint.compile_return
-let s:VimlLint.compile_funcs[s:NODE_EXCALL] = s:VimlLint.compile_excall
-let s:VimlLint.compile_funcs[s:NODE_LET] = s:VimlLint.compile_let
-let s:VimlLint.compile_funcs[s:NODE_UNLET] = s:VimlLint.compile_unlet
-let s:VimlLint.compile_funcs[s:NODE_LOCKVAR] = s:VimlLint.compile_lockvar
-let s:VimlLint.compile_funcs[s:NODE_UNLOCKVAR] = s:VimlLint.compile_unlockvar
-let s:VimlLint.compile_funcs[s:NODE_IF] = s:VimlLint.compile_if
-let s:VimlLint.compile_funcs[s:NODE_WHILE] = s:VimlLint.compile_while
-let s:VimlLint.compile_funcs[s:NODE_FOR] = s:VimlLint.compile_for
-let s:VimlLint.compile_funcs[s:NODE_CONTINUE] = s:VimlLint.compile_continue
-let s:VimlLint.compile_funcs[s:NODE_BREAK] = s:VimlLint.compile_break
-let s:VimlLint.compile_funcs[s:NODE_TRY] = s:VimlLint.compile_try
-let s:VimlLint.compile_funcs[s:NODE_THROW] = s:VimlLint.compile_throw
-let s:VimlLint.compile_funcs[s:NODE_ECHO] = s:VimlLint.compile_echo
-let s:VimlLint.compile_funcs[s:NODE_ECHON] = s:VimlLint.compile_echon
-let s:VimlLint.compile_funcs[s:NODE_ECHOHL] = s:VimlLint.compile_echohl
-let s:VimlLint.compile_funcs[s:NODE_ECHOMSG] = s:VimlLint.compile_echomsg
-let s:VimlLint.compile_funcs[s:NODE_ECHOERR] = s:VimlLint.compile_echoerr
-let s:VimlLint.compile_funcs[s:NODE_EXECUTE] = s:VimlLint.compile_execute
-let s:VimlLint.compile_funcs[s:NODE_TERNARY] = s:VimlLint.compile_ternary
-let s:VimlLint.compile_funcs[s:NODE_OR] = s:VimlLint.compile_or
-let s:VimlLint.compile_funcs[s:NODE_AND] = s:VimlLint.compile_and
-let s:VimlLint.compile_funcs[s:NODE_EQUAL] = s:VimlLint.compile_equal
-let s:VimlLint.compile_funcs[s:NODE_EQUALCI] = s:VimlLint.compile_equalci
-let s:VimlLint.compile_funcs[s:NODE_EQUALCS] = s:VimlLint.compile_equalcs
-let s:VimlLint.compile_funcs[s:NODE_NEQUAL] = s:VimlLint.compile_nequal
-let s:VimlLint.compile_funcs[s:NODE_NEQUALCI] = s:VimlLint.compile_nequalci
-let s:VimlLint.compile_funcs[s:NODE_NEQUALCS] = s:VimlLint.compile_nequalcs
-let s:VimlLint.compile_funcs[s:NODE_GREATER] = s:VimlLint.compile_greater
-let s:VimlLint.compile_funcs[s:NODE_GREATERCI] = s:VimlLint.compile_greaterci
-let s:VimlLint.compile_funcs[s:NODE_GREATERCS] = s:VimlLint.compile_greatercs
-let s:VimlLint.compile_funcs[s:NODE_GEQUAL] = s:VimlLint.compile_gequal
-let s:VimlLint.compile_funcs[s:NODE_GEQUALCI] = s:VimlLint.compile_gequalci
-let s:VimlLint.compile_funcs[s:NODE_GEQUALCS] = s:VimlLint.compile_gequalcs
-let s:VimlLint.compile_funcs[s:NODE_SMALLER] = s:VimlLint.compile_smaller
-let s:VimlLint.compile_funcs[s:NODE_SMALLERCI] = s:VimlLint.compile_smallerci
-let s:VimlLint.compile_funcs[s:NODE_SMALLERCS] = s:VimlLint.compile_smallercs
-let s:VimlLint.compile_funcs[s:NODE_SEQUAL] = s:VimlLint.compile_sequal
-let s:VimlLint.compile_funcs[s:NODE_SEQUALCI] = s:VimlLint.compile_sequalci
-let s:VimlLint.compile_funcs[s:NODE_SEQUALCS] = s:VimlLint.compile_sequalcs
-let s:VimlLint.compile_funcs[s:NODE_MATCH] = s:VimlLint.compile_match
-let s:VimlLint.compile_funcs[s:NODE_MATCHCI] = s:VimlLint.compile_matchci
-let s:VimlLint.compile_funcs[s:NODE_MATCHCS] = s:VimlLint.compile_matchcs
-let s:VimlLint.compile_funcs[s:NODE_NOMATCH] = s:VimlLint.compile_nomatch
-let s:VimlLint.compile_funcs[s:NODE_NOMATCHCI] = s:VimlLint.compile_nomatchci
-let s:VimlLint.compile_funcs[s:NODE_NOMATCHCS] = s:VimlLint.compile_nomatchcs
-let s:VimlLint.compile_funcs[s:NODE_IS] = s:VimlLint.compile_is
-let s:VimlLint.compile_funcs[s:NODE_ISCI] = s:VimlLint.compile_isci
-let s:VimlLint.compile_funcs[s:NODE_ISCS] = s:VimlLint.compile_iscs
-let s:VimlLint.compile_funcs[s:NODE_ISNOT] = s:VimlLint.compile_isnot
-let s:VimlLint.compile_funcs[s:NODE_ISNOTCI] = s:VimlLint.compile_isnotci
-let s:VimlLint.compile_funcs[s:NODE_ISNOTCS] = s:VimlLint.compile_isnotcs
-let s:VimlLint.compile_funcs[s:NODE_ADD] = s:VimlLint.compile_add
-let s:VimlLint.compile_funcs[s:NODE_SUBTRACT] = s:VimlLint.compile_subtract
-let s:VimlLint.compile_funcs[s:NODE_CONCAT] = s:VimlLint.compile_concat
-let s:VimlLint.compile_funcs[s:NODE_MULTIPLY] = s:VimlLint.compile_multiply
-let s:VimlLint.compile_funcs[s:NODE_DIVIDE] = s:VimlLint.compile_divide
-let s:VimlLint.compile_funcs[s:NODE_REMAINDER] = s:VimlLint.compile_remainder
-let s:VimlLint.compile_funcs[s:NODE_NOT] = s:VimlLint.compile_not
-let s:VimlLint.compile_funcs[s:NODE_PLUS] = s:VimlLint.compile_plus
-let s:VimlLint.compile_funcs[s:NODE_MINUS] = s:VimlLint.compile_minus
-let s:VimlLint.compile_funcs[s:NODE_SUBSCRIPT] = s:VimlLint.compile_subscript
-let s:VimlLint.compile_funcs[s:NODE_SLICE] = s:VimlLint.compile_slice
-let s:VimlLint.compile_funcs[s:NODE_DOT] = s:VimlLint.compile_dot
-let s:VimlLint.compile_funcs[s:NODE_CALL] = s:VimlLint.compile_call
-let s:VimlLint.compile_funcs[s:NODE_NUMBER] = s:VimlLint.compile_number
-let s:VimlLint.compile_funcs[s:NODE_STRING] = s:VimlLint.compile_string
-let s:VimlLint.compile_funcs[s:NODE_LIST] = s:VimlLint.compile_list
-let s:VimlLint.compile_funcs[s:NODE_DICT] = s:VimlLint.compile_dict
-let s:VimlLint.compile_funcs[s:NODE_OPTION] = s:VimlLint.compile_option
-let s:VimlLint.compile_funcs[s:NODE_IDENTIFIER] = s:VimlLint.compile_identifier
-let s:VimlLint.compile_funcs[s:NODE_CURLYNAME] = s:VimlLint.compile_curlyname
-let s:VimlLint.compile_funcs[s:NODE_ENV] = s:VimlLint.compile_env
-let s:VimlLint.compile_funcs[s:NODE_REG] = s:VimlLint.compile_reg
+let s:VimlLint.compile_funcs = repeat([0], 90)
+let s:VimlLint.compile_funcs[s:vlp.NODE_TOPLEVEL] = s:VimlLint.compile_toplevel
+let s:VimlLint.compile_funcs[s:vlp.NODE_COMMENT] = s:VimlLint.compile_comment
+let s:VimlLint.compile_funcs[s:vlp.NODE_EXCMD] = s:VimlLint.compile_excmd
+let s:VimlLint.compile_funcs[s:vlp.NODE_FUNCTION] = s:VimlLint.compile_function
+let s:VimlLint.compile_funcs[s:vlp.NODE_DELFUNCTION] = s:VimlLint.compile_delfunction
+let s:VimlLint.compile_funcs[s:vlp.NODE_RETURN] = s:VimlLint.compile_return
+let s:VimlLint.compile_funcs[s:vlp.NODE_EXCALL] = s:VimlLint.compile_excall
+let s:VimlLint.compile_funcs[s:vlp.NODE_LET] = s:VimlLint.compile_let
+let s:VimlLint.compile_funcs[s:vlp.NODE_UNLET] = s:VimlLint.compile_unlet
+let s:VimlLint.compile_funcs[s:vlp.NODE_LOCKVAR] = s:VimlLint.compile_lockvar
+let s:VimlLint.compile_funcs[s:vlp.NODE_UNLOCKVAR] = s:VimlLint.compile_unlockvar
+let s:VimlLint.compile_funcs[s:vlp.NODE_IF] = s:VimlLint.compile_if
+let s:VimlLint.compile_funcs[s:vlp.NODE_WHILE] = s:VimlLint.compile_while
+let s:VimlLint.compile_funcs[s:vlp.NODE_FOR] = s:VimlLint.compile_for
+let s:VimlLint.compile_funcs[s:vlp.NODE_CONTINUE] = s:VimlLint.compile_continue
+let s:VimlLint.compile_funcs[s:vlp.NODE_BREAK] = s:VimlLint.compile_break
+let s:VimlLint.compile_funcs[s:vlp.NODE_TRY] = s:VimlLint.compile_try
+let s:VimlLint.compile_funcs[s:vlp.NODE_THROW] = s:VimlLint.compile_throw
+let s:VimlLint.compile_funcs[s:vlp.NODE_ECHO] = s:VimlLint.compile_echo
+let s:VimlLint.compile_funcs[s:vlp.NODE_ECHON] = s:VimlLint.compile_echon
+let s:VimlLint.compile_funcs[s:vlp.NODE_ECHOHL] = s:VimlLint.compile_echohl
+let s:VimlLint.compile_funcs[s:vlp.NODE_ECHOMSG] = s:VimlLint.compile_echomsg
+let s:VimlLint.compile_funcs[s:vlp.NODE_ECHOERR] = s:VimlLint.compile_echoerr
+let s:VimlLint.compile_funcs[s:vlp.NODE_EXECUTE] = s:VimlLint.compile_execute
+let s:VimlLint.compile_funcs[s:vlp.NODE_TERNARY] = s:VimlLint.compile_ternary
+let s:VimlLint.compile_funcs[s:vlp.NODE_OR] = s:VimlLint.compile_or
+let s:VimlLint.compile_funcs[s:vlp.NODE_AND] = s:VimlLint.compile_and
+let s:VimlLint.compile_funcs[s:vlp.NODE_EQUAL] = s:VimlLint.compile_equal
+let s:VimlLint.compile_funcs[s:vlp.NODE_EQUALCI] = s:VimlLint.compile_equalci
+let s:VimlLint.compile_funcs[s:vlp.NODE_EQUALCS] = s:VimlLint.compile_equalcs
+let s:VimlLint.compile_funcs[s:vlp.NODE_NEQUAL] = s:VimlLint.compile_nequal
+let s:VimlLint.compile_funcs[s:vlp.NODE_NEQUALCI] = s:VimlLint.compile_nequalci
+let s:VimlLint.compile_funcs[s:vlp.NODE_NEQUALCS] = s:VimlLint.compile_nequalcs
+let s:VimlLint.compile_funcs[s:vlp.NODE_GREATER] = s:VimlLint.compile_greater
+let s:VimlLint.compile_funcs[s:vlp.NODE_GREATERCI] = s:VimlLint.compile_greaterci
+let s:VimlLint.compile_funcs[s:vlp.NODE_GREATERCS] = s:VimlLint.compile_greatercs
+let s:VimlLint.compile_funcs[s:vlp.NODE_GEQUAL] = s:VimlLint.compile_gequal
+let s:VimlLint.compile_funcs[s:vlp.NODE_GEQUALCI] = s:VimlLint.compile_gequalci
+let s:VimlLint.compile_funcs[s:vlp.NODE_GEQUALCS] = s:VimlLint.compile_gequalcs
+let s:VimlLint.compile_funcs[s:vlp.NODE_SMALLER] = s:VimlLint.compile_smaller
+let s:VimlLint.compile_funcs[s:vlp.NODE_SMALLERCI] = s:VimlLint.compile_smallerci
+let s:VimlLint.compile_funcs[s:vlp.NODE_SMALLERCS] = s:VimlLint.compile_smallercs
+let s:VimlLint.compile_funcs[s:vlp.NODE_SEQUAL] = s:VimlLint.compile_sequal
+let s:VimlLint.compile_funcs[s:vlp.NODE_SEQUALCI] = s:VimlLint.compile_sequalci
+let s:VimlLint.compile_funcs[s:vlp.NODE_SEQUALCS] = s:VimlLint.compile_sequalcs
+let s:VimlLint.compile_funcs[s:vlp.NODE_MATCH] = s:VimlLint.compile_match
+let s:VimlLint.compile_funcs[s:vlp.NODE_MATCHCI] = s:VimlLint.compile_matchci
+let s:VimlLint.compile_funcs[s:vlp.NODE_MATCHCS] = s:VimlLint.compile_matchcs
+let s:VimlLint.compile_funcs[s:vlp.NODE_NOMATCH] = s:VimlLint.compile_nomatch
+let s:VimlLint.compile_funcs[s:vlp.NODE_NOMATCHCI] = s:VimlLint.compile_nomatchci
+let s:VimlLint.compile_funcs[s:vlp.NODE_NOMATCHCS] = s:VimlLint.compile_nomatchcs
+let s:VimlLint.compile_funcs[s:vlp.NODE_IS] = s:VimlLint.compile_is
+let s:VimlLint.compile_funcs[s:vlp.NODE_ISCI] = s:VimlLint.compile_isci
+let s:VimlLint.compile_funcs[s:vlp.NODE_ISCS] = s:VimlLint.compile_iscs
+let s:VimlLint.compile_funcs[s:vlp.NODE_ISNOT] = s:VimlLint.compile_isnot
+let s:VimlLint.compile_funcs[s:vlp.NODE_ISNOTCI] = s:VimlLint.compile_isnotci
+let s:VimlLint.compile_funcs[s:vlp.NODE_ISNOTCS] = s:VimlLint.compile_isnotcs
+let s:VimlLint.compile_funcs[s:vlp.NODE_ADD] = s:VimlLint.compile_add
+let s:VimlLint.compile_funcs[s:vlp.NODE_SUBTRACT] = s:VimlLint.compile_subtract
+let s:VimlLint.compile_funcs[s:vlp.NODE_CONCAT] = s:VimlLint.compile_concat
+let s:VimlLint.compile_funcs[s:vlp.NODE_MULTIPLY] = s:VimlLint.compile_multiply
+let s:VimlLint.compile_funcs[s:vlp.NODE_DIVIDE] = s:VimlLint.compile_divide
+let s:VimlLint.compile_funcs[s:vlp.NODE_REMAINDER] = s:VimlLint.compile_remainder
+let s:VimlLint.compile_funcs[s:vlp.NODE_NOT] = s:VimlLint.compile_not
+let s:VimlLint.compile_funcs[s:vlp.NODE_PLUS] = s:VimlLint.compile_plus
+let s:VimlLint.compile_funcs[s:vlp.NODE_MINUS] = s:VimlLint.compile_minus
+let s:VimlLint.compile_funcs[s:vlp.NODE_SUBSCRIPT] = s:VimlLint.compile_subscript
+let s:VimlLint.compile_funcs[s:vlp.NODE_SLICE] = s:VimlLint.compile_slice
+let s:VimlLint.compile_funcs[s:vlp.NODE_DOT] = s:VimlLint.compile_dot
+let s:VimlLint.compile_funcs[s:vlp.NODE_CALL] = s:VimlLint.compile_call
+let s:VimlLint.compile_funcs[s:vlp.NODE_NUMBER] = s:VimlLint.compile_number
+let s:VimlLint.compile_funcs[s:vlp.NODE_STRING] = s:VimlLint.compile_string
+let s:VimlLint.compile_funcs[s:vlp.NODE_LIST] = s:VimlLint.compile_list
+let s:VimlLint.compile_funcs[s:vlp.NODE_DICT] = s:VimlLint.compile_dict
+let s:VimlLint.compile_funcs[s:vlp.NODE_OPTION] = s:VimlLint.compile_option
+let s:VimlLint.compile_funcs[s:vlp.NODE_IDENTIFIER] = s:VimlLint.compile_identifier
+let s:VimlLint.compile_funcs[s:vlp.NODE_CURLYNAME] = s:VimlLint.compile_curlyname
+let s:VimlLint.compile_funcs[s:vlp.NODE_ENV] = s:VimlLint.compile_env
+let s:VimlLint.compile_funcs[s:vlp.NODE_REG] = s:VimlLint.compile_reg
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
