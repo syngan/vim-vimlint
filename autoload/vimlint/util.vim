@@ -244,9 +244,48 @@ function! vimlint#util#check_scriptencoding(c, lines) " {{{
   endfor
 endfunction " }}}
 
+function! vimlint#util#skip_modifiers_excmd(str)
+  " issue68
+  let str = a:str
+  while 1
+    let s = matchstr(str, '^\s*\(sil\%[ent]!\=\|uns\%[ilent]\|[0-9]*verb\%[ose\]\)\s*')
+    if s == ''
+      break
+    endif
+    let str = str[len(s): ]
+  endwhile
 
+  return str
+endfunction
+
+function! vimlint#util#req_parse_excmd(str)
+  " issue52
+  let s = matchstr(a:str, '^[cl]\(ex\%[pr]!\=\|gete\%[xpr]\|adde\%[xpr]\)\s*\zs.*\ze$')
+  if s != ''
+    return s
+  endif
+
+  let s = matchstr(a:str, '`=\zs.*\ze`')
+  if s != ''
+    return s
+  endif
+
+  " The register can also be '=' followed by an optional
+  " expression.  The expression continues until the end of
+  " the command.  You need to escape the '|' and '"'
+  " characters to prevent them from terminating the
+  " command.  Example: >
+  " @TODO 'x  position of mark x is unsupported
+  let s = matchstr(a:str, '^\([0-9]*\|[$]\)pu[t]\=\s\+=\zs.*\ze$')
+  if s != ''
+    return substitute(s, '\\\([|"]\)', '\1', 'g')
+  endif
+
+  return ''
+endfunction
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
+
 
 " vim:set et ts=2 sts=2 sw=2 tw=0 fdm=marker:

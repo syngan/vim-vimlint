@@ -901,8 +901,6 @@ function s:VimlLint.compile_comment(node, ...) " {{{
   endif
 endfunction " }}}
 
-let s:cmd_expr = {'cexpr':0,'lexpr':0,'cgetexpr':0,'lgetexpr':0,'caddexpr':0,'laddexpr':0}
-
 " @vimlint(EVL103, 1, a:refchk)
 function s:VimlLint.compile_excmd(node, refchk) " {{{
 " @TODO
@@ -911,19 +909,13 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   " lcd `=cwd`
   " edit/new `=file`
 
-  if has_key(a:node.ea.cmd, "name")
-    " issue#52
-    let name = a:node.ea.cmd.name
-    if has_key(s:cmd_expr, name)
-      let s = substitute(a:node.str, '^[a-z]\+!\=', '', '')
-"     let s = s:escape_string(s)
-      call self.parse_string(s, a:node, name, 1)
-    endif
-  endif
+  " command を引数にとるものは skip する.
+  let str = vimlint#util#skip_modifiers_excmd(a:node.str)
 
-  let s = matchstr(a:node.str, '`=\zs.*\ze`')
-  if '' != s
-    call self.parse_string(s, a:node, 'ExCommand', 1)
+  let s = vimlint#util#req_parse_excmd(str)
+  if s != ''
+    let name = '^[a-z0-9]*'
+    call self.parse_string(s, a:node, name, 1)
     return
   endif
 
@@ -933,15 +925,6 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
     let a:node.type = s:vlp.NODE_IDENTIFIER
     let a:node.value = s
     call self.append_var(self.env, a:node, s:vlp.NIL, 'redir')
-    return
-  endif
-
-  " :[line]pu[t] [x]
-	" The register can also be '=' followed by an optional expression
-  " @TODO 'x  position of mark x is unsupported
-  let s = matchstr(a:node.str, '\v^\s*(silent\s+)*\s*([%$.]|[0-9]+|w0|w$)*put\s+\=\zs.*\ze')
-  if s != ''
-    call self.parse_string(s, a:node, 'ExCommand', 1)
     return
   endif
 
