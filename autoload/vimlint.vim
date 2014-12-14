@@ -170,107 +170,7 @@ function s:VimlLint.new(param) " {{{
   return obj
 endfunction " }}}
 
-" for debug " {{{
-
-let s:node_label = {}
-let s:node_label[1] = 'TOPLEVEL'
-let s:node_label[2] = 'COMMENT'
-let s:node_label[3] = 'EXCMD'
-let s:node_label[4] = 'FUNCTION'
-let s:node_label[5] = 'ENDFUNCTION'
-let s:node_label[6] = 'DELFUNCTION'
-let s:node_label[7] = 'RETURN'
-let s:node_label[8] = 'EXCALL'
-let s:node_label[9] = 'LET'
-let s:node_label[10] = 'UNLET'
-let s:node_label[11] = 'LOCKVAR'
-let s:node_label[12] = 'UNLOCKVAR'
-let s:node_label[13] = 'IF'
-let s:node_label[14] = 'ELSEIF'
-let s:node_label[15] = 'ELSE'
-let s:node_label[16] = 'ENDIF'
-let s:node_label[17] = 'WHILE'
-let s:node_label[18] = 'ENDWHILE'
-let s:node_label[19] = 'FOR'
-let s:node_label[20] = 'ENDFOR'
-let s:node_label[21] = 'CONTINUE'
-let s:node_label[22] = 'BREAK'
-let s:node_label[23] = 'TRY'
-let s:node_label[24] = 'CATCH'
-let s:node_label[25] = 'FINALLY'
-let s:node_label[26] = 'ENDTRY'
-let s:node_label[27] = 'THROW'
-let s:node_label[28] = 'ECHO'
-let s:node_label[29] = 'ECHON'
-let s:node_label[30] = 'ECHOHL'
-let s:node_label[31] = 'ECHOMSG'
-let s:node_label[32] = 'ECHOERR'
-let s:node_label[33] = 'EXECUTE'
-let s:node_label[34] = 'TERNARY'
-let s:node_label[35] = 'OR'
-let s:node_label[36] = 'AND'
-let s:node_label[37] = 'EQUAL'
-let s:node_label[38] = 'EQUALCI'
-let s:node_label[39] = 'EQUALCS'
-let s:node_label[40] = 'NEQUAL'
-let s:node_label[41] = 'NEQUALCI'
-let s:node_label[42] = 'NEQUALCS'
-let s:node_label[43] = 'GREATER'
-let s:node_label[44] = 'GREATERCI'
-let s:node_label[45] = 'GREATERCS'
-let s:node_label[46] = 'GEQUAL'
-let s:node_label[47] = 'GEQUALCI'
-let s:node_label[48] = 'GEQUALCS'
-let s:node_label[49] = 'SMALLER'
-let s:node_label[50] = 'SMALLERCI'
-let s:node_label[51] = 'SMALLERCS'
-let s:node_label[52] = 'SEQUAL'
-let s:node_label[53] = 'SEQUALCI'
-let s:node_label[54] = 'SEQUALCS'
-let s:node_label[55] = 'MATCH'
-let s:node_label[56] = 'MATCHCI'
-let s:node_label[57] = 'MATCHCS'
-let s:node_label[58] = 'NOMATCH'
-let s:node_label[59] = 'NOMATCHCI'
-let s:node_label[60] = 'NOMATCHCS'
-let s:node_label[61] = 'IS'
-let s:node_label[62] = 'ISCI'
-let s:node_label[63] = 'ISCS'
-let s:node_label[64] = 'ISNOT'
-let s:node_label[65] = 'ISNOTCI'
-let s:node_label[66] = 'ISNOTCS'
-let s:node_label[67] = 'ADD'
-let s:node_label[68] = 'SUBTRACT'
-let s:node_label[69] = 'CONCAT'
-let s:node_label[70] = 'MULTIPLY'
-let s:node_label[71] = 'DIVIDE'
-let s:node_label[72] = 'REMAINDER'
-let s:node_label[73] = 'NOT'
-let s:node_label[74] = 'MINUS'
-let s:node_label[75] = 'PLUS'
-let s:node_label[76] = 'SUBSCRIPT'
-let s:node_label[77] = 'SLICE'
-let s:node_label[78] = 'CALL'
-let s:node_label[79] = 'DOT'
-let s:node_label[80] = 'NUMBER'
-let s:node_label[81] = 'STRING'
-let s:node_label[82] = 'LIST'
-let s:node_label[83] = 'DICT'
-let s:node_label[85] = 'OPTION'
-let s:node_label[86] = 'IDENTIFIER'
-let s:node_label[87] = 'CURLYNAME'
-let s:node_label[88] = 'ENV'
-let s:node_label[89] = 'REG'
-function! s:node2str(node) " {{{
-if type(a:node) == type({}) &&
-\  has_key(a:node, 'type') && has_key(s:node_label, a:node.type)
-  return s:node_label[a:node.type]
-else
-  return "unknown"
-endif
-endfunction " }}}
-
-function! s:tostring_varstack_n(v)
+function! s:tostring_varstack_n(v) " {{{
   let v = a:v
   let s = ""
   let s .= "type=" . v.type[0:2]
@@ -285,15 +185,7 @@ function! s:tostring_varstack_n(v)
     let s .= ",var="
   endif
   return s
-endfunction
-
-function! s:decho(str)
-  if g:vimlint#debug > 1
-    echo a:str
-  endif
-endfunction
-
-" }}}
+endfunction " }}}
 
 function! s:env(outer, funcname, ...) " {{{
   let env = {}
@@ -624,11 +516,11 @@ function! s:restore_varstack(env, pos, pp) " {{{
   " @param pp は debug 用
   call s:simpl_varstack(a:env, a:pos, len(a:env.varstack) - 1)
   let i = len(a:env.varstack)
-  "call s:decho("restore: " . a:pp . ": " . a:pos)
+  "call vimlint#debug#decho("restore: " . a:pp . ": " . a:pos)
   while i > a:pos
     let i = i - 1
     let v = a:env.varstack[i]
-"    call s:decho("restore[" . a:pp . "] " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : " . s:tostring_varstack_n(v))
+"    call vimlint#debug#decho("restore[" . a:pp . "] " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : " . s:tostring_varstack_n(v))
     if v.type == 'delete'
       let v.env.var[v.var] = v.v
     elseif v.type == 'append'
@@ -651,7 +543,7 @@ function! s:simpl_varstack(env, pos, pose) " {{{
   let d = {}
   let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0, 'stat' : 0}}
 
-"  call s:decho("simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1))
+"  call vimlint#debug#decho("simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1))
   for i in range(a:pos, a:pose)
     let v = a:env.varstack[i]
     if v.type == 'nop'
@@ -680,14 +572,14 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
   for p in a:pos
     for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
-"      call s:decho("v[" . j . "]=" . v.type)
+"      call vimlint#debug#decho("v[" . j . "]=" . v.type)
       if v.type == 'nop' && has_key(v, 'rt_from')
         " v.zz is a return value of reconstruct_varstack_rt
         " @@memo return [vardict, N, N_lp]
         let tail = len(a:env.varstack)
         call s:reconstruct_varstack_chk(a:self, a:env, v.zz, 1)
         let vs = a:env.varstack[tail :]
-"        call s:decho("nop-:" . v.rt_from . ".." . v.rt_to . ",tail=" . tail . ",vs=" . len(vs))
+"        call vimlint#debug#decho("nop-:" . v.rt_from . ".." . v.rt_to . ",tail=" . tail . ",vs=" . len(vs))
         for ui in range(len(vs))
           call remove(a:env.varstack, -1)
         endfor
@@ -714,7 +606,7 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
             throw "stop"
           endif
           let a:env.varstack[ui + ti] = vs[ti]
-"          call s:decho("recon2: varstack[" . (ui+ti) . "]=vs[" . ti . "]=" . s:tostring_varstack_n(vs[ti]))
+"          call vimlint#debug#decho("recon2: varstack[" . (ui+ti) . "]=vs[" . ti . "]=" . s:tostring_varstack_n(vs[ti]))
           if vs[ti].type == "append" && has_key(vref, vs[ti].var)
             let vs[ti].v.ref += vref[vs[ti].var]
           endif
@@ -742,7 +634,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
   let N_lp = 0 " break/continue されたルート数
 
   for p in a:pos
-"    call s:decho("reconstruct_rt: " . string(p) . "/" . len(a:pos))
+"    call vimlint#debug#decho("reconstruct_rt: " . string(p) . "/" . len(a:pos))
     if p[2] " return した.
       " イベントをなかったことにする
       for j in range(p[0], p[1] - 1)
@@ -765,7 +657,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
     let vi = {}
     for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
-"      call s:decho("reconstruct" . j . "/" . (p[1]-1) . ":    " . s:tostring_varstack_n(v) . ",pos=" . string(p))
+"      call vimlint#debug#decho("reconstruct" . j . "/" . (p[1]-1) . ":    " . s:tostring_varstack_n(v) . ",pos=" . string(p))
       if v.type == 'nop'
         continue
       endif
@@ -790,7 +682,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
 
     " 情報をマージ
     for k in keys(vi)
-"      call s:decho("_rt(): vi[" . k . "]=" . string(vi[k][1:]) . ",ref=" . vi[k][0].v.ref)
+"      call vimlint#debug#decho("_rt(): vi[" . k . "]=" . string(vi[k][1:]) . ",ref=" . vi[k][0].v.ref)
       if vi[k][1] != vi[k][2] " nop 以外? わかめ
         if has_key(vardict, k)
           let vardict[k][1] += vi[k][1]
@@ -905,9 +797,9 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
   let v.rt_from = a:pos[0][0]
   let v.rt_to = len(a:env.varstack)
 
-"  call s:decho("construct rvrt2: range=" . v.rt_from . ".." . v.rt_to)
+"  call vimlint#debug#decho("construct rvrt2: range=" . v.rt_from . ".." . v.rt_to)
   let rvrt2 = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
-"  call s:decho("vard=" . len(vardict) . ", var2=" . len(rvrt2[0]))
+"  call vimlint#debug#decho("vard=" . len(vardict) . ", var2=" . len(rvrt2[0]))
   " @TODO 参照情報をコピーする.
 
   if len(vardict) <= len(rvrt2[0]) - 1
@@ -936,17 +828,10 @@ function! s:reconstruct_varstack_st(self, env, p) " {{{
 endfunction " }}}
 " @vimlint(EVL103, 0, a:self)
 
-function! s:echonode(node, refchk) " {{{
-  echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
-    \ (has_key(a:node, "value") ?
-    \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%") .
-    \  ", ref=" . a:refchk
-endfunction " }}}
-
 function s:VimlLint.compile(node, refchk) " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
     if a:node.type != 2 && g:vimlint#debug > 2 || g:vimlint#debug >= 5
-      call s:echonode(a:node, a:refchk)
+      call vimlint#debug#echonode(a:node, a:refchk)
     endif
 "  else
 "    echo "node=" . type(a:node)
@@ -954,7 +839,7 @@ function s:VimlLint.compile(node, refchk) " {{{
   endif
 
   " try
-  "   let a:node.sg_type_str = s:node2str(a:node)
+  "   let a:node.sg_type_str = vimlint#debug#node2str(a:node)
   " catch
   "   echo v:exception
   "   echo a:node
@@ -1246,7 +1131,7 @@ function! s:VimlLint.extract_exists(cond) " {{{
   " !exists()
   " exists != 0
   " exists == 0
-  " call s:echonode(a:cond, 0)
+  " call vimlint#debug#echonode(a:cond, 0)
   if a:cond.type == s:vlp.NODE_EQUAL ||
       \  a:cond.type == s:vlp.NODE_NEQUAL
     if a:cond.left == a:cond.right
@@ -1401,9 +1286,9 @@ function s:VimlLint.compile_if(node, refchk) "{{{
 
   " reconstruct
   " let して return した、は let していないにする
-"  call s:decho("call reconstruct _ifs: " . string(a:node.pos))
+"  call vimlint#debug#decho("call reconstruct _ifs: " . string(a:node.pos))
   call s:reconstruct_varstack(self, self.env, pos, 0)
-"  call s:decho("call reconstruct _ife: " . string(a:node.pos))
+"  call vimlint#debug#decho("call reconstruct _ife: " . string(a:node.pos))
 
 endfunction "}}}
 
@@ -1521,9 +1406,9 @@ function s:VimlLint.compile_for(node, refchk) "{{{
   finally
     let self.env.has_break = bak_has_break
   endtry
-  "call s:decho("call reconstruct _fors: " . string(a:node.pos))
+  "call vimlint#debug#decho("call reconstruct _fors: " . string(a:node.pos))
   call s:reconstruct_varstack(self, self.env, pos, 1)
-  "call s:decho("call reconstruct _fore: " . string(a:node.pos))
+  "call vimlint#debug#decho("call reconstruct _fore: " . string(a:node.pos))
   let self.env.global.loop -= 1
 endfunction "}}}
 
