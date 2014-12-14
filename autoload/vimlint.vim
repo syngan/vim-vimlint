@@ -167,6 +167,7 @@ function s:VimlLint.new(param) " {{{
 
   let obj.param = a:param
   let obj.error = []
+  let obj.errnum = 0
   return obj
 endfunction " }}}
 
@@ -236,6 +237,7 @@ function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
     let ev = ["None", "None", "Warning", "Warning", "Error", "Error"][lv]
     let pos = vimlint#util#get_pos(a:node)
     call self.param.outfunc(filename, pos, ev, a:eid, a:mes, self)
+    let self.errnum += 1
   endif
 endfunction " }}}
 
@@ -1968,15 +1970,12 @@ function! s:get_param(p) " {{{
   let param = s:extend_errlevel(param)
   let param.bak = deepcopy(param)
 
-
   let out_type = "echo"
   if has_key(param, 'output') " {{{
     if type(param.output) == type("")
       if param.output ==# 'quickfix'
         unlet param.output
         let out_type = "quickfix"
-        let param.outfunc = function('vimlint#util#output_quickfix')
-        call setqflist([], ' ')
       else
         let param.output = {'filename' : param.output}
       endif
@@ -2016,6 +2015,10 @@ function! s:get_param(p) " {{{
     endif
   elseif out_type == "echo"
     let param.outfunc = function('vimlint#util#output_echo')
+  elseif out_type == "quickfix"
+    call setqflist([], ' ')
+    let param.outfunc = function('vimlint#util#output_quickfix')
+    let param.hook_after_0 = [function('vimlint#util#hook_after_quickfix')]
   endif "}}}
 
   return param

@@ -133,6 +133,16 @@ function! vimlint#util#output_quickfix(filename, pos, ev, eid, mes, ...) " {{{
   call setqflist([d], 'a')
 endfunction " }}}
 
+" @vimlint(EVL103, 1, a:param)
+" @vimlint(EVL103, 1, a:filename)
+function! vimlint#util#hook_after_quickfix(filename, param, c) " {{{
+  if a:c.errnum > 0
+    :copen
+  endif
+endfunction " }}}
+" @vimlint(EVL103, 0, a:param)
+" @vimlint(EVL103, 0, a:filename)
+
 function! vimlint#util#isvarname(s) "{{{
   return a:s =~# '^[vgslabwt]:$\|^\([vgslabwt]:\)\?[A-Za-z_][0-9A-Za-z_#]*$'
 endfunction "}}}
