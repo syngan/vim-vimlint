@@ -223,6 +223,27 @@ function! vimlint#util#echo_progress(param, msg) " {{{
   endif
 endfunction " }}}
 
+function! s:contain_multibyte(str) "{{{
+  return byteidx(a:str, strlen(a:str))==-1
+endfunction "}}}
+
+function! vimlint#util#check_scriptencoding(c, lines) " {{{
+  let strs = a:lines
+  let se = 0
+  for i in range(0, len(strs) - 1)
+    let s = strs[i]
+    if match(s, '^\s*scriptencoding\s*$') >= 0
+      let se = 0
+    elseif match(s, '^\s*scriptencoding\s.*$') >= 0
+      let se = 1
+    elseif s:contain_multibyte(s) && se == 0
+      call a:c.error_mes({'pos' : {'lnum' : i+1, 'col' : 1}},
+            \ 'EVL205', 'missing scriptencoding', 1)
+      break
+    endif
+  endfor
+endfunction " }}}
+
 
 
 let &cpo = s:save_cpo

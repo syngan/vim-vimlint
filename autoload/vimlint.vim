@@ -943,7 +943,6 @@ function! s:echonode(node, refchk) " {{{
     \  ", ref=" . a:refchk
 endfunction " }}}
 
-
 function s:VimlLint.compile(node, refchk) " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
     if a:node.type != 2 && g:vimlint#debug > 2 || g:vimlint#debug >= 5
@@ -2018,27 +2017,6 @@ function s:VimlLint.compile_op2(node, op) " {{{
 endfunction " }}}
 " @vimlint(EVL103, 0, a:op)
 
-function! s:contain_multibyte(str) "{{{
-  return byteidx(a:str, strlen(a:str))==-1
-endfunction "}}}
-
-function! s:check_scriptencoding(c, lines) " {{{
-  let strs = a:lines
-  let se = 0
-  for i in range(0, len(strs) - 1)
-    let s = strs[i]
-    if match(s, '^\s*scriptencoding\s*$') >= 0
-      let se = 0
-    elseif match(s, '^\s*scriptencoding\s.*$') >= 0
-      let se = 1
-    elseif s:contain_multibyte(s) && se == 0
-      call a:c.error_mes({'pos' : {'lnum' : i+1, 'col' : 1}},
-            \ 'EVL205', 'missing scriptencoding', 1)
-      break
-    endif
-  endfor
-endfunction " }}}
-
 function! s:vimlint_file(filename, param, progress) " {{{
   let vimfile = a:filename
   let p = s:vlp.VimLParser.new()
@@ -2068,11 +2046,7 @@ function! s:vimlint_file(filename, param, progress) " {{{
       endif
     endfor
 
-    if a:param.type == 'string'
-      call s:check_scriptencoding(c, [vimfile])
-    else
-      call s:check_scriptencoding(c, readfile(vimfile))
-    endif
+    call vimlint#util#check_scriptencoding(c, a:param.type == 'string' ? [vimfile] : readfile(vimfile))
   catch
 
     let line = matchstr(v:exception, '.*line \zs\d\+\ze col \d\+$')
