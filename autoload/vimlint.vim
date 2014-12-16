@@ -1641,27 +1641,48 @@ function s:VimlLint.compile_isnotcs(node, ...)
 endfunction
 
 function s:VimlLint.compile_add(node, ...)
-  return self.compile_op2(a:node, '+')
+  let r = self.compile_op2(a:node, '+')
+  if vimlint#util#notnum_type(r.left) && vimlint#util#notlist_type(r.left) ||
+  \  vimlint#util#notnum_type(r.right) && vimlint#util#notlist_type(r.right)
+    call self.error_mes(r, 'EVL206', '`+` operator can be used for Number addition or List concatenation', r)
+  endif
+  return r
 endfunction
 
 function s:VimlLint.compile_subtract(node, ...)
-  return self.compile_op2(a:node, '-')
+  let r = self.compile_op2(a:node, '-')
+  if vimlint#util#notnum_type(r.left) || vimlint#util#notnum_type(r.right)
+    call self.error_mes(r, 'EVL206', '`-` operator can be used for Number subtraction', r)
+  endif
+  return r
 endfunction
 
 function s:VimlLint.compile_concat(node, ...)
-  return self.compile_op2(a:node, '+')
+  return self.compile_op2(a:node, '.')
 endfunction
 
 function s:VimlLint.compile_multiply(node, ...)
-  return self.compile_op2(a:node, '*')
+  let r = self.compile_op2(a:node, '*')
+  if vimlint#util#notnum_type(r.left) || vimlint#util#notnum_type(r.right)
+    call self.error_mes(r, 'EVL206', '`*` operator can be used for Number multipliction', r)
+  endif
+  return r
 endfunction
 
 function s:VimlLint.compile_divide(node, ...)
-  return self.compile_op2(a:node, '/')
+  let r = self.compile_op2(a:node, '/')
+  if vimlint#util#notnum_type(r.left) || vimlint#util#notnum_type(r.right)
+    call self.error_mes(r, 'EVL206', '`/` operator can be used for Number division', r)
+  endif
+  return r
 endfunction
 
 function s:VimlLint.compile_remainder(node, ...)
-  return self.compile_op2(a:node, '%')
+  let r = self.compile_op2(a:node, '%')
+  if vimlint#util#notnum_type(r.left) || vimlint#util#notnum_type(r.right)
+    call self.error_mes(r, 'EVL206', '`%` operator can be used for Number modulo', r)
+  endif
+  return r
 endfunction
 " }}}
 

@@ -42,6 +42,12 @@ function! vimlint#util#notlist_type(node) " {{{
   \  vimlint#util#isnum_type(a:node)
 endfunction " }}}
 
+function! vimlint#util#notnum_type(node) " {{{
+  return vimlint#util#isdict_type(a:node) ||
+  \  vimlint#util#isstr_type(a:node) ||
+  \  vimlint#util#islist_type(a:node)
+endfunction " }}}
+
 function! vimlint#util#str_value(node) " {{{
   " node が str と一致するか.
   " isstr_type() で判定済みと仮定
