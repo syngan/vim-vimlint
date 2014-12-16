@@ -102,7 +102,7 @@ You can define default values by |g:vimlint#config|.
 		'hoge', then >
 		let g:vimlint#config.EVL103 = {'hoge' : 1}
 <
-	"func_abort"		Default: 0
+	"func_abort"		Default: 0	*g:vimlint#config.func_abort*
 		If the value is non-zero, |vimlint| reports |EVL110| if
 		a function does not have the abort argument.
 		See |:func-abort|.
@@ -298,11 +298,13 @@ EVL107: A function name is not allowed to contain a colon: `v`	*EVL107*
 	    endif
 <
 
-EVL108: `n`th argument of `v` should be `xxx`			*EVL108*
+EVL108: `n`th argument of `v` should be `x`			*EVL108*
 
 EVL109: local variable `v` is used outside of a function	*EVL109*
 
 EVL110: function `v` does not have `x` argument.		*EVL110*
+	See |g:vimlint#config.func_abort|.
+	
 
 code
 EVL201: unreachable code `return/throw`				*EVL201*
@@ -321,6 +323,8 @@ EVL204: constant in conditional context				*EVL204*
 	    endif 1
 <
 EVL205: missing scriptencoding					*EVL205*
+
+EVL206: `v` can be used for `x`					*EVL206*
 
 system error
 EVL901: unknown type `t`					*EVL901*
