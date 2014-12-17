@@ -1180,6 +1180,7 @@ function! s:VimlLint.extract_exists(cond) " {{{
 endfunction " }}}
 
 function s:VimlLint.check_exists(ex, cond) " {{{
+
   let a = a:ex
   if len(a) == 0
     return
@@ -1201,7 +1202,14 @@ function s:VimlLint.check_exists(ex, cond) " {{{
     if b[1] == 'e' && b[0] && b[2][1] =~# '[A-Za-z0-9_]'
       " append する.
       " @see :h exists()
-      call self.parse_string(b[2][1 : -2] . " = 1", a:cond, 'exists', 0)
+      let name = b[2][1 : -2]
+      if name =~# '^[0-9A-Za-z_]*'
+        " prefix なし.
+        if self.env == self.env.global
+          let name = 'g:' . name
+        endif
+      endif
+      call self.parse_string(name . " = 1", a:cond, 'exists', 0)
     endif
   endfor
 endfunction " }}}
@@ -1707,8 +1715,10 @@ endfunction "}}}
 function s:VimlLint.parse_string(str, node, cmd, ref) "{{{
   try
     let p = s:vlp.VimLParser.new()
-    let c = s:VimlLint.new(self.param)
+    let param = copy(self.param)
+    let c = s:VimlLint.new(param)
     let c.env = self.env
+    let c.filename = self.filename
     if a:ref
       let r = s:vlp.StringReader.new('echo ' . a:str)
     else
@@ -1924,6 +1934,7 @@ function! s:vimlint_file(filename, param, progress) " {{{
     call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' start')
 
     let vp = p.parse(r)
+
 
     call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' check')
 
