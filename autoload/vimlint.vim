@@ -475,6 +475,8 @@ function! s:delete_var(env, var) " {{{
       else
         let name = 'l:' . name
       endif
+    elseif name =~# '^s:'
+      return
     endif
 
     if has_key(a:env.var, name)
