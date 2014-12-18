@@ -1203,13 +1203,17 @@ function s:VimlLint.check_exists(ex, cond) " {{{
       " append する.
       " @see :h exists()
       let name = b[2][1 : -2]
-      if name =~# '^[0-9A-Za-z_]*'
+      if name !~# '^[gbwtslva]:' && name !~# '#'
         " prefix なし.
         if self.env == self.env.global
           let name = 'g:' . name
         endif
       endif
-      call self.parse_string(name . " = 1", a:cond, 'exists', 0)
+      " lockvar はやらない
+      if name !~# '^a:' || self.env == self.env.global
+        " @TODO 今は変数の中身は参照していないので適当に代入可能
+        call self.parse_string(name . " = 1", a:cond, 'exists', 0)
+      endif
     endif
   endfor
 endfunction " }}}
