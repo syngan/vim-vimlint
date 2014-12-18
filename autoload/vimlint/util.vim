@@ -283,6 +283,12 @@ function! vimlint#util#req_parse_excmd(str)
 
   let s = matchstr(a:str, '`=\zs.*\ze`')
   if s != ''
+    if a:str =~# '^com\%[mand]'
+      " command! 内だったら.... <q-args> とか.
+      for v in ['q-args', 'line1', 'line2', 'count', 'bang', 'reg', '-args', 'lt', 'f-args']
+        let s = substitute(s, '<' . v . '>', 'vimlint#dummy_' . substitute(v, '-', '_', 'g'), 'g')
+      endfor
+    endif
     return s
   endif
 

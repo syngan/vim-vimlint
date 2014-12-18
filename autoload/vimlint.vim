@@ -916,8 +916,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 
   let s = vimlint#util#req_parse_excmd(str)
   if s != ''
-    let name = '^[a-z0-9]*'
-    call self.parse_string(s, a:node, name, 1)
+    call self.parse_string(s, a:node, 'excmd', 1)
     return
   endif
 
