@@ -46,7 +46,7 @@ VARIABLES						*vimlint-variables*
 You can define default values by |g:vimlint#config|.
 |g:vimlint#config| is a |Dictionary| which contains the following items:
 
-	"output"		Default: |vimlint#output_echo()|
+	"output"		Default: |vimlint#util#output_echo()|
 		The value is a |String|, a |List| or a |Funcref|.
 		If the value is 'quickfix', |vimlint| outputs the result
 		to the quickfix by using |vimlint#util#output_quickfix()|.
@@ -289,6 +289,7 @@ EVL106: local variable `v` is used without l:			*EVL106*
 	    endif
 <
 EVL107: A function name is not allowed to contain a colon: `v`	*EVL107*
+	See |E128|.
 >
 	    function! g:incorrect()
 	        return 0
