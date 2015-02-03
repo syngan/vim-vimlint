@@ -70,7 +70,6 @@ let s:default_errlevel.EVL901 = s:DEF_WRN
 let s:default_errlevel.EVL902 = s:DEF_WRN
 let s:def_var_name = ':'
 
-
 function! s:bak_param(param, key, var) " {{{
   if !has_key(a:param.bak, a:key)
     " 一度もセットされていない
@@ -113,7 +112,7 @@ function! s:set_param(param, key, errlv, var) " {{{
   endif
   let dict = param[key]
   if g:vimlint#debug > 0
-    echo "vimlint: set_param(" . key . ":" . a:var . ")=" . elv
+    echo 'vimlint: set_param(' . key . ':' . a:var . ')=' . elv
   endif
   if has_key(dict, a:var)
     unlet dict[a:var]
@@ -163,7 +162,7 @@ function s:VimlLint.new(param) " {{{
   let obj = copy(self)
   let obj.indent = ['']
   let obj.lines = []
-  let obj.env = s:env({}, "")
+  let obj.env = s:env({}, '')
 
   let obj.param = a:param
   let obj.error = []
@@ -173,17 +172,17 @@ endfunction " }}}
 
 function! s:tostring_varstack_n(v) " {{{
   let v = a:v
-  let s = ""
-  let s .= "type=" . v.type[0:2]
-  let s .= ",ref=" . v.v.ref
-  let s .= ",sub=" . v.v.subs
-  let s .= ",stt=" . v.v.stat
-  if has_key(v, "var")
-    let s .= ",var=" . v.var
-  elseif has_key(v, "rt_from")
-    let s .= ",rm=" . v.rt_from . ".." .  v.rt_to
+  let s = ''
+  let s .= 'type=' . v.type[0:2]
+  let s .= ',ref=' . v.v.ref
+  let s .= ',sub=' . v.v.subs
+  let s .= ',stt=' . v.v.stat
+  if has_key(v, 'var')
+    let s .= ',var=' . v.var
+  elseif has_key(v, 'rt_from')
+    let s .= ',rm=' . v.rt_from . '..' .  v.rt_to
   else
-    let s .= ",var="
+    let s .= ',var='
   endif
   return s
 endfunction " }}}
@@ -912,6 +911,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 " e.g. a = 3   (let 漏れ)
   " lcd `=cwd`
   " edit/new `=file`
+  " line put = expr
 
   " command を引数にとるものは skip する.
   let str = vimlint#util#skip_modifiers_excmd(a:node.str)
