@@ -918,7 +918,8 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 
   let s = vimlint#util#req_parse_excmd(str)
   if s != ''
-    call self.parse_string(s, a:node, 'excmd', 1)
+    let ref = (s =~# '^exe\%[cute]') ? 2 : 1
+    call self.parse_string(s, a:node, 'excmd', ref)
     return
   endif
 
@@ -1213,7 +1214,7 @@ function s:VimlLint.check_exists(ex, cond) " {{{
       " lockvar はやらない
       if name !~# '^a:' || self.env == self.env.global
         " @TODO 今は変数の中身は参照していないので適当に代入可能
-        call self.parse_string(name . " = 1", a:cond, 'exists', 0)
+        call self.parse_string(name, a:cond, 'exists', 0)
       endif
     endif
   endfor
@@ -1724,10 +1725,14 @@ function s:VimlLint.parse_string(str, node, cmd, ref) "{{{
     let c = s:VimlLint.new(param)
     let c.env = self.env
     let c.filename = self.filename
-    if a:ref
+    let r = s:vlp.StringReader.new(a:str)
+    if a:ref == 1
       let r = s:vlp.StringReader.new('echo ' . a:str)
+    elseif a:ref == 2
+      let r = s:vlp.StringReader.new(a:str)
     else
-      let r = s:vlp.StringReader.new('let ' . a:str)
+      " @TODO 今は変数の中身は参照していないので適当に代入可能
+      let r = s:vlp.StringReader.new('let ' . a:str . ' = 1')
     endif
     call c.compile(p.parse(r), 1)
   catch

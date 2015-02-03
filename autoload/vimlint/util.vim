@@ -264,7 +264,7 @@ function! vimlint#util#skip_modifiers_excmd(str)
   " issue68
   let str = a:str
   while 1
-    let s = matchstr(str, '^\s*\(sil\%[ent]!\=\|uns\%[ilent]\|[0-9]*verb\%[ose\]\)\s*')
+    let s = matchstr(str, '^\s*\(sil\%[ent]!\=\|uns\%[ilent]\|[0-9]*verb\%[ose\]\|:\=noautocmd\)\s*')
     if s == ''
       break
     endif
@@ -303,6 +303,14 @@ function! vimlint#util#req_parse_excmd(str)
   if s != ''
     return substitute(s, '\\\([|"]\)', '\1', 'g')
   endif
+
+  " execute は通常なら vimlparser が compile_execute() を呼び出す.
+  " e.g. #68: silent! noautocmd execute winnr 'wincmd w'
+  if a:str =~# '^exe\%[cute]'
+    " expr の空白区切り. なので、もう一度パースが必要か.
+    return a:str
+  endif
+
 
   return ''
 endfunction
