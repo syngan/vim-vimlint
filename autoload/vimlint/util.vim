@@ -292,13 +292,14 @@ function! vimlint#util#req_parse_excmd(str)
     return s
   endif
 
+  " :[line]pu[t] [x]	Put the text [from register x] after [line] (default
   " The register can also be '=' followed by an optional
   " expression.  The expression continues until the end of
   " the command.  You need to escape the '|' and '"'
   " characters to prevent them from terminating the
   " command.  Example: >
   " @TODO 'x  position of mark x is unsupported
-  let s = matchstr(a:str, '^\([0-9]*\|[$]\)pu[t]\=\s\+=\zs.*\ze$')
+  let s = matchstr(a:str, '^\([0-9]*\|[$]\)\s*pu[t]\=\s\+=\zs.*\ze$')
   if s != ''
     return substitute(s, '\\\([|"]\)', '\1', 'g')
   endif
