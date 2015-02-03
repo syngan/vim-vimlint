@@ -1,7 +1,7 @@
 before_script:
     - uname -a
     - git clone https://github.com/ynkdir/vim-vimlparser.git /tmp/vimlparser
-    - git clone https://github.com/thinca/vim-themis --branch v1.4 --single-branch --depth 1 /tmp/vim-themis
+    - git clone https://github.com/thinca/vim-themis --branch v1.4 --depth 1 /tmp/vim-themis
     - vim --version
 
 script:
