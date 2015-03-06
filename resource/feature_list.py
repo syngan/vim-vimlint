@@ -23,8 +23,7 @@ dict = {}
 for line in fp:
   if re.match('^\s*".*",.*', line):
     m = re.search('".*"', line)
-    line = line[m.start() : m.end()]
-    line = line.replace('"', '')
+    line = line[m.start()+1 : m.end()-1].lower()
     dict[line] = 1
     if re.match('.*win32.*', line):
       win64 = line.replace('win32', 'win64')
@@ -35,8 +34,7 @@ for line in fp:
 for line in fp:
   if re.match('\s*else if \(STRICMP\(name, "[0-9a-zA-Z_]+"\) ', line):
     m = re.search('".*"', line)
-    line = line[m.start() : m.end()]
-    line = line.replace('"', '')
+    line = line[m.start()+1 : m.end()-1].lower()
     dict[line] = 1
   elif re.match('^}', line):
     break
