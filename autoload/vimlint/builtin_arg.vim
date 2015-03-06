@@ -112,6 +112,23 @@ function! s:funcs.getregtype(vl, fname, node) " {{{
   endfor
 endfunction " }}}
 
+let s:feature_list = vimlint#feature#list()
+
+function! s:funcs.has(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  if vimlint#util#notstr_type(rlist[0])
+    call s:EVL108(a:vl, a:node, 1, a:fname, 'a string')
+  endif
+  if vimlint#util#isstr_type(rlist[0])
+    let str = vimlint#util#str_value(rlist[0])
+    if str !~# 'patch[0-9]\+' &&
+          \ str !~# 'patch-[0-9]\+\.[0-9]\+\.[0-9]\+' &&
+          \ !has_key(s:feature_list, tolower(str))
+      call s:EVL108(a:vl, a:node, 1, a:fname, 'a feature. see :h feature-list')
+    endif
+  endif
+endfunction " }}}
+
 function! s:funcs.keys(vl, fname, node) " {{{
   let rlist = a:node.rlist
   for i in range(1)
@@ -198,6 +215,7 @@ function! s:funcs.printf(vl, fname, node) " {{{
       let idx += 1
     elseif str[idx] =~# '^[doxXcsSfeEgG%]'
       " %O, %D are not documented
+      " iDUOF see message.c vim_snprintf()
       let idx += 1
       let num += 1
     else
