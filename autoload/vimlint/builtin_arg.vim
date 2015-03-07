@@ -52,6 +52,76 @@ function! s:funcs.eval(vl, fname, node) " {{{
   call s:eval_test(a:vl, a:fname, a:node, 0)
 endfunction " }}}
 
+function! s:filename_modifiers(vl, fname, node, str, idx) abort " {{{
+  let ert = {'e': 0, 'r': 0, 't': 0}
+  let str = a:str
+  while str =~# '^:'
+    if str =~# '^:[p8~.S]'
+      let str = str[2:]
+    elseif str =~# '^:[hert]'
+      " ng:
+      "   ert -> h
+      "   re  -> t
+      "   re  -> r
+      "   re   -> e
+      if str[1] ==# 'h'
+        if ert['e'] || ert['r'] || ert['t']
+          break
+        endif
+      else
+        if ert['e'] || ert['r']
+          break
+        endif
+      endif
+      let ert[str[1]] = 1
+      let str = str[2:]
+    elseif str =~# '^:g\=s'
+      let end = matchend(str, '^:g\=s\(.\).\+\1.*\1')
+      if end < 0
+        break
+      endif
+      let str = str[end :]
+    else
+      break
+    endif
+  endwhile
+
+  if str !=# ''
+    call s:EVL108(a:vl, a:node, a:idx, a:fname, 'a valid file-modifier: ' . str)
+  endif
+endfunction " }}}
+
+function! s:funcs.expand(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  if vimlint#util#notstr_type(rlist[0])
+    call s:EVL108(a:vl, a:node, 1, a:fname, 'a string')
+    return
+  endif
+  if vimlint#util#isstr_type(rlist[0])
+    let str = vimlint#util#str_value(rlist[0])
+    if str =~# '^[A-Za-z0-9_]\+' || str =~# '^[\$]'
+      " 多分 expand 使う必要がない.
+      call s:EVL108(a:vl, a:node, 1, a:fname, 'a wildcard')
+      return
+    endif
+    if str =~# '^<'
+      if str !~# '^<\(cword\|cWORD\|client\|cfile\|afile\|abuf\|amatch\|sfile\|slnum\)>'
+        call s:EVL108(a:vl, a:node, 1, a:fname, 'a valid name')
+        return
+      endif
+      let str = substitute(str, '^[^>]\+>', '', '')
+    elseif str =~# '^%'
+      let str = str[1: ]
+    elseif str =~# '^#'
+      let str = substitute(str, '^#\(#\=\|<\=\d\+\)', '', '')
+    else
+      let str = ''
+    endif
+
+    call s:filename_modifiers(a:vl, a:fname, a:node, str, 1)
+  endif
+endfunction " }}}
+
 function! s:funcs.extend(vl, fname, node) " {{{
   let rlist = a:node.rlist
   if vimlint#util#islist_type(rlist[0])
