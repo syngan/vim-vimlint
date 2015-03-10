@@ -99,7 +99,7 @@ function! s:funcs.expand(vl, fname, node) " {{{
   endif
   if vimlint#util#isstr_type(rlist[0])
     let str = vimlint#util#str_value(rlist[0])
-    if str =~# '^[A-Za-z0-9_]\+' || str =~# '^[\$]'
+    if str =~# '^[A-Za-z0-9_]\+'
       " 多分 expand 使う必要がない.
       call s:EVL108(a:vl, a:node, 1, a:fname, 'a wildcard')
       return
