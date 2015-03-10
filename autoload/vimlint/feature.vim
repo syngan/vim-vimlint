@@ -178,8 +178,6 @@ function! s:init() " {{{
   let kaoriya = {
         \ 'kaoriya': 1,
         \ 'migemo': 1,
-        \ 'cmigemo': 1,
-        \ 'migemo/dyn': 1,
         \ 'guess_encode': 1,
         \ } " }}}
 
