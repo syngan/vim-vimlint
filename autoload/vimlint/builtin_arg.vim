@@ -160,6 +160,18 @@ function! s:funcs.filter(vl, fname, node) " {{{
   call s:eval_test(a:vl, a:fname, a:node, 1)
 endfunction " }}}
 
+function! s:funcs.fnamemodify(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  if vimlint#util#notstr_type(rlist[1])
+    call s:EVL108(a:vl, a:node, 2, a:fname, 'a string')
+    return
+  endif
+  if vimlint#util#isstr_type(rlist[1])
+    let str = vimlint#util#str_value(rlist[1])
+    call s:filename_modifiers(a:vl, a:fname, a:node, str, 1)
+  endif
+endfunction " }}}
+
 " @vimlint(EVL103, 1, a:fname)
 function! s:funcs.get(vl, fname, node) " {{{
   let rlist = a:node.rlist
