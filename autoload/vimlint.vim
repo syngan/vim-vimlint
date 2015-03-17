@@ -70,7 +70,7 @@ let s:default_errlevel.EVL901 = s:DEF_WRN
 let s:default_errlevel.EVL902 = s:DEF_WRN
 let s:def_var_name = ':'
 
-function! s:bak_param(param, key, var) " {{{
+function! s:bak_param(param, key, var) abort " {{{
   if !has_key(a:param.bak, a:key)
     " 一度もセットされていない
     return
@@ -86,7 +86,7 @@ function! s:bak_param(param, key, var) " {{{
 
 endfunction " }}}
 
-function! s:set_param(param, key, errlv, var) " {{{
+function! s:set_param(param, key, errlv, var) abort " {{{
 " echo "set_param[" . a:key . "," . a:var . "]=" . a:errlv
   let key = a:key
   let param = a:param
@@ -120,7 +120,7 @@ function! s:set_param(param, key, errlv, var) " {{{
   let dict[a:var] = elv
 endfunction " }}}
 
-function! s:extend_errlevel(param) " {{{
+function! s:extend_errlevel(param) abort " {{{
   let param = a:param
   for key in keys(s:default_errlevel)
 "   echo "param[" . key . "]"
@@ -158,7 +158,7 @@ function! s:extend_errlevel(param) " {{{
   return param
 endfunction " }}}
 
-function s:VimlLint.new(param) " {{{
+function s:VimlLint.new(param) abort " {{{
   let obj = copy(self)
   let obj.indent = ['']
   let obj.lines = []
@@ -170,7 +170,7 @@ function s:VimlLint.new(param) " {{{
   return obj
 endfunction " }}}
 
-function! s:tostring_varstack_n(v) " {{{
+function! s:tostring_varstack_n(v) abort " {{{
   let v = a:v
   let s = ''
   let s .= 'type=' . v.type[0:2]
@@ -187,7 +187,7 @@ function! s:tostring_varstack_n(v) " {{{
   return s
 endfunction " }}}
 
-function! s:env(outer, funcname, ...) " {{{
+function! s:env(outer, funcname, ...) abort " {{{
   let env = {}
   let env.outer = a:outer
   let env.function = a:funcname
@@ -208,8 +208,8 @@ function! s:env(outer, funcname, ...) " {{{
   return env
 endfunction " }}}
 
-function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
-  if type(a:var) == type("")
+function! s:VimlLint.error_mes(node, eid, mes, var) abort " {{{
+  if type(a:var) == type('')
     let var = a:var
   else
     let var = s:def_var_name
@@ -233,7 +233,7 @@ function! s:VimlLint.error_mes(node, eid, mes, var) " {{{
   endif
   if lv > s:DEF_NON
     let filename = get(self, 'filename', '...')
-    let ev = ["None", "None", "Warning", "Warning", "Error", "Error"][lv]
+    let ev = ['None', 'None', 'Warning', 'Warning', 'Error', 'Error'][lv]
     let pos = vimlint#util#get_pos(a:node)
     call self.param.outfunc(filename, pos, ev, a:eid, a:mes, self)
     let self.errnum += 1
@@ -244,7 +244,7 @@ endfunction " }}}
 " @param var string
 " @param node dict: return value of compile
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
-function! vimlint#exists_var(self, env, node, funcref, refonly)
+function! vimlint#exists_var(self, env, node, funcref, refonly) abort
   let var = (a:refonly is 0) ? a:node.value : a:refonly
   if var =~# '#'
     " cannot support
@@ -261,7 +261,7 @@ function! vimlint#exists_var(self, env, node, funcref, refonly)
       return 1
     else
       " local
-      if var ==# "count"
+      if var ==# 'count'
         call a:self.error_mes(a:node, 'EVL106', 'local variable `' . var . '` is used withoug l:', var)
       endif
       let var = 'l:' . var
@@ -310,24 +310,24 @@ function! vimlint#exists_var(self, env, node, funcref, refonly)
   return 0
 endfunction " }}}
 
-function! s:push_varstack(env, dict) " {{{
+function! s:push_varstack(env, dict) abort " {{{
 
   let a:env.varstack += [a:dict]
 
-  if !has_key(a:dict, "type") || type(a:dict.type) != type("")
-    throw "varstack() invalid type: " . string(a:dict)
+  if !has_key(a:dict, 'type') || type(a:dict.type) != type('')
+    throw 'varstack() invalid type: ' . string(a:dict)
   endif
-  if !has_key(a:dict, "v") || type(a:dict.v) != type({}) ||
-  \ !has_key(a:dict.v, "ref") || !has_key(a:dict.v, "subs") ||
-  \ !has_key(a:dict.v, "stat")
+  if !has_key(a:dict, 'v') || type(a:dict.v) != type({}) ||
+  \ !has_key(a:dict.v, 'ref') || !has_key(a:dict.v, 'subs') ||
+  \ !has_key(a:dict.v, 'stat')
   \ || type(a:dict.v.ref) != type(1)
   \ || type(a:dict.v.subs) != type(1)
-    throw "varstack() invalid v: " . string(a:dict)
+    throw 'varstack() invalid v: ' . string(a:dict)
   endif
 
 endfunction " }}}
 
-function! s:append_var_(env, var, node, val, cnt) " {{{
+function! s:append_var_(env, var, node, val, cnt) abort " {{{
 
 "  echo "append_var: var=" . a:var . ", cnt=" . a:cnt . ", has=" . has_key(a:env.var, a:var)
   if has_key(a:env.var, a:var)
@@ -393,12 +393,12 @@ endfunction " }}}
 " left node  = var
 " right node = val
 " pos = string
-function! s:VimlLint.append_var(env, var, val, pos)
+function! s:VimlLint.append_var(env, var, val, pos) abort
   if type(a:var) != type({})
     " @debug
-    echo "in append_var: invalid input: type=" . type(a:var) . ",pos=" . a:pos
+    echo 'in append_var: invalid input: type=' . type(a:var) . ',pos=' . a:pos
     echo a:var
-    throw "stop"
+    throw 'stop'
   endif
   let ret = {}
 
@@ -410,14 +410,14 @@ function! s:VimlLint.append_var(env, var, val, pos)
       let node = a:var.left
       let v = a:var.left.value
     endif
-    if v =~# "^[0-9]*$"
-      echo "in append_var: invalid input: type=" . type(a:var) . ",pos=" . a:pos
+    if v =~# '^[0-9]*$'
+      echo 'in append_var: invalid input: type=' . type(a:var) . ',pos=' . a:pos
       echo a:var
-      throw "stop"
+      throw 'stop'
     endif
-    if a:pos == 'a:'
+    if a:pos ==# 'a:'
       " 関数引数
-      if v != '...'
+      if v !=# '...'
         let ret = s:append_var_(a:env, 'a:' . v, node, a:val, 1)
       endif
       return ret
@@ -435,7 +435,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
         let v = 'g:' . v
 
       else
-        if v ==# "count"
+        if v ==# 'count'
           call self.error_mes(a:var, 'EVL106', 'local variable `' . v . '` is used withoug l:', v)
         endif
         let v = 'l:' . v
@@ -465,7 +465,7 @@ function! s:VimlLint.append_var(env, var, val, pos)
   return ret
 endfunction " }}}
 
-function! s:delete_var(env, var) " {{{
+function! s:delete_var(env, var) abort " {{{
   if a:var.type == s:vlp.NODE_IDENTIFIER
     let name = a:var.value
     if name !~# '^[gbwtslv]:' && name !~# '#'
@@ -505,17 +505,17 @@ function! s:delete_var(env, var) " {{{
 
 endfunction " }}}
 
-function! s:reset_env_cntl(env) " {{{
+function! s:reset_env_cntl(env) abort " {{{
   let a:env.ret = 0
   let a:env.loopb = 0
 endfunction " }}}
 
-function! s:gen_pos_cntl(env, p) " {{{
+function! s:gen_pos_cntl(env, p) abort " {{{
   return [a:p, len(a:env.varstack), a:env.ret, a:env.loopb]
 endfunction " }}}
 
 " @vimlint(EVL103, 1, a:pp)
-function! s:restore_varstack(env, pos, pp) " {{{
+function! s:restore_varstack(env, pos, pp) abort " {{{
   " @param pp は debug 用
   call s:simpl_varstack(a:env, a:pos, len(a:env.varstack) - 1)
   let i = len(a:env.varstack)
@@ -524,32 +524,32 @@ function! s:restore_varstack(env, pos, pp) " {{{
     let i = i - 1
     let v = a:env.varstack[i]
 "    call vimlint#debug#decho("restore[" . a:pp . "] " . i . "/" . a:pos . "/" . (len(a:env.varstack)-1) . " : " . s:tostring_varstack_n(v))
-    if v.type == 'delete'
+    if v.type ==# 'delete'
       let v.env.var[v.var] = v.v
-    elseif v.type == 'append'
+    elseif v.type ==# 'append'
       " break されたりするときの restore では
       " let されているとは限らない
       " @TODO
       if has_key(v.env.var, v.var)
         unlet v.env.var[v.var]
       endif
-    elseif v.type == 'update'
+    elseif v.type ==# 'update'
       let v.env.var[v.var].stat = v.stat
-    elseif v.type != 'nop'
-      throw "system error"
+    elseif v.type !=# 'nop'
+      throw 'system error'
     endif
   endwhile
 endfunction " }}}
 " @vimlint(EVL103, 0, a:pp)
 
-function! s:simpl_varstack(env, pos, pose) " {{{
+function! s:simpl_varstack(env, pos, pose) abort " {{{
   let d = {}
   let nop = {'type' : 'nop', 'v' : {'ref' : 0, 'subs' : 0, 'stat' : 0}}
 
 "  call vimlint#debug#decho("simpl_varstack: " . a:pos . ".." . (len(a:env.varstack)-1))
   for i in range(a:pos, a:pose)
     let v = a:env.varstack[i]
-    if v.type == 'nop'
+    if v.type ==# 'nop'
       " do nothing
     elseif has_key(d, v.var)
       let j = d[v.var]
@@ -570,13 +570,13 @@ function! s:simpl_varstack(env, pos, pose) " {{{
   endfor
 endfunction " }}}
 
-function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
+function! s:reconstruct_varstack_rm(self, env, pos, nop) abort " {{{
   " remake
   for p in a:pos
     for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
 "      call vimlint#debug#decho("v[" . j . "]=" . v.type)
-      if v.type == 'nop' && has_key(v, 'rt_from')
+      if v.type ==# 'nop' && has_key(v, 'rt_from')
         " v.zz is a return value of reconstruct_varstack_rt
         " @@memo return [vardict, N, N_lp]
         let tail = len(a:env.varstack)
@@ -593,7 +593,7 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
         let vref = {}
         for ui in range(v.rt_from, v.rt_to - 1)
           let vp = a:env.varstack[ui]
-          if vp.type == "append"
+          if vp.type ==# 'append'
             if has_key(vref, vp.var)
               let vref[vp.var] += vp.v.ref
             else
@@ -605,19 +605,19 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
         let ti = 0
         let ui = v.rt_from
         for ti in range(len(vs))
-          if ui + ti >= v.rt_to && a:env.varstack[ui + ti].type != 'nop'
-            throw "stop"
+          if ui + ti >= v.rt_to && a:env.varstack[ui + ti].type !=# 'nop'
+            throw 'stop'
           endif
           let a:env.varstack[ui + ti] = vs[ti]
 "          call vimlint#debug#decho("recon2: varstack[" . (ui+ti) . "]=vs[" . ti . "]=" . s:tostring_varstack_n(vs[ti]))
-          if vs[ti].type == "append" && has_key(vref, vs[ti].var)
+          if vs[ti].type ==# 'append' && has_key(vref, vs[ti].var)
             let vs[ti].v.ref += vref[vs[ti].var]
           endif
         endfor
         let ui = ui + ti
         while ui < v.rt_to
           let a:env.varstack[ui] = a:nop
-"          echo "recon2: varstack[" . (ui) . "]=nop"
+"          echo 'recon2: varstack[' . (ui) . ']=nop'
           let ui = ui + 1
         endwhile
       endif
@@ -627,7 +627,7 @@ function! s:reconstruct_varstack_rm(self, env, pos, nop) " {{{
 
 endfunction " }}}
 
-function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
+function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) abort " {{{
   " すべてのルートをチェックして,
   " 変数の代入、参照状態を構築する
   let vardict = {} " 変数情報を詰め込む
@@ -642,7 +642,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
       " イベントをなかったことにする
       for j in range(p[0], p[1] - 1)
         let v = a:env.varstack[j]
-        if v.type == 'append' && v.v.ref == 0 && a:env.global.fins == 0
+        if v.type ==# 'append' && v.v.ref == 0 && a:env.global.fins == 0
           " 変数を追加したが参照していない
           " かつ,  finally 句がない場合
           call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var. '`', v.var)
@@ -661,24 +661,24 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
     for j in range(p[0], p[1] - 1)
       let v = a:env.varstack[j]
 "      call vimlint#debug#decho("reconstruct" . j . "/" . (p[1]-1) . ":    " . s:tostring_varstack_n(v) . ",pos=" . string(p))
-      if v.type == 'nop'
+      if v.type ==# 'nop'
         continue
       endif
       if has_key(vi, v.var)
         " if 文内で定義したものを削除した など
         " simplify によりありえない
-        echo "============ ERR ============="
+        echo '============ ERR ============='
 "        echo v
 "        echo vi[v.var]
-        throw "err: simpl_varstack()"
+        throw 'err: simpl_varstack()'
       endif
 
-      if v.type == 'delete'
+      if v.type ==# 'delete'
         " if 文前に定義したものを削除した
         let vi[v.var] = [v, 0, 1, 0, 0]
-      elseif v.type == 'append' || v.type == 'update'
+      elseif v.type ==# 'append' || v.type ==# 'update'
         let vi[v.var] = [v, 1, 0, 0, 0]
-      elseif v.type != 'nop'
+      elseif v.type !=# 'nop'
         call a:self.error_mes(v.v, 'EVL901', 'unknown type `' . v.type . '`', 1)
       endif
     endfor
@@ -703,7 +703,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) " {{{
 endfunction " }}}
 
 " @vimlint(EVL103, 1, a:brk_cont)
-function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
+function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) abort "{{{
   " reconstruct_varstack_rt() で構築した情報をもとに,
   let vardict = a:rtret[0]
   let N = a:rtret[1]
@@ -729,7 +729,7 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
         echo v:exception
         echo v:errmsg
         echo v:throwpoint
-        throw "stop"
+        throw 'stop'
       endtry
 
 "echo "z=" . string(z[1]) . ",N_lp=" . N_lp . ",N=" . N
@@ -745,7 +745,7 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) "{{{
 endfunction "}}}
 " @vimlint(EVL103, 0, a:brk_cont)
 
-function! s:reconstruct_varstack(self, env, pos, is_loop) " {{{
+function! s:reconstruct_varstack(self, env, pos, is_loop) abort " {{{
   " a:pos は s:gen_pos_cntl() により構築される
   " すべてのルートをみて変数定義まわりの情報を再構築する
   " test/for7.vim とか.
@@ -818,12 +818,12 @@ endfunction " }}}
 " @vimlint(EVL102, 0, l:i)
 
 " @vimlint(EVL103, 1, a:self)
-function! s:reconstruct_varstack_st(self, env, p) " {{{
+function! s:reconstruct_varstack_st(self, env, p) abort " {{{
   " try 句の reconstrutt. どこで例外が発生するかわからない状態
   " @param p(list) reconstruct_varstack() の pos(listlist) と同じではない
   for j in range(a:p, len(a:env.varstack) - 1)
     let v = a:env.varstack[j]
-    if v.type == 'append'
+    if v.type ==# 'append'
       let v.stat = 1
     endif
   endfor
@@ -831,7 +831,7 @@ function! s:reconstruct_varstack_st(self, env, p) " {{{
 endfunction " }}}
 " @vimlint(EVL103, 0, a:self)
 
-function s:VimlLint.compile(node, refchk) " {{{
+function s:VimlLint.compile(node, refchk) abort " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
     if a:node.type != 2 && g:vimlint#debug > 2 || g:vimlint#debug >= 5
       call vimlint#debug#echonode(a:node, a:refchk)
@@ -853,23 +853,23 @@ function s:VimlLint.compile(node, refchk) " {{{
 
 endfunction " }}}
 
-function s:VimlLint.compile_body(body, refchk) " {{{
+function s:VimlLint.compile_body(body, refchk) abort " {{{
   for node in a:body
     if self.env.ret + self.env.loopb > 0 && node.type != s:vlp.NODE_COMMENT
-      call self.error_mes(node, 'EVL201', "unreachable code: " .
-      \ (self.env.ret > 0 ? "return/throw" : "continue/break"), 1)
+      call self.error_mes(node, 'EVL201', 'unreachable code: ' .
+      \ (self.env.ret > 0 ? 'return/throw' : 'continue/break'), 1)
       break
     endif
     call self.compile(node, a:refchk)
   endfor
 endfunction " }}}
 
-function s:VimlLint.compile_toplevel(node, refchk) " {{{
+function s:VimlLint.compile_toplevel(node, refchk) abort " {{{
   call self.compile_body(a:node.body, a:refchk)
   return self.lines
 endfunction " }}}
 
-function s:VimlLint.compile_comment(node, ...) " {{{
+function s:VimlLint.compile_comment(node, ...) abort " {{{
   " コメント部に @vimlint(EVLxxx, number [, var]) な形式があれば
   " それを元にエラーレベルを修正する
   " 0 は元に戻すを意味する.
@@ -886,18 +886,18 @@ function s:VimlLint.compile_comment(node, ...) " {{{
 
   if !has_key(self.param, l[1])
     if g:vimlint#debug > 1
-      echo "vimlint: unknown error code: " . l[1]
+      echo 'vimlint: unknown error code: ' . l[1]
     endif
     return
 "    let self.param[l[1]] = s:DEF_NON
   endif
 
-  if l[3] == ''
+  if l[3] ==# ''
     let v = s:def_var_name
   else
     let v = l[4]
   endif
-  if l[2] == '0'
+  if l[2] ==# '0'
     call s:bak_param(self.param, l[1], v)
   else
     call s:set_param(self.param, l[1], str2nr(l[2]), v)
@@ -905,7 +905,7 @@ function s:VimlLint.compile_comment(node, ...) " {{{
 endfunction " }}}
 
 " @vimlint(EVL103, 1, a:refchk)
-function s:VimlLint.compile_excmd(node, refchk) " {{{
+function s:VimlLint.compile_excmd(node, refchk) abort " {{{
 " @TODO
 " e.g. set cpo&vim
 " e.g. a = 3   (let 漏れ)
@@ -917,7 +917,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
   let str = vimlint#util#skip_modifiers_excmd(a:node.str)
 
   let s = vimlint#util#req_parse_excmd(str)
-  if s != ''
+  if s !=# ''
     let ref = (s =~# '^exe\%[cute]') ? 2 : 1
     call self.parse_string(s, a:node, 'excmd', ref)
     return
@@ -925,7 +925,7 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 
   "  redir => res, redir =>> res
   let s = matchstr(a:node.str, '\s*redi[r]\?\s\+=>[>]\?\s*\zs.*\ze\s*')
-  if s != '' && s != 'END'
+  if s !=# '' && s !=# 'END'
     let a:node.type = s:vlp.NODE_IDENTIFIER
     let a:node.value = s
     call self.append_var(self.env, a:node, s:vlp.NIL, 'redir')
@@ -942,12 +942,12 @@ function s:VimlLint.compile_excmd(node, refchk) " {{{
 endfunction "}}}
 
 " 関数名. よくわからんのは '' を返す
-function! s:get_funcname(self, node) " {{{
+function! s:get_funcname(self, node) abort " {{{
   if a:node.type == s:vlp.NODE_IDENTIFIER
     return a:node.value
   endif
   if a:node.type == s:vlp.NODE_DOT
-    return "a" . '.' . s:get_funcname(a:self, a:node.right)
+    return 'a' . '.' . s:get_funcname(a:self, a:node.right)
   endif
   if a:node.type == s:vlp.NODE_SUBSCRIPT
     return ''
@@ -960,11 +960,11 @@ function! s:get_funcname(self, node) " {{{
   return ''
 endfunction " }}}
 
-function s:VimlLint.compile_function(node, refchk) "{{{
+function s:VimlLint.compile_function(node, refchk) abort "{{{
   " @TODO left が dot/subs だった場合にのみ self は予約語とする #5
   let left = self.compile(a:node.left, 0) " name of function
   let funcname = s:get_funcname(self, left)
-  if funcname =~ ':' && funcname !~# '^s:' && funcname !~# '^g:[A-Z]'
+  if funcname =~# ':' && funcname !~# '^s:' && funcname !~# '^g:[A-Z]'
     " https://groups.google.com/forum/#!topic/vim_dev/iZMnLrMXEZM/discussion
     "  A function name should not be allowed to contain a colon.
     "  The intention, as mentioned in the quoted docs,  is only alphanumeric
@@ -982,12 +982,12 @@ function s:VimlLint.compile_function(node, refchk) "{{{
   let self.env = s:env(self.env, left, a:node.attr.dict ||
         \ left.type == s:vlp.NODE_DOT || left.type == s:vlp.NODE_SUBSCRIPT)
   if a:node.attr.range
-    call s:append_var_(self.env, "a:firstline", a:node, a:node, 1)
-    call s:append_var_(self.env, "a:lastline", a:node, a:node, 1)
+    call s:append_var_(self.env, 'a:firstline', a:node, a:node, 1)
+    call s:append_var_(self.env, 'a:lastline', a:node, a:node, 1)
   endif
   for v in rlist
     " E853 if Duplicate argument
-    call self.append_var(self.env, v, s:vlp.NIL, "a:")
+    call self.append_var(self.env, v, s:vlp.NIL, 'a:')
     unlet v
   endfor
   call self.compile_body(a:node.body, 1)
@@ -1009,12 +1009,12 @@ function s:VimlLint.compile_function(node, refchk) "{{{
 endfunction " }}}
 
 " @vimlint(EVL103, 1, a:node)
-function s:VimlLint.compile_delfunction(node, refchk) " {{{
+function s:VimlLint.compile_delfunction(node, refchk) abort " {{{
   " @TODO function は定義済か?
 endfunction " }}}
 " @vimlint(EVL103, 0, a:node)
 
-function s:VimlLint.compile_return(node, refchk) " {{{
+function s:VimlLint.compile_return(node, refchk) abort " {{{
 
   if self.env == self.env.global
     call self.error_mes(a:node, 'E133', ':return not inside a function', 1)
@@ -1026,11 +1026,11 @@ function s:VimlLint.compile_return(node, refchk) " {{{
   endif
 endfunction " }}}
 
-function s:VimlLint.compile_excall(node, refchk) " {{{
+function s:VimlLint.compile_excall(node, refchk) abort " {{{
   return self.compile(a:node.left, a:refchk)
 endfunction " }}}
 
-function s:VimlLint.compile_let(node, refchk) " {{{
+function s:VimlLint.compile_let(node, refchk) abort " {{{
   " if type(a:node.right) != type({})
   "   echo "compile_let. right is invalid"
   "   echo a:node
@@ -1042,7 +1042,7 @@ function s:VimlLint.compile_let(node, refchk) " {{{
     if s:readonly_var(left)
       call self.error_mes(left, 'E46', 'Cannot change read-only variable ' . left.value, 1)
     else
-      call self.append_var(self.env, left, right, "let1")
+      call self.append_var(self.env, left, right, 'le1')
     endif
   else
     let list = map(a:node.list, 'self.compile(v:val, 0)')
@@ -1052,13 +1052,13 @@ function s:VimlLint.compile_let(node, refchk) " {{{
       if s:readonly_var(v)
         call self.error_mes(v, 'E46', 'Cannot change read-only variable ' . v.value, 1)
       else
-        call self.append_var(self.env, v, right, "letr")
+        call self.append_var(self.env, v, right, 'letr')
       endif
     endif
   endif
 endfunction " }}}
 
-function s:VimlLint.compile_unlet(node, refchk) "{{{
+function s:VimlLint.compile_unlet(node, refchk) abort "{{{
   " @TODO unlet! の場合には存在チェック不要
   let f = a:node.ea.forceit ? 0 : 1
   let list = map(a:node.list, 'self.compile(v:val, ' . f . ')')
@@ -1068,7 +1068,7 @@ function s:VimlLint.compile_unlet(node, refchk) "{{{
   endfor
 endfunction "}}}
 
-function s:VimlLint.compile_lockvar(node, refchk) "{{{
+function s:VimlLint.compile_lockvar(node, refchk) abort "{{{
   for var in a:node.list
     if var.type != s:vlp.NODE_IDENTIFIER
 "      call self.error_mes(a:node, "Ex#, 'lockvar: internal variable is required: ' . var, 1)
@@ -1079,7 +1079,7 @@ function s:VimlLint.compile_lockvar(node, refchk) "{{{
   endfor
 endfunction "}}}
 
-function s:VimlLint.compile_unlockvar(node, refchk) "{{{
+function s:VimlLint.compile_unlockvar(node, refchk) abort "{{{
   for var in a:node.list
     if var.type != s:vlp.NODE_IDENTIFIER
 "      call self.error_mes(a:node, 'lockvar: internal variable is required: ' . var, 1)
@@ -1090,7 +1090,7 @@ function s:VimlLint.compile_unlockvar(node, refchk) "{{{
   endfor
 endfunction "}}}
 
-function! s:neg_exists(ex) " {{{
+function! s:neg_exists(ex) abort " {{{
   let a = a:ex
   if len(a) == 0
     return a
@@ -1100,7 +1100,7 @@ function! s:neg_exists(ex) " {{{
     let b = remove(stack, -1)
     if len(b) == 0
       continue
-    elseif b[1] == 'e'
+    elseif b[1] ==# 'e'
       let b[0] = !b[0]
       continue
     else
@@ -1111,7 +1111,7 @@ function! s:neg_exists(ex) " {{{
   return a
 endfunction " }}}
 
-function! s:VimlLint.extract_exists(cond) " {{{
+function! s:VimlLint.extract_exists(cond) abort " {{{
   " @return a list of {type:and/or/exists, bool, var]
   " これ以外はしらない
   " exists()
@@ -1150,7 +1150,7 @@ function! s:VimlLint.extract_exists(cond) " {{{
     endif
   elseif a:cond.type == s:vlp.NODE_CALL
     let l = a:cond.left
-    if l.type != s:vlp.NODE_IDENTIFIER || l.value !=# "exists"
+    if l.type != s:vlp.NODE_IDENTIFIER || l.value !=# 'exists'
       return []
     endif
 
@@ -1166,7 +1166,7 @@ function! s:VimlLint.extract_exists(cond) " {{{
             \ s:VimlLint.extract_exists(a:cond.right)]
       if len(lr) == 0
         continue
-      elseif lr[1] != 'e' && lr[0] == (a:cond.type == s:vlp.NODE_AND)
+      elseif lr[1] !=# 'e' && lr[0] == (a:cond.type == s:vlp.NODE_AND)
         let a += lr[2]
       else
         let a += [lr]
@@ -1181,14 +1181,14 @@ function! s:VimlLint.extract_exists(cond) " {{{
   return []
 endfunction " }}}
 
-function s:VimlLint.check_exists(ex, cond) " {{{
+function s:VimlLint.check_exists(ex, cond) abort " {{{
 
   let a = a:ex
   if len(a) == 0
     return
   endif
 
-  if a[1] == 'e'
+  if a[1] ==# 'e'
     " if exists()
     let a = [a]
   elseif a[0]
@@ -1201,7 +1201,7 @@ function s:VimlLint.check_exists(ex, cond) " {{{
   endif
 
   for b in a
-    if b[1] == 'e' && b[0] && b[2][1] =~# '[A-Za-z0-9_]'
+    if b[1] ==# 'e' && b[0] && b[2][1] =~# '[A-Za-z0-9_]'
       " append する.
       " @see :h exists()
       let name = b[2][1 : -2]
@@ -1220,14 +1220,14 @@ function s:VimlLint.check_exists(ex, cond) " {{{
   endfor
 endfunction " }}}
 
-function s:VimlLint.compile_if(node, refchk) "{{{
+function s:VimlLint.compile_if(node, refchk) abort "{{{
 "  call s:VimlLint.error_mes(a:node, "compile_if")
   let cond = self.compile(a:node.cond, 2) " if ()
   let tcond = cond
 
 
   if cond.type == s:vlp.NODE_NUMBER
-      call self.error_mes(a:node, 'EVL204', "constant in conditional context", 1)
+      call self.error_mes(a:node, 'EVL204', 'constant in conditional context', 1)
   endif
 
   let p = len(self.env.varstack)
@@ -1236,7 +1236,7 @@ function s:VimlLint.compile_if(node, refchk) "{{{
   call self.check_exists(ex[-1], cond)
   call self.compile_body(a:node.body, a:refchk)
 
-  call s:restore_varstack(self.env, p, "if1")
+  call s:restore_varstack(self.env, p, 'if1')
 
   let pos = [s:gen_pos_cntl(self.env, p)]
   call s:reset_env_cntl(self.env)
@@ -1247,7 +1247,7 @@ function s:VimlLint.compile_if(node, refchk) "{{{
     let tcond = {'type' : s:vlp.NODE_OR, 'left' : tcond, 'right' : cond}
 
     if cond.type == s:vlp.NODE_NUMBER
-        call self.error_mes(a:node, 'EVL204', "constant in conditional context", 1)
+        call self.error_mes(a:node, 'EVL204', 'constant in conditional context', 1)
     endif
 
     call self.compile(node.cond, 2)
@@ -1257,7 +1257,7 @@ function s:VimlLint.compile_if(node, refchk) "{{{
     "echo "elif" . string(ex)
     call self.check_exists(ex[-1], cond)
     call self.compile_body(node.body, a:refchk)
-    call s:restore_varstack(self.env, p, "if2")
+    call s:restore_varstack(self.env, p, 'if2')
 
     let pos += [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
@@ -1277,7 +1277,7 @@ function s:VimlLint.compile_if(node, refchk) "{{{
     "echo "else" . string(ex)
     call self.check_exists(s:neg_exists(ex), cond)
     call self.compile_body(a:node.else.body, a:refchk)
-    call s:restore_varstack(self.env, p, "if3")
+    call s:restore_varstack(self.env, p, 'if3')
   endif
 
   let pos += [s:gen_pos_cntl(self.env, p)]
@@ -1291,7 +1291,7 @@ function s:VimlLint.compile_if(node, refchk) "{{{
 
 endfunction "}}}
 
-function s:VimlLint.compile_while(node, refchk) "{{{
+function s:VimlLint.compile_while(node, refchk) abort "{{{
   let cond = self.compile(a:node.cond, 1)
 
   if cond.type == s:vlp.NODE_NUMBER
@@ -1302,7 +1302,7 @@ function s:VimlLint.compile_while(node, refchk) "{{{
       else
         let node = a:node
       endif
-      call self.error_mes(node, 'EVL201', "unreachable code: while", 1)
+      call self.error_mes(node, 'EVL201', 'unreachable code: while', 1)
       return
     endif
   endif
@@ -1315,7 +1315,7 @@ function s:VimlLint.compile_while(node, refchk) "{{{
 
   if cond.type != s:vlp.NODE_NUMBER
     " 通常ルート
-    call s:restore_varstack(self.env, p, "whl")
+    call s:restore_varstack(self.env, p, 'whl')
     let pos = [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
 
@@ -1337,7 +1337,7 @@ function s:VimlLint.compile_while(node, refchk) "{{{
 
 endfunction "}}}
 
-function s:VimlLint.compile_for(node, refchk) "{{{
+function s:VimlLint.compile_for(node, refchk) abort "{{{
   " VAR が変数のリスト、または変数であることは, vimlparser がチェックしている
   " right がリストであることはチェックしていない.
   " for VAR in LIST
@@ -1358,14 +1358,14 @@ function s:VimlLint.compile_for(node, refchk) "{{{
       else
         let node = right
       endif
-      call self.error_mes(node, 'EVL201', "unreachable code: for", 1)
+      call self.error_mes(node, 'EVL201', 'unreachable code: for', 1)
       return
     endif
   endif
 
   if a:node.left isnot s:vlp.NIL " for {var} in {list}
     let left = self.compile(a:node.left, 0)
-    call self.append_var(self.env, left, right, "for")
+    call self.append_var(self.env, left, right, 'for')
     " append
 "    echo "compile for, left is"
 "    echo left
@@ -1377,7 +1377,7 @@ function s:VimlLint.compile_for(node, refchk) "{{{
     " append
     if a:node.rest isnot s:vlp.NIL
       let rest = self.compile(a:node.rest, 0)
-      call self.append_var(self.env, rest, right, "forr")
+      call self.append_var(self.env, rest, right, 'forr')
     endif
   endif
 
@@ -1392,7 +1392,7 @@ function s:VimlLint.compile_for(node, refchk) "{{{
     call self.compile_body(a:node.body, 1)
 
 
-    call s:restore_varstack(self.env, p, "for")
+    call s:restore_varstack(self.env, p, 'for')
     let pos = [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
 
@@ -1411,7 +1411,7 @@ function s:VimlLint.compile_for(node, refchk) "{{{
   let self.env.global.loop -= 1
 endfunction "}}}
 
-function s:VimlLint.compile_continue(node, refchk) "{{{
+function s:VimlLint.compile_continue(node, refchk) abort "{{{
   if self.env.global.loop <= 0
     " vimlparser....
     call self.error_mes(a:node, 'E586', ':continue without :while or :for: continue', 1)
@@ -1421,7 +1421,7 @@ function s:VimlLint.compile_continue(node, refchk) "{{{
   endif
 endfunction "}}}
 
-function s:VimlLint.compile_break(node, refchk) "{{{
+function s:VimlLint.compile_break(node, refchk) abort "{{{
   if self.env.global.loop <= 0
     call self.error_mes(a:node, 'E587', ':break without :while or :for: break', 1)
   else
@@ -1430,7 +1430,7 @@ function s:VimlLint.compile_break(node, refchk) "{{{
   endif
 endfunction "}}}
 
-function s:VimlLint.compile_try(node, refchk) "{{{
+function s:VimlLint.compile_try(node, refchk) abort "{{{
 
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
@@ -1459,7 +1459,7 @@ function s:VimlLint.compile_try(node, refchk) "{{{
       call self.compile_body(node.body, a:refchk)
     endif
 
-    call s:restore_varstack(self.env, p, "cth")
+    call s:restore_varstack(self.env, p, 'cth')
 
     let pos += [s:gen_pos_cntl(self.env, p)]
     call s:reset_env_cntl(self.env)
@@ -1486,39 +1486,39 @@ function s:VimlLint.compile_try(node, refchk) "{{{
 
 endfunction "}}}
 
-function s:VimlLint.compile_throw(node, refchk) "{{{
+function s:VimlLint.compile_throw(node, refchk) abort "{{{
   call self.compile(a:node.left, 1)
   " return みたいなものでしょう.
   let self.env.ret = 1
 endfunction "}}}
 
-function s:VimlLint.compile_echo(node, refchk) "{{{
+function s:VimlLint.compile_echo(node, refchk) abort "{{{
   call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
-function s:VimlLint.compile_echon(node, refchk) "{{{
+function s:VimlLint.compile_echon(node, refchk) abort "{{{
   call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
-function s:VimlLint.compile_echohl(...) "{{{
+function s:VimlLint.compile_echohl(...) abort "{{{
 "   " @TODO
 endfunction "}}}
 
-function s:VimlLint.compile_echomsg(node, refchk) "{{{
+function s:VimlLint.compile_echomsg(node, refchk) abort "{{{
   call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
-function s:VimlLint.compile_echoerr(node, refchk) "{{{
+function s:VimlLint.compile_echoerr(node, refchk) abort "{{{
   call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
-function s:VimlLint.compile_execute(node, refchk) "{{{
+function s:VimlLint.compile_execute(node, refchk) abort "{{{
   " @TODO execute :e `=path`
   call map(a:node.list, 'self.compile(v:val, 1)')
 endfunction "}}}
 
 " expr1: expr2 ? expr1 : expr1
-function s:VimlLint.compile_ternary(node, refchk) "{{{
+function s:VimlLint.compile_ternary(node, refchk) abort "{{{
   let a:node.cond = self.compile(a:node.cond, 1)
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
@@ -1526,135 +1526,135 @@ function s:VimlLint.compile_ternary(node, refchk) "{{{
 endfunction "}}}
 
 " op2 {{{
-function s:VimlLint.compile_or(node, ...)
+function s:VimlLint.compile_or(node, ...) abort
   return self.compile_op2(a:node, 'or')
 endfunction
 
-function s:VimlLint.compile_and(node, ...)
+function s:VimlLint.compile_and(node, ...) abort
   return self.compile_op2(a:node, 'and')
 endfunction
 
-function s:VimlLint.compile_equal(node, ...)
+function s:VimlLint.compile_equal(node, ...) abort
   return self.compile_op2(a:node, '==')
 endfunction
 
-function s:VimlLint.compile_equalci(node, ...)
+function s:VimlLint.compile_equalci(node, ...) abort
   return self.compile_op2(a:node, '==?')
 endfunction
 
-function s:VimlLint.compile_equalcs(node, ...)
+function s:VimlLint.compile_equalcs(node, ...) abort
   return self.compile_op2(a:node, '==#')
 endfunction
 
-function s:VimlLint.compile_nequal(node, ...)
+function s:VimlLint.compile_nequal(node, ...) abort
   return self.compile_op2(a:node, '!=')
 endfunction
 
-function s:VimlLint.compile_nequalci(node, ...)
+function s:VimlLint.compile_nequalci(node, ...) abort
   return self.compile_op2(a:node, '!=?')
 endfunction
 
-function s:VimlLint.compile_nequalcs(node, ...)
+function s:VimlLint.compile_nequalcs(node, ...) abort
   return self.compile_op2(a:node, '!=#')
 endfunction
 
-function s:VimlLint.compile_greater(node, ...)
+function s:VimlLint.compile_greater(node, ...) abort
   return self.compile_op2(a:node, '>')
 endfunction
 
-function s:VimlLint.compile_greaterci(node, ...)
+function s:VimlLint.compile_greaterci(node, ...) abort
   return self.compile_op2(a:node, '>?')
 endfunction
 
-function s:VimlLint.compile_greatercs(node, ...)
+function s:VimlLint.compile_greatercs(node, ...) abort
   return self.compile_op2(a:node, '>#')
 endfunction
 
-function s:VimlLint.compile_gequal(node, ...)
+function s:VimlLint.compile_gequal(node, ...) abort
   return self.compile_op2(a:node, '>=')
 endfunction
 
-function s:VimlLint.compile_gequalci(node, ...)
+function s:VimlLint.compile_gequalci(node, ...) abort
   return self.compile_op2(a:node, '>=?')
 endfunction
 
-function s:VimlLint.compile_gequalcs(node, ...)
+function s:VimlLint.compile_gequalcs(node, ...) abort
   return self.compile_op2(a:node, '>=#')
 endfunction
 
-function s:VimlLint.compile_smaller(node, ...)
+function s:VimlLint.compile_smaller(node, ...) abort
   return self.compile_op2(a:node, '<')
 endfunction
 
-function s:VimlLint.compile_smallerci(node, ...)
+function s:VimlLint.compile_smallerci(node, ...) abort
   return self.compile_op2(a:node, '<?')
 endfunction
 
-function s:VimlLint.compile_smallercs(node, ...)
+function s:VimlLint.compile_smallercs(node, ...) abort
   return self.compile_op2(a:node, '<#')
 endfunction
 
-function s:VimlLint.compile_sequal(node, ...)
+function s:VimlLint.compile_sequal(node, ...) abort
   return self.compile_op2(a:node, '<=')
 endfunction
 
-function s:VimlLint.compile_sequalci(node, ...)
+function s:VimlLint.compile_sequalci(node, ...) abort
   return self.compile_op2(a:node, '<=?')
 endfunction
 
-function s:VimlLint.compile_sequalcs(node, ...)
+function s:VimlLint.compile_sequalcs(node, ...) abort
   return self.compile_op2(a:node, '<=#')
 endfunction
 
-function s:VimlLint.compile_match(node, ...)
+function s:VimlLint.compile_match(node, ...) abort
   return self.compile_op2(a:node, 'match')
 endfunction
 
-function s:VimlLint.compile_matchci(node, ...)
+function s:VimlLint.compile_matchci(node, ...) abort
   return self.compile_op2(a:node, 'matchci')
 endfunction
 
-function s:VimlLint.compile_matchcs(node, ...)
+function s:VimlLint.compile_matchcs(node, ...) abort
   return self.compile_op2(a:node, 'matchcs')
 endfunction
 
-function s:VimlLint.compile_nomatch(node, ...)
+function s:VimlLint.compile_nomatch(node, ...) abort
   return self.compile_op2(a:node, 'nomatch')
 endfunction
 
-function s:VimlLint.compile_nomatchci(node, ...)
+function s:VimlLint.compile_nomatchci(node, ...) abort
   return self.compile_op2(a:node, 'nomatchci')
 endfunction
 
-function s:VimlLint.compile_nomatchcs(node, ...)
+function s:VimlLint.compile_nomatchcs(node, ...) abort
   return self.compile_op2(a:node, 'nomatchcs')
 endfunction
 
-function s:VimlLint.compile_is(node, ...)
+function s:VimlLint.compile_is(node, ...) abort
   return self.compile_op2(a:node, 'is')
 endfunction
 
-function s:VimlLint.compile_isci(node, ...)
+function s:VimlLint.compile_isci(node, ...) abort
   return self.compile_op2(a:node, 'is?')
 endfunction
 
-function s:VimlLint.compile_iscs(node, ...)
+function s:VimlLint.compile_iscs(node, ...) abort
   return self.compile_op2(a:node, 'is#')
 endfunction
 
-function s:VimlLint.compile_isnot(node, ...)
+function s:VimlLint.compile_isnot(node, ...) abort
   return self.compile_op2(a:node, 'is not')
 endfunction
 
-function s:VimlLint.compile_isnotci(node, ...)
+function s:VimlLint.compile_isnotci(node, ...) abort
   return self.compile_op2(a:node, 'isnot?')
 endfunction
 
-function s:VimlLint.compile_isnotcs(node, ...)
+function s:VimlLint.compile_isnotcs(node, ...) abort
   return self.compile_op2(a:node, 'isnot#')
 endfunction
 
-function s:VimlLint.compile_add(node, ...)
+function s:VimlLint.compile_add(node, ...) abort
   let r = self.compile_op2(a:node, '+')
   if vimlint#util#notnum_type(r.left) && vimlint#util#notlist_type(r.left) ||
   \  vimlint#util#notnum_type(r.right) && vimlint#util#notlist_type(r.right)
@@ -1663,7 +1663,7 @@ function s:VimlLint.compile_add(node, ...)
   return r
 endfunction
 
-function s:VimlLint.compile_subtract(node, ...)
+function s:VimlLint.compile_subtract(node, ...) abort
   let r = self.compile_op2(a:node, '-')
   if vimlint#util#notnum_type(r.left) || vimlint#util#notnum_type(r.right)
     call self.error_mes(r, 'EVL206', '`-` operator can be used for Number subtraction', r)
@@ -1671,11 +1671,11 @@ function s:VimlLint.compile_subtract(node, ...)
   return r
 endfunction
 
-function s:VimlLint.compile_concat(node, ...)
+function s:VimlLint.compile_concat(node, ...) abort
   return self.compile_op2(a:node, '.')
 endfunction
 
-function s:VimlLint.compile_multiply(node, ...)
+function s:VimlLint.compile_multiply(node, ...) abort
   let r = self.compile_op2(a:node, '*')
   if vimlint#util#notnum_type(r.left) || vimlint#util#notnum_type(r.right)
     call self.error_mes(r, 'EVL206', '`*` operator can be used for Number multipliction', r)
@@ -1683,7 +1683,7 @@ function s:VimlLint.compile_multiply(node, ...)
   return r
 endfunction
 
-function s:VimlLint.compile_divide(node, ...)
+function s:VimlLint.compile_divide(node, ...) abort
   let r = self.compile_op2(a:node, '/')
   if vimlint#util#notnum_type(r.left) || vimlint#util#notnum_type(r.right)
     call self.error_mes(r, 'EVL206', '`/` operator can be used for Number division', r)
@@ -1691,7 +1691,7 @@ function s:VimlLint.compile_divide(node, ...)
   return r
 endfunction
 
-function s:VimlLint.compile_remainder(node, ...)
+function s:VimlLint.compile_remainder(node, ...) abort
   let r = self.compile_op2(a:node, '%')
   if vimlint#util#notnum_type(r.left) || vimlint#util#notnum_type(r.right)
     call self.error_mes(r, 'EVL206', '`%` operator can be used for Number modulo', r)
@@ -1701,24 +1701,24 @@ endfunction
 " }}}
 
 " op1 {{{
-function s:VimlLint.compile_not(node, ...)
+function s:VimlLint.compile_not(node, ...) abort
   return self.compile_op1(a:node, 'not ')
 endfunction
 
-function s:VimlLint.compile_plus(node, ...)
+function s:VimlLint.compile_plus(node, ...) abort
   return self.compile_op1(a:node, '+')
 endfunction
 
-function s:VimlLint.compile_minus(node, ...)
+function s:VimlLint.compile_minus(node, ...) abort
   return self.compile_op1(a:node, '-')
 endfunction
 " }}}
 
-function! s:escape_string(str) "{{{
+function! s:escape_string(str) abort "{{{
   return eval(a:str)
 endfunction "}}}
 
-function s:VimlLint.parse_string(str, node, cmd, ref) "{{{
+function s:VimlLint.parse_string(str, node, cmd, ref) abort "{{{
   try
     let p = s:vlp.VimLParser.new()
     let param = copy(self.param)
@@ -1740,12 +1740,12 @@ function s:VimlLint.parse_string(str, node, cmd, ref) "{{{
   endtry
 endfunction "}}}
 
-function s:VimlLint.compile_call(node, refchk) "{{{
+function s:VimlLint.compile_call(node, refchk) abort "{{{
   let rlist = map(a:node.rlist, 'self.compile(v:val, 1)')
   let a:node.rlist = rlist
   let left = self.compile(a:node.left, 0)
   " 関数名がそのまま left.value に入っている..
-  if has_key(left, 'value') && type(left.value) == type("")
+  if has_key(left, 'value') && type(left.value) == type('')
     let d = vimlint#builtin#get_func_inf(left.value)
     if d != {}
 "     call s:__called(left.value)
@@ -1781,7 +1781,7 @@ endfunction "}}}
 " :let l = mylist[:3]             " first four items
 " :let l = mylist[4:4]            " List with one item
 " :let l = mylist[:]              " shallow copy of a List
-function s:VimlLint.compile_slice(node, refchk) " {{{
+function s:VimlLint.compile_slice(node, refchk) abort " {{{
   for i in range(len(a:node.rlist))
     let r = a:node.rlist[i] is s:vlp.NIL ? s:vlp.NIL : self.compile(a:node.rlist[i], 1)
     let a:node.rlist[i] = r
@@ -1792,7 +1792,7 @@ function s:VimlLint.compile_slice(node, refchk) " {{{
 "  return {'type' : 'slice', 'l' : left, 'r' : [r0,r1], 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_subscript(node, ...) " {{{
+function s:VimlLint.compile_subscript(node, ...) abort " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
   if a:node.right.type == s:vlp.NODE_IDENTIFIER
@@ -1806,7 +1806,7 @@ function s:VimlLint.compile_subscript(node, ...) " {{{
 "  return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_dot(node, refchk) " {{{
+function s:VimlLint.compile_dot(node, refchk) abort " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 0)
 
@@ -1814,24 +1814,24 @@ function s:VimlLint.compile_dot(node, refchk) " {{{
 "  return {'type' : 'subs', 'l' : left, 'r' : right, 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_number(node, ...) " {{{
+function s:VimlLint.compile_number(node, ...) abort " {{{
   return a:node
 "  return { 'type' : 'integer', 'val' : a:node.value, 'node' : a:node}
 endfunction " }}}
 
 " map の引数などをどう処理するか?
-function s:VimlLint.compile_string(node, ...) " {{{
+function s:VimlLint.compile_string(node, ...) abort " {{{
   return a:node
 "  return { 'type' : 'string', 'val' : a:node.value, 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_list(node, refchk) " {{{
+function s:VimlLint.compile_list(node, refchk) abort " {{{
   let a:node.value = map(a:node.value, 'self.compile(v:val, 1)')
   return a:node
 "  return { 'type' : 'list', 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_dict(node, refchk) " {{{
+function s:VimlLint.compile_dict(node, refchk) abort " {{{
   " @TODO 文字列のみ
   for i in range(len(a:node.value))
     let v = a:node.value[i]
@@ -1842,12 +1842,12 @@ function s:VimlLint.compile_dict(node, refchk) " {{{
 "  return { 'type' : 'dict', 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_option(node, ...) " {{{
+function s:VimlLint.compile_option(node, ...) abort " {{{
   return a:node
 "  return { 'type' : 'option', 'node' : a:node}
 endfunction " }}}
 
-function! s:readonly_var(var) " {{{
+function! s:readonly_var(var) abort " {{{
   if a:var.type == s:vlp.NODE_IDENTIFIER
     if a:var.value =~# '^a:.*'
       return 1
@@ -1859,7 +1859,7 @@ function! s:readonly_var(var) " {{{
   endif
 endfunction " }}}
 
-function! s:reserved_name(name, is_dic_func) " {{{
+function! s:reserved_name(name, is_dic_func) abort " {{{
   if a:name =~# '^\(a:\d\|[gbwtsla]:$\)' ||
   \  a:name ==# 'v:val' || a:name ==# 's:' ||
   \  (a:name ==# 'self' && a:is_dic_func)
@@ -1870,7 +1870,7 @@ function! s:reserved_name(name, is_dic_func) " {{{
   return 0
 endfunction " }}}
 
-function s:VimlLint.compile_identifier(node, refchk) " {{{
+function s:VimlLint.compile_identifier(node, refchk) abort " {{{
   let name = a:node.value
   if a:refchk && !s:reserved_name(name, self.env.is_dic_func)
     call vimlint#exists_var(self, self.env, a:node, 0, 0)
@@ -1885,7 +1885,7 @@ function s:VimlLint.compile_identifier(node, refchk) " {{{
 "  return {'type' : 'id', 'val' : name, 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_curlyname(node, refchk) " {{{
+function s:VimlLint.compile_curlyname(node, refchk) abort " {{{
   for f in a:node.value
     if f.curly
       call self.compile(f.value, 1)
@@ -1896,14 +1896,14 @@ function s:VimlLint.compile_curlyname(node, refchk) " {{{
 "  return {'type' : 'curly', 'node' : a:node}
 endfunction " }}}
 
-function s:VimlLint.compile_env(node, refchk) " {{{
+function s:VimlLint.compile_env(node, refchk) abort " {{{
   return a:node
 "  return {'type' : 'env', 'node' : a:node}
 endfunction " }}}
 " @vimlint(EVL103, 0, a:refchk)
 
 " register
-function s:VimlLint.compile_reg(node, ...) " {{{
+function s:VimlLint.compile_reg(node, ...) abort " {{{
   return a:node
 "  return {'type' : 'reg', 'val' : a:node.value, 'node' : a:node}
 "  echo a:node
@@ -1911,14 +1911,14 @@ function s:VimlLint.compile_reg(node, ...) " {{{
 endfunction " }}}
 
 " @vimlint(EVL103, 1, a:op)
-function s:VimlLint.compile_op1(node, op) " {{{
+function s:VimlLint.compile_op1(node, op) abort " {{{
   let a:node.left = self.compile(a:node.left, 1)
   return a:node
 endfunction " }}}
 " @vimlint(EVL103, 0, a:op)
 
 " @vimlint(EVL103, 1, a:op)
-function s:VimlLint.compile_op2(node, op) " {{{
+function s:VimlLint.compile_op2(node, op) abort " {{{
   let a:node.left = self.compile(a:node.left, 1)
   let a:node.right = self.compile(a:node.right, 1)
   return a:node
@@ -1928,12 +1928,12 @@ function s:VimlLint.compile_op2(node, op) " {{{
 endfunction " }}}
 " @vimlint(EVL103, 0, a:op)
 
-function! s:vimlint_file(filename, param, progress) " {{{
+function! s:vimlint_file(filename, param, progress) abort " {{{
   let vimfile = a:filename
   let p = s:vlp.VimLParser.new()
   let c = s:VimlLint.new(a:param)
   try
-    if a:param.type == 'string'
+    if a:param.type ==# 'string'
         let r = s:vlp.StringReader.new(vimfile)
         let c.filename = ''
     else
@@ -1958,15 +1958,15 @@ function! s:vimlint_file(filename, param, progress) " {{{
       endif
     endfor
 
-    call vimlint#util#check_scriptencoding(c, a:param.type == 'string' ? [vimfile] : readfile(vimfile))
+    call vimlint#util#check_scriptencoding(c, a:param.type ==# 'string' ? [vimfile] : readfile(vimfile))
   catch
 
     let line = matchstr(v:exception, '.*line \zs\d\+\ze col \d\+$')
     let col  = matchstr(v:exception, '.*line \d\+ col \zs\d\+\ze$')
     let i = 'EVP_0'
-    if line == ""
+    if line ==# ''
       let msg = substitute(v:throwpoint, '\.\.\zs\d\+', '\=s:numtoname(submatch(0))', 'g') . "\n" . v:exception
-    elseif matchstr(v:exception, 'vimlparser: E\d\+:') != ''
+    elseif matchstr(v:exception, 'vimlparser: E\d\+:') !=# ''
       let i = 'EVP_' . matchstr(v:exception, 'vimlparser: \zsE\d\+\ze:')
       let msg = matchstr(v:exception, '.*vimlparser: E\d\+: \zs.*\ze: line \d\+ col \d\+$')
     else
@@ -1987,22 +1987,22 @@ function! s:vimlint_file(filename, param, progress) " {{{
 
 endfunction " }}}
 
-function! s:vimlint_dir(dir, param) " {{{
+function! s:vimlint_dir(dir, param) abort " {{{
   if a:param.recursive
-    let filess = glob(a:dir . "/**/*.vim")
+    let filess = glob(a:dir . '/**/*.vim')
   else
-    let filess = glob(a:dir . "/*.vim")
+    let filess = glob(a:dir . '/*.vim')
   endif
   let fs = split(filess, "\n")
   let ret = []
   for i in range(len(fs))
-    let ret += s:vimlint_file(fs[i], a:param, printf("(%2d/%d) ", i+1, len(fs)))
+    let ret += s:vimlint_file(fs[i], a:param, printf('(%2d/%d) ', i+1, len(fs)))
   endfor
 
   return ret
 endfunction " }}}
 
-function! s:get_param(p) " {{{
+function! s:get_param(p) abort " {{{
   let param = a:p
   if exists('g:vimlint#config') && type(g:vimlint#config) == type({})
     let param = extend(param, g:vimlint#config, 'keep')
@@ -2012,21 +2012,21 @@ function! s:get_param(p) " {{{
   let param = s:extend_errlevel(param)
   let param.bak = deepcopy(param)
 
-  let out_type = "echo"
+  let out_type = 'echo'
   if has_key(param, 'output') " {{{
-    if type(param.output) == type("")
+    if type(param.output) == type('')
       if param.output ==# 'quickfix'
         unlet param.output
-        let out_type = "quickfix"
+        let out_type = 'quickfix'
       else
         let param.output = {'filename' : param.output}
       endif
     elseif type(param.output) == type([])
-      let out_type = "list"
+      let out_type = 'list'
       unlet param.output
       let param.outfunc = function('vimlint#util#output_list')
     elseif type(param.output) == type(function('tr'))
-      let out_type = "function"
+      let out_type = 'function'
       let param.outfunc = param.output
       unlet param.output
     elseif type(param.output) != type({})
@@ -2035,10 +2035,10 @@ function! s:get_param(p) " {{{
 
     if has_key(param, 'output')
       let param.output = extend(param.output, s:default_param_output, 'keep')
-      if param.output.filename == ''
+      if param.output.filename ==# ''
         unlet param.output
       else
-        let out_type = "file"
+        let out_type = 'file'
       endif
     endif
   endif
@@ -2048,16 +2048,16 @@ function! s:get_param(p) " {{{
     unlet param.hook_after_0
   endif
   let param.hook_after_0 = []
-  if out_type == "file"
+  if out_type ==# 'file'
     " file
     let param.outfunc = function('vimlint#util#output_file')
     let param.hook_after_0 = [function('vimlint#util#hook_after_file')]
     if !param.output.append
       call writefile([], param.output.filename)
     endif
-  elseif out_type == "echo"
+  elseif out_type ==# 'echo'
     let param.outfunc = function('vimlint#util#output_echo')
-  elseif out_type == "quickfix"
+  elseif out_type ==# 'quickfix'
     call setqflist([], ' ')
     let param.outfunc = function('vimlint#util#output_quickfix')
     let param.hook_after_0 = [function('vimlint#util#hook_after_quickfix')]
@@ -2066,7 +2066,7 @@ function! s:get_param(p) " {{{
   return param
 endfunction " }}}
 
-function! vimlint#vimlint(file, ...) " {{{
+function! vimlint#vimlint(file, ...) abort " {{{
 
   let param = s:get_param(a:0 ? deepcopy(a:1) : {})
 
@@ -2074,20 +2074,20 @@ function! vimlint#vimlint(file, ...) " {{{
   let ret = []
   for f in files
 
-    if param.type == "string"
-      let ret += s:vimlint_file(f, param, ".... ")
+    if param.type ==# 'string'
+      let ret += s:vimlint_file(f, param, '.... ')
     elseif isdirectory(f)
       let ret += s:vimlint_dir(f, param)
     elseif filereadable(f)
-      let ret += s:vimlint_file(f, param, ".... ")
+      let ret += s:vimlint_file(f, param, '.... ')
     else
-      echoerr "vimlint: cannot readfile: " . f
+      echoerr 'vimlint: cannot readfile: ' . f
     endif
   endfor
   return ret
 endfunction " }}}
 
-function! s:numtoname(num) " {{{
+function! s:numtoname(num) abort " {{{
   let sig = printf("function('%s')", a:num)
   for k in keys(s:)
     if type(s:[k]) == type({})
@@ -2101,7 +2101,7 @@ function! s:numtoname(num) " {{{
   return a:num
 endfunction " }}}
 
-function! vimlint#command(config) " {{{
+function! vimlint#command(config) abort " {{{
   let config = {}
   let [file, config] = vimlint#util#parse_cmdline(a:config, config)
   return vimlint#vimlint(file, config)
