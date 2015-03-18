@@ -187,7 +187,7 @@ function! vimlint#util#parse_cmdline(str, conf) " {{{
       let brk = i + 1
       break
     endif
-    let l = matchlist(s[i], '^-\([a-z]\+\)=\(.\+\)$')
+    let l = matchlist(s[i], '^-\([a-z][a-z_]\+\)=\(.\+\)$')
     if l == []
       let brk = i
       break
