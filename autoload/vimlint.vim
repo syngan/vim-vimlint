@@ -35,6 +35,7 @@ let s:VimlLint = {}
 
 
 let s:default_param = {} " {{{
+let s:default_param.parse_py = 1
 let s:default_param.recursive = 1
 let s:default_param.quiet = 0
 let s:default_param.type = 'file'
@@ -1941,9 +1942,23 @@ function! s:vimlint_file(filename, param, progress) abort " {{{
         let c.filename = vimfile
     endif
 
-    call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' start')
 
-    let vp = p.parse(r)
+    if c.filename !=# '' && a:param.parse_py
+      call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' start.py')
+      let py = globpath(&rtp, 'bin/vimlparser-vimlint.py')
+      let f = tempname()
+      call system(printf('python3 %s %s %s', py, vimfile, f))
+      call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' source.py')
+      source `=f`
+      let vp = g:Vimlint_Parse_Ret(s:vlp.NIL)
+      unlet! g:vimlint#parer_ret
+      if type(vp) == type('')
+        throw vp
+      endif
+    else
+      call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' start')
+      let vp = p.parse(r)
+    endif
 
 
     call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' check')
@@ -2008,6 +2023,7 @@ function! s:get_param(p) abort " {{{
     let param = extend(param, g:vimlint#config, 'keep')
   endif
   let param = extend(param, s:default_param, 'keep')
+  let param.parse_py = param.parse_py ? executable('python3') : 0
 
   let param = s:extend_errlevel(param)
   let param.bak = deepcopy(param)
