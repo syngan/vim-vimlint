@@ -1313,7 +1313,7 @@ function s:VimlLint.compile_while(node, refchk) abort "{{{
   let p = len(self.env.varstack)
   call self.compile_body(a:node.body, a:refchk)
 
-  if cond.type != s:vlp.NODE_NUMBER
+  if cond.type != s:vlp.NODE_NUMBER || cond.value
     " 通常ルート
     call s:restore_varstack(self.env, p, 'whl')
     let pos = [s:gen_pos_cntl(self.env, p)]
@@ -1725,15 +1725,19 @@ function s:VimlLint.parse_string(str, node, cmd, ref) abort "{{{
     let c = s:VimlLint.new(param)
     let c.env = self.env
     let c.filename = self.filename
-    let r = s:vlp.StringReader.new(a:str)
+    let pos = vimlint#util#get_pos(a:node)
+    let lines = range(pos.lnum - 1)
+    let lines = map(lines, '""')
+"    let r = s:vlp.StringReader.new(a:str)
     if a:ref == 1
-      let r = s:vlp.StringReader.new('echo ' . a:str)
+      let lines += ['echo ' . a:str]
     elseif a:ref == 2
-      let r = s:vlp.StringReader.new(a:str)
+      let lines += [a:str]
     else
+      let lines += ['let ' . a:str . ' = 1']
       " @TODO 今は変数の中身は参照していないので適当に代入可能
-      let r = s:vlp.StringReader.new('let ' . a:str . ' = 1')
     endif
+    let r = s:vlp.StringReader.new(lines)
     call c.compile(p.parse(r), 1)
   catch
     call self.error_mes(a:node, 'EVL203', 'parse error in `' . a:cmd . '`', 1)
@@ -1950,7 +1954,7 @@ function! s:vimlint_file(filename, param, progress) abort " {{{
 
     call c.compile(vp, 1)
 
-    " global 変数のチェック
+    " global 変数(s:)のチェック
     let env = c.env
     for v in keys(env.var)
       if env.var[v].subs == 0 && env.extend == 0
