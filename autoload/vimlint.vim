@@ -193,9 +193,9 @@ function! s:env(outer, funcname, ...) abort " {{{
   let env.function = a:funcname
   let env.var = {}
   let env.varstack = []
-  let env.ret = 0
-  let env.loopb = 0
-  let env.has_break = 0
+  let env.ret = 0       " どのルートを通っても return なら 1
+  let env.loopb = 0     " どのルートを通っても break/continue なら 1
+  let env.has_break = 0 " どこかで break/continue したら 1
   let env.is_dic_func = a:0 > 0 && a:1
   let env.extend = 0
   if has_key(a:outer, 'global')
@@ -508,10 +508,11 @@ endfunction " }}}
 function! s:reset_env_cntl(env) abort " {{{
   let a:env.ret = 0
   let a:env.loopb = 0
+  let a:env.has_break = 0
 endfunction " }}}
 
 function! s:gen_pos_cntl(env, p) abort " {{{
-  return [a:p, len(a:env.varstack), a:env.ret, a:env.loopb]
+  return [a:p, len(a:env.varstack), a:env.ret, a:env.loopb, a:env.has_break]
 endfunction " }}}
 
 " @vimlint(EVL103, 1, a:pp)
@@ -635,10 +636,12 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) abort " {{{
 
   let N = 0 " return しないルート数
   let N_lp = 0 " break/continue されたルート数
+  let has_break = 0 " break されたか
 
   for p in a:pos
 "    call vimlint#debug#decho("reconstruct_rt: " . string(p) . "/" . len(a:pos))
-    if p[2] " return した.
+    let has_break = has_break || p[4]
+    if p[2] && !p[4] " return した.
       " イベントをなかったことにする
       for j in range(p[0], p[1] - 1)
         let v = a:env.varstack[j]
@@ -654,6 +657,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) abort " {{{
     let N += 1
 "echo "p=" . string(p) . ", brk=" . a:brk_cont
     if p[3] && !a:brk_cont
+      " break/continue した
       let N_lp += 1
       continue
     endif
@@ -699,7 +703,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) abort " {{{
     endfor
   endfor
 
-  return [vardict, N, N_lp]
+  return [vardict, N, N_lp, has_break]
 endfunction " }}}
 
 " @vimlint(EVL103, 1, a:brk_cont)
@@ -745,7 +749,7 @@ function! s:reconstruct_varstack_chk(self, env, rtret, brk_cont) abort "{{{
 endfunction "}}}
 " @vimlint(EVL103, 0, a:brk_cont)
 
-function! s:reconstruct_varstack(self, env, pos, is_loop) abort " {{{
+function! s:reconstruct_varstack(self, env, pos, is_loop, ...) abort " {{{
   " a:pos は s:gen_pos_cntl() により構築される
   " すべてのルートをみて変数定義まわりの情報を再構築する
   " test/for7.vim とか.
@@ -755,18 +759,16 @@ function! s:reconstruct_varstack(self, env, pos, is_loop) abort " {{{
 
   if a:is_loop
     " varstack を modify する.
-
     call s:reconstruct_varstack_rm(a:self, a:env, a:pos, nop)
-    let rtret = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 1, nop)
-  else
-    let rtret = s:reconstruct_varstack_rt(a:self, a:env, a:pos, 0, nop)
   endif
+  let rtret = s:reconstruct_varstack_rt(a:self, a:env, a:pos, a:is_loop, nop)
 
   let vardict = rtret[0]
   let N = rtret[1]
   let N_lp = rtret[2]
+  let a:self.env.has_break = rtret[3]
 
-  if N == 0
+  if N == 0 && rtret[3] == 0
     " すべての route で return
     let a:self.env.ret = 1
     return
@@ -1286,14 +1288,13 @@ function s:VimlLint.compile_if(node, refchk) abort "{{{
   " reconstruct
   " let して return した、は let していないにする
 "  call vimlint#debug#decho("call reconstruct _ifs: " . string(a:node.pos))
-  call s:reconstruct_varstack(self, self.env, pos, 0)
+  call s:reconstruct_varstack(self, self.env, pos, 0, 'if') " if
 "  call vimlint#debug#decho("call reconstruct _ife: " . string(a:node.pos))
 
 endfunction "}}}
 
 function s:VimlLint.compile_while(node, refchk) abort "{{{
   let cond = self.compile(a:node.cond, 1)
-
   if cond.type == s:vlp.NODE_NUMBER
     " while 0
     if str2nr(cond.value) == 0
@@ -1307,34 +1308,7 @@ function s:VimlLint.compile_while(node, refchk) abort "{{{
     endif
   endif
 
-  let self.env.global.loop += 1
-
-  " while 文の中
-  let p = len(self.env.varstack)
-  call self.compile_body(a:node.body, a:refchk)
-
-  if cond.type != s:vlp.NODE_NUMBER || cond.value
-    " 通常ルート
-    call s:restore_varstack(self.env, p, 'whl')
-    let pos = [s:gen_pos_cntl(self.env, p)]
-    call s:reset_env_cntl(self.env)
-
-
-    " while にはいらなかった場合
-    let p = len(self.env.varstack)
-    let pos += [s:gen_pos_cntl(self.env, p)]
-    call s:reset_env_cntl(self.env)
-
-    call s:reconstruct_varstack(self, self.env, pos, 1)
-  else
-    " while 1
-    " return/break/continue が必須.
-    " throw があるから....
-    let self.env.loopb = 0
-  endif
-
-  let self.env.global.loop -= 1
-
+  call self.compile_loop(a:node, a:refchk, cond.type != s:vlp.NODE_NUMBER, 'while')
 endfunction "}}}
 
 function s:VimlLint.compile_for(node, refchk) abort "{{{
@@ -1381,33 +1355,38 @@ function s:VimlLint.compile_for(node, refchk) abort "{{{
     endif
   endif
 
-  let self.env.global.loop += 1
-  let bak_has_break = self.env.has_break
+  call self.compile_loop(a:node, a:refchk, right.type != s:vlp.NODE_LIST, 'for')
+endfunction "}}}
+
+function s:VimlLint.compile_loop(node, refchk, noloop, kind) abort "{{{
+  let bak = [self.env.loopb, self.env.has_break]
+  let self.env.loopb = 0
   let self.env.has_break = 0
 
-  try
+  let self.env.global.loop += 1
 
-    " for 文の中
+  " for/while 文の中
+  let p = len(self.env.varstack)
+  call self.compile_body(a:node.body, 1)
+
+  call s:restore_varstack(self.env, p, a:kind)
+  let pos = [s:gen_pos_cntl(self.env, p)]
+  call s:reset_env_cntl(self.env)
+
+  if a:noloop
+    " for/while にはいらなかった場合
+    " ループ条件がはじめから false な場合
     let p = len(self.env.varstack)
-    call self.compile_body(a:node.body, 1)
+    let pos += [s:gen_pos_cntl(self.env, p)]
+  endif
 
-
-    call s:restore_varstack(self.env, p, 'for')
-    let pos = [s:gen_pos_cntl(self.env, p)]
-    call s:reset_env_cntl(self.env)
-
-    if right.type != s:vlp.NODE_LIST || self.env.has_break
-      " for にはいらなかった場合
-      let p = len(self.env.varstack)
-      let pos += [s:gen_pos_cntl(self.env, p)]
-    endif
-
-  finally
-    let self.env.has_break = bak_has_break
-  endtry
   "call vimlint#debug#decho("call reconstruct _fors: " . string(a:node.pos))
-  call s:reconstruct_varstack(self, self.env, pos, 1)
+  call s:reconstruct_varstack(self, self.env, pos, 1, a:kind) " loop(for/while)
   "call vimlint#debug#decho("call reconstruct _fore: " . string(a:node.pos))
+
+  " loop 内の break/continue 情報は意味がないため
+  let self.env.loopb = bak[0]
+  let self.env.has_break = bak[1]
   let self.env.global.loop -= 1
 endfunction "}}}
 
@@ -1468,7 +1447,7 @@ function s:VimlLint.compile_try(node, refchk) abort "{{{
 
   " @TODO
 
-  call s:reconstruct_varstack(self, self.env, pos, 0)
+  call s:reconstruct_varstack(self, self.env, pos, 0, 'try')
 
   " backup env
   let retc = self.env.ret
