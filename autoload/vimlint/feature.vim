@@ -188,6 +188,7 @@ function! s:init() abort " {{{
   let dict['gui_macvim'] = 1
   let dict['gui_kde'] = 1
   let dict['gui_qt'] = 1
+  let dict['nvim'] = 1
 
   return dict
 endfunction " }}}
