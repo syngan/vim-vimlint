@@ -44,13 +44,13 @@ def main():
     else:
       f = sys.stdout
     f.write('function! g:Vimlint_Parse_Ret(nil)\n')
-    f.write('let g:vimlint#parser_ret = ')
+    f.write('let ret = ')
     try:
       c.compile(p.parse(r), f)
     except VimLParserException as e:
       f.write("'{0}'".format(str(e)))
 
-    f.write('\nreturn g:vimlint#parser_ret\n')
+    f.write('\nreturn ret\n')
     f.write('endfunction\n')
     f.close()
 

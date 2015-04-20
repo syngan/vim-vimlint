@@ -1933,8 +1933,9 @@ function! s:vimlint_file(filename, param, progress) abort " {{{
       call system(printf('python3 %s %s %s', py, vimfile, f))
       call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' source.py')
       source `=f`
+      silent! unlet! g:Vimlint_Parse_Ret
       let vp = g:Vimlint_Parse_Ret(s:vlp.NIL)
-      unlet! g:vimlint#parer_ret
+      silent! unlet! g:Vimlint_Parse_Ret
       if type(vp) == type('')
         throw vp
       endif
