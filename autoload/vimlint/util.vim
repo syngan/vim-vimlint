@@ -197,8 +197,10 @@ function! vimlint#util#parse_cmdline(str, conf) " {{{
   if brk == -1
     let s = [expand('%')]
   else
-    let s = s[brk : ]
+    let s = map(s[brk : ], 'expand(v:val)')
   endif
+  let g:cmd = s
+
   return [s, a:conf]
 endfunction " }}}
 
