@@ -263,7 +263,7 @@ function! vimlint#exists_var(self, env, node, funcref, refonly) abort
     else
       " local
       if var ==# 'count'
-        call a:self.error_mes(a:node, 'EVL106', 'local variable `' . var . '` is used withoug l:', var)
+        call a:self.error_mes(a:node, 'EVL106', 'local variable `' . var . '` is used without l:', var)
       endif
       let var = 'l:' . var
     endif
@@ -437,7 +437,7 @@ function! s:VimlLint.append_var(env, var, val, pos) abort
 
       else
         if v ==# 'count'
-          call self.error_mes(a:var, 'EVL106', 'local variable `' . v . '` is used withoug l:', v)
+          call self.error_mes(a:var, 'EVL106', 'local variable `' . v . '` is used without l:', v)
         endif
         let v = 'l:' . v
       endif
