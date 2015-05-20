@@ -62,6 +62,8 @@ let s:default_errlevel.EVL105 = s:DEF_WRN
 let s:default_errlevel.EVL107 = s:DEF_NON
 let s:default_errlevel.EVL108 = s:DEF_NON
 let s:default_errlevel.EVL109 = s:DEF_NON
+let s:default_errlevel.EVL110 = s:DEF_NON
+let s:default_errlevel.EVL111 = s:DEF_NON
 let s:default_errlevel.EVL201 = s:DEF_NON
 let s:default_errlevel.EVL202 = s:DEF_WRN
 let s:default_errlevel.EVL203 = s:DEF_WRN
@@ -199,6 +201,7 @@ function! s:env(outer, funcname, ...) abort " {{{
   let env.has_break = 0 " どこかで break/continue したら 1
   let env.is_dic_func = a:0 > 0 && a:1
   let env.extend = 0
+  let env.no_prepend_var = {}
   if has_key(a:outer, 'global')
     let env.global = a:outer.global
   else
@@ -438,6 +441,9 @@ function! s:VimlLint.append_var(env, var, val, pos) abort
       else
         if v ==# 'count'
           call self.error_mes(a:var, 'EVL106', 'local variable `' . v . '` is used without l:', v)
+        elseif v =~# '^[A-Z]'
+          " for EVL111
+          let a:env.no_prepend_var[v] = a:var
         endif
         let v = 'l:' . v
       endif
@@ -1745,7 +1751,17 @@ function s:VimlLint.compile_call(node, refchk) abort "{{{
       endif
     elseif left.value =~# '^[gl]:[a-z][A-Za-z0-9_]\+$'
       call self.error_mes(left, 'E117', 'Unknown function: `' . left.value . '`', 1)
+"    elseif left.value =~# '^[A-Z][A-Za-z0-9_]*$' && self.env.global != self.env
+"      call vimlint#exists_var(self, self.env, left, 1, 0)
     elseif left.value =~# '^\%([la]:\)\?[A-Za-z0-9_]\+$'
+      if left.value =~# '^\(l:\)\?[A-Z]'
+        let funcname = substitute(left.value, '^l:', '', '')
+        if has_key(self.env.no_prepend_var, funcname)
+          let n = self.env.no_prepend_var[funcname]
+          call self.error_mes(n, 'EVL111', 'variable `' . funcname . '` is used without prefix', funcname)
+        endif
+      endif
+
       " variable? 参照しましたよ.
       " 新しい関数がでたらどうする？
       " @TODO local function が EVL101 になってしまうので gbwtsla にしない
@@ -1976,7 +1992,7 @@ function! s:vimlint_file(filename, param, progress) abort " {{{
     call c.error_mes({'pos' : {'lnum' : line, 'col' : col, 'i' : i}}, i, msg, 1)
   finally
 
-    for Hook in c.param.hook_after_0
+    for l:Hook in c.param.hook_after_0
       call Hook(a:filename, a:param, c)
     endfor
 
