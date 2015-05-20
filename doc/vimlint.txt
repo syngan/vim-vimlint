@@ -305,7 +305,18 @@ EVL109: local variable `v` is used outside of a function	*EVL109*
 
 EVL110: function `v` does not have `x` argument.		*EVL110*
 	See |g:vimlint#config.func_abort|.
-	
+EVL111: variable `v` is used without prefix.			*EVL111*
+>
+	    function! Incorrect()
+		" vim reports E705 if function `Func` is already defined.
+	        let Func = function('printf')
+		return Func
+	    endif
+	    function! Correct()
+	        let l:Func = function('printf')
+		return Func
+	    endif
+<
 
 code
 EVL201: unreachable code `return/throw`				*EVL201*
