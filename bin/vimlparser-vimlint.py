@@ -20,7 +20,13 @@ class VimLCompiler:
     elif type(node) == type(1):
       f.write("{0}".format(node))
     elif type(node) == type(''):
-      str = re.sub("'", "''", node)
+      str = node
+      str = re.sub("'", "''", str)
+      str = re.sub('\n', r'\\n', str)
+      str = re.sub('\t', r'\\t', str)
+      str = re.sub('\r', r'\\r', str)
+      if node.startswith('lua << EOF'):
+        print(str)
       f.write("'{0}'".format(str))
     else:
       f.write("{\n")
