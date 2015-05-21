@@ -1945,13 +1945,15 @@ function! s:vimlint_file(filename, param, progress) abort " {{{
     if c.filename !=# '' && a:param.parse_py
       call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' start.py')
       let py = globpath(&rtp, 'bin/vimlparser-vimlint.py')
+      let fv = tempname()
+      silent execute 'new' vimfile
+      silent execute ':w ++enc=utf-8' fv
+      :quit!
       let f = tempname()
-      call system(printf('python3 %s %s %s', py, vimfile, f))
+      call system(printf('python3 %s %s %s', py, fv, f))
       call vimlint#util#echo_progress(a:param, a:progress . c.filename . ' source.py')
       source `=f`
-      silent! unlet! g:Vimlint_Parse_Ret
       let vp = g:Vimlint_Parse_Ret(s:vlp.NIL)
-      silent! unlet! g:Vimlint_Parse_Ret
       if type(vp) == type('')
         throw vp
       endif
