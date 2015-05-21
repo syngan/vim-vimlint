@@ -35,7 +35,7 @@ let s:VimlLint = {}
 
 
 let s:default_param = {} " {{{
-let s:default_param.parse_py = 1
+let s:default_param.parse_py = 0
 let s:default_param.recursive = 1
 let s:default_param.quiet = 0
 let s:default_param.type = 'file'
