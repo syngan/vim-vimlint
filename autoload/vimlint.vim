@@ -1002,6 +1002,14 @@ function s:VimlLint.compile_function(node, refchk) abort "{{{
   call self.compile_body(a:node.body, 1)
 
   " 未使用変数は?
+  if a:node.attr.range
+    " issue #76
+    if self.env.var['a:firstline'].ref || self.env.var['a:lastline'].ref
+      let self.env.var['a:firstline'].ref = 1
+      let self.env.var['a:lastline'].ref = 1
+    endif
+  endif
+
   for v in keys(self.env.var)
     if self.env.var[v].ref == 0
       " a: は例外とする, オプションが必要 @TODO
