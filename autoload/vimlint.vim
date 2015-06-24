@@ -1010,15 +1010,13 @@ function s:VimlLint.compile_function(node, refchk) abort "{{{
     endif
   endif
 
-  for v in keys(self.env.var)
-    if self.env.var[v].ref == 0
-      " a: は例外とする, オプションが必要 @TODO
+  for v in filter(keys(self.env.var), 'self.env.var[v:val].ref == 0')
+    " a: は例外とする, オプションが必要 @TODO
 "      echo self.env.var[v]
-      if v =~# '^a:'
-        call self.error_mes(self.env.var[v].node, 'EVL103', 'unused argument `' . v . '`', v)
-      else
-        call self.error_mes(self.env.var[v].node, 'EVL102', 'unused variable `' . v . '`', v)
-      endif
+    if v =~# '^a:'
+      call self.error_mes(self.env.var[v].node, 'EVL103', 'unused argument `' . v . '`', v)
+    else
+      call self.error_mes(self.env.var[v].node, 'EVL102', 'unused variable `' . v . '`', v)
     endif
   endfor
 
