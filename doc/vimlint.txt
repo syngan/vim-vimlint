@@ -338,6 +338,7 @@ EVL204: constant in conditional context				*EVL204*
 	    endif 1
 <
 EVL205: missing scriptencoding					*EVL205*
+	See |:scriptencoding|.
 
 EVL206: `v` can be used for `x`					*EVL206*
 
