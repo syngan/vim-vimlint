@@ -102,6 +102,9 @@ You can define default values by |g:vimlint#config|.
 		'hoge', then >
 		let g:vimlint#config.EVL103 = {'hoge' : 1}
 <
+		The following messages cannot be turned off:
+		|EVL105|, |EVL202|, |EVL203|, |EVL205|, |EVL901|, and |EVL902|.
+
 	"func_abort"		Default: 0	*g:vimlint#config.func_abort*
 		If the value is non-zero, |vimlint| reports |EVL110| if
 		a function does not have the abort argument.
