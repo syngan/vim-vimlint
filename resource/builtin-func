@@ -20,7 +20,7 @@ bufexists( {expr})		Number	TRUE if buffer {expr} exists
 buflisted( {expr})		Number	TRUE if buffer {expr} is listed
 bufloaded( {expr})		Number	TRUE if buffer {expr} is loaded
 bufname( {expr})		String	Name of the buffer {expr}
-bufnr( {expr} [, {create}])	Number	Number of the buffer {expr}
+bufnr( {expr} [, {create}])			Number	Number of the buffer {expr}
 bufwinnr( {expr})		Number	window number of buffer {expr}
 byte2line( {byte})		Number	line number at byte count {byte}
 byteidx( {expr}, {nr})		Number	byte index of {nr}'th char in {expr}
@@ -45,8 +45,8 @@ count( {list}, {expr} [, {ic} [, {start}]])
 				Number	 count how many {expr} are in {list}
 cscope_connection( [{num} , {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
-cursor( {lnum}, {col} [, {coladd}])
-				Number	move cursor to {lnum}, {col}, {coladd}
+cursor( {lnum}, {col} [, {off}])
+				Number	move cursor to {lnum}, {col}, {off}
 cursor( {list})			Number	move cursor to position in {list}
 deepcopy( {expr} [, {noref}])	any	make a full copy of {expr}
 delete( {fname})		Number	delete file {fname}
@@ -124,9 +124,10 @@ getwinposx()			Number	X coord in pixels of GUI Vim window
 getwinposy()			Number	Y coord in pixels of GUI Vim window
 getwinvar( {nr}, {varname} [, {def}])
 				any	variable {varname} in window {nr}
-glob( {expr} [, {nosuf} [, {list}]])
+glob( {expr} [, {nosuf} [, {list} [, {alllinks}]]])
 				any	expand file wildcards in {expr}
-globpath( {path}, {expr} [, {nosuf} [, {list}]])
+glob2regpat( {expr})		String  convert a glob pat into a search pat
+globpath( {path}, {expr} [, {nosuf} [, {list} [, {alllinks}]]])
 				String	do glob({expr}) for all dirs in {path}
 has( {feature})			Number	TRUE if feature {feature} supported
 has_key( {dict}, {key})		Number	TRUE if {dict} has entry {key}
@@ -274,7 +275,7 @@ split( {expr} [, {pat} [, {keepempty}]])
 sqrt( {expr})			Float	square root of {expr}
 str2float( {expr})		Float	convert String to Float
 str2nr( {expr} [, {base}])	Number	convert String to Number
-strchars( {expr})		Number	character length of the String {expr}
+strchars( {expr} [, {skipcc}])	Number	character length of the String {expr}
 strdisplaywidth( {expr} [, {col}]) Number display length of the String {expr}
 strftime( {format}[, {time}])	String	time in specified format
 stridx( {haystack}, {needle}[, {start}])
