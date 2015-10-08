@@ -20,7 +20,7 @@ bufexists( {expr})		Number	TRUE if buffer {expr} exists
 buflisted( {expr})		Number	TRUE if buffer {expr} is listed
 bufloaded( {expr})		Number	TRUE if buffer {expr} is loaded
 bufname( {expr})		String	Name of the buffer {expr}
-bufnr( {expr} [, {create}])			Number	Number of the buffer {expr}
+bufnr( {expr} [, {create}])	Number	Number of the buffer {expr}
 bufwinnr( {expr})		Number	window number of buffer {expr}
 byte2line( {byte})		Number	line number at byte count {byte}
 byteidx( {expr}, {nr})		Number	byte index of {nr}'th char in {expr}
@@ -95,6 +95,7 @@ getbufvar( {expr}, {varname} [, {def}])
 				any	variable {varname} in buffer {expr}
 getchar( [expr])		Number	get one character from the user
 getcharmod( )			Number	modifiers for the last typed character
+getcharsearch()			Dict	last character search
 getcmdline()			String	return the current command-line
 getcmdpos()			Number	return cursor position in command-line
 getcmdtype()			String	return current command-line type
@@ -244,6 +245,7 @@ server2client( {clientid}, {string})
 				Number	send reply string
 serverlist()			String	get a list of available servers
 setbufvar( {expr}, {varname}, {val})	set {varname} in buffer {expr} to {val}
+setcharsearch( {dict})		Dict	set character search from {dict}
 setcmdpos( {pos})		Number	set cursor position in command-line
 setline( {lnum}, {line})	Number	set line {lnum} to {line}
 setloclist( {nr}, {list}[, {action}])
