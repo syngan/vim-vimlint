@@ -105,7 +105,7 @@ endif
 endfunction " }}}
 
 function! vimlint#debug#echonode(node, refchk) " {{{
-  echo "compile. " . s:node2str(a:node) . "(" . a:node.type . "), val=" .
+  echo "compile. " . vimlint#debug#node2str(a:node) . "(" . a:node.type . "), val=" .
     \ (has_key(a:node, "value") ?
     \ (type(a:node.value) ==# type("") ? a:node.value : "@@" . type(a:node.value)) : "%%") .
     \  ", ref=" . a:refchk
