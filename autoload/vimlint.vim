@@ -69,6 +69,8 @@ let s:default_errlevel.EVL202 = s:DEF_WRN
 let s:default_errlevel.EVL203 = s:DEF_WRN
 let s:default_errlevel.EVL204 = s:DEF_NON
 let s:default_errlevel.EVL205 = s:DEF_WRN
+let s:default_errlevel.EVL206 = s:DEF_NON
+let s:default_errlevel.EVL207 = s:DEF_NON
 let s:default_errlevel.EVL901 = s:DEF_WRN
 let s:default_errlevel.EVL902 = s:DEF_WRN
 let s:def_var_name = ':'
@@ -921,6 +923,10 @@ function s:VimlLint.compile_excmd(node, refchk) abort " {{{
   " lcd `=cwd`
   " edit/new `=file`
   " line put = expr
+  if has_key(a:node, 'ea') && has_key(a:node.ea, 'cmd') && get(a:node.ea.cmd, 'name', '') ==# 'let'
+    call self.error_mes(a:node, 'EVL207', 'statement with no effect', a:node)
+    return
+  endif
 
   " command を引数にとるものは skip する.
   let str = vimlint#util#skip_modifiers_excmd(a:node.str)
