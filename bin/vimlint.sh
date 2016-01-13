@@ -9,6 +9,7 @@ usage()
 Usage ${0##*/} [-p <dir>][-l <dir>][-e errlv][-v][-E][-h][-c config] {<file>|<dir>} ...
  -p <dir>           look for vim-vimlparser in <dir>
  -l <dir>           look for vim-vimlint in <dir>
+ -u                 invoke vim with '-u NONE -i NONE'
  -h                 print this message and exit
  -e EVLxxx=n        set error level for all variables
  -e EVLxxx.var=n    set error level for the variable "var"
@@ -33,7 +34,7 @@ VOPT="-c 'set rtp+=`pwd`'"
 echo "call has_key(g:, \"vimlint#config\") | let g:vimlint#config = {}" > ${VF}
 echo "let g:vimlint#config.quiet = 1" >> ${VF}
 ERRGREP='Error|Warning'
-while getopts 'hl:p:e:vc:E' OPT; do
+while getopts 'hl:p:ue:vc:E' OPT; do
 	case "$OPT" in
 	p)
 		if [ ! -f "${OPTARG}/autoload/vimlparser.vim" ]; then
@@ -47,6 +48,8 @@ while getopts 'hl:p:e:vc:E' OPT; do
 		fi
 		VOPT="$VOPT -c 'set rtp+=$OPTARG'"
 		shift ;;
+	u)
+		VOPT="$VOPT -u NONE -i NONE" ;;
 	E)
 		ERRGREP='Error' ;;
 	e)
