@@ -35,6 +35,16 @@ script:
   - sh /tmp/vim-vimlint/bin/vimlint.sh -l /tmp/vim-vimlint -p /tmp/vim-vimlparser -v autoload
 ```
 
+If you want to ignore EVL103 for any cases and EVL102 for variable `_`,
+```
+before_script:
+    - git clone https://github.com/syngan/vim-vimlint /tmp/vim-vimlint
+    - git clone https://github.com/ynkdir/vim-vimlparser /tmp/vim-vimlparser
+
+script:
+  - sh /tmp/vim-vimlint/bin/vimlint.sh -l /tmp/vim-vimlint -p /tmp/vim-vimlparser -e EVL103=1 -e EVL102.l:_=1 -c func_abort=1 autoload
+```
+
 - [vim-vimlint で Travis-CI 連携](http://d.hatena.ne.jp/syngan/20140321/1395411106)
 
 # Recommended Plugin
