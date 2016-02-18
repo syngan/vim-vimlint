@@ -35,6 +35,15 @@ byteidxcomp( {expr}, {nr})	Number	byte index of {nr}'th char in {expr}
 call( {func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
 ceil( {expr})			Float	round {expr} up
+ch_close( {handle})		none	close a channel
+ch_logfile( {fname} [, {mode}])	none	start logging channel activity
+ch_open( {address} [, {argdict})] Number open a channel to {address}
+ch_readraw( {handle})		String	read from channel {handle}
+ch_sendexpr( {handle}, {expr} [, {options}])
+				any	send {expr} over JSON channel {handle}
+ch_sendraw( {handle}, {string} [, {options}])
+				any	send {string} over raw channel {handle}
+ch_status( {handle})		String	status of channel {handle}
 changenr()			Number	current change number
 char2nr( {expr}[, {utf8}])	Number	ASCII/UTF8 value of first char in {expr}
 cindent( {lnum})		Number	C indent for line {lnum}
@@ -60,6 +69,7 @@ delete( {fname} [, {flags}])	Number	delete the file or directory {fname}
 did_filetype()			Number	TRUE if FileType autocommand event used
 diff_filler( {lnum})		Number	diff filler lines about {lnum}
 diff_hlID( {lnum}, {col})	Number	diff highlighting at {lnum}/{col}
+disable_char_avail_for_testing({expr})  none  test without typeahead
 empty( {expr})			Number	TRUE if {expr} is empty
 escape( {string}, {chars})	String	escape {chars} in {string} with '\'
 eval( {string})			any	evaluate {string} into its value
@@ -166,7 +176,15 @@ invert( {expr})			Number  bitwise invert
 isdirectory( {directory})	Number	TRUE if {directory} is a directory
 islocked( {expr})		Number	TRUE if {expr} is locked
 items( {dict})			List	key-value pairs in {dict}
+job_getchannel( {job})		Number	get the channel handle for {job}
+job_start( {command} [, {options}]) Job	start a job	
+job_status( {job})		String	get the status of a job
+job_stop( {job} [, {how}])	Number	stop a job
 join( {list} [, {sep}])		String	join {list} items into one String
+js_decode( {string})		any	decode JS style JSON
+js_encode( {expr})		String	encode JS style JSON
+json_decode( {string})		any	decode JSON
+json_encode( {expr})		String	encode JSON
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}
 libcall( {lib}, {func}, {arg})	String	call {func} in library {lib} with {arg}
@@ -186,9 +204,9 @@ mapcheck( {name}[, {mode} [, {abbr}]])
 				String	check for mappings matching {name}
 match( {expr}, {pat}[, {start}[, {count}]])
 				Number	position where {pat} matches in {expr}
-matchadd( {group}, {pattern}[, {priority}[, {id}]])
+matchadd( {group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 				Number	highlight {pattern} with {group}
-matchaddpos( {group}, {list}[, {priority}[, {id}]])
+matchaddpos( {group}, {pos}[, {priority}[, {id}[, {dict}]]])
 				Number	highlight positions with {group}
 matcharg( {nr})			List	arguments of |:match|
 matchdelete( {id})		Number	delete match identified by {id}
