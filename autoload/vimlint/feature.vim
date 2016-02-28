@@ -29,6 +29,8 @@ function! s:init() abort " {{{
 \ 'cmdline_info': 1,
 \ 'comments': 1,
 \ 'conceal': 1,
+\ 'crypt-blowfish': 1,
+\ 'crypt-blowfish2': 1,
 \ 'cryptv': 1,
 \ 'cscope': 1,
 \ 'cursorbind': 1,
@@ -40,8 +42,6 @@ function! s:init() abort " {{{
 \ 'digraphs': 1,
 \ 'directx': 1,
 \ 'dnd': 1,
-\ 'dos16': 1,
-\ 'dos32': 1,
 \ 'ebcdic': 1,
 \ 'emacs_tags': 1,
 \ 'eval': 1,
@@ -68,7 +68,6 @@ function! s:init() abort " {{{
 \ 'gui_nextaw': 1,
 \ 'gui_photon': 1,
 \ 'gui_running': 1,
-\ 'gui_win16': 1,
 \ 'gui_win32': 1,
 \ 'gui_win32s': 1,
 \ 'gui_win64': 1,
@@ -109,7 +108,8 @@ function! s:init() abort " {{{
 \ 'netbeans_enabled': 1,
 \ 'netbeans_intg': 1,
 \ 'ole': 1,
-\ 'os2': 1,
+\ 'osx': 1,
+\ 'packages': 1,
 \ 'path_extra': 1,
 \ 'perl': 1,
 \ 'persistent_undo': 1,
@@ -127,7 +127,6 @@ function! s:init() abort " {{{
 \ 'showcmd': 1,
 \ 'signs': 1,
 \ 'smartindent': 1,
-\ 'sniff': 1,
 \ 'spell': 1,
 \ 'startuptime': 1,
 \ 'statusline': 1,
@@ -159,7 +158,6 @@ function! s:init() abort " {{{
 \ 'vreplace': 1,
 \ 'wildignore': 1,
 \ 'wildmenu': 1,
-\ 'win16': 1,
 \ 'win32': 1,
 \ 'win32unix': 1,
 \ 'win64': 1,
@@ -186,8 +184,19 @@ function! s:init() abort " {{{
         \ 'guess_encode': 1,
         \ } " }}}
 
+  " old version {{{
+  let old = {
+\ 'dos16': 1,
+\ 'dos32': 1,
+\ 'gui_win16': 1,
+\ 'os2': 1,
+\ 'sniff': 1,
+\ 'win16': 1,
+\ } " }}}
+
   let dict = feature
   let dict = extend(dict, kaoriya)
+  let dict = extend(dict, old)
   let dict['gui_macvim'] = 1
   let dict['gui_kde'] = 1
   let dict['gui_qt'] = 1
