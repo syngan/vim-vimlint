@@ -142,6 +142,7 @@ function! s:init() abort " {{{
 \ 'termresponse': 1,
 \ 'textobjects': 1,
 \ 'tgetent': 1,
+\ 'timers': 1,
 \ 'title': 1,
 \ 'toolbar': 1,
 \ 'unix': 1,
