@@ -658,7 +658,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) abort " {{{
         if v.type ==# 'append' && v.v.ref == 0 && a:env.global.fins == 0
           " 変数を追加したが参照していない
           " かつ,  finally 句がない場合
-          call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var. '`', v.var)
+          call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var . '`', v.var)
         endif
         let a:env.varstack[j] = nop
       endfor
