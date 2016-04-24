@@ -54,7 +54,7 @@ function! Vimlint_test(dir, ...)
   if isdirectory(a:dir)
     let files = expand(a:dir . "/*.vim")
   else
-    let files = a:dir
+    let files = expand(a:dir)
   endif
   let ok = 0
   let ng = 0
