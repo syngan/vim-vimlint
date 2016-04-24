@@ -303,7 +303,10 @@ EVL107: A function name is not allowed to contain a colon: `v`	*EVL107*
 <
 
 EVL108: `n`th argument of `v` should be `x`			*EVL108*
-
+>
+           has('python3/dyn') " dyn feasutre is invalid
+           has('python3')     " correct
+<
 EVL109: local variable `v` is used outside of a function	*EVL109*
 
 EVL110: function `v` does not have `x` argument.		*EVL110*
@@ -335,7 +338,7 @@ EVL204: constant in conditional context				*EVL204*
 	    if 1
 	    @vimlint(EVL204, 0)
 	        " avoid error
-	    endif 1
+	    endif
 <
 EVL205: missing scriptencoding					*EVL205*
 	See |:scriptencoding|.
