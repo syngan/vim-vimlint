@@ -71,6 +71,7 @@ let s:default_errlevel.EVL204 = s:DEF_NON
 let s:default_errlevel.EVL205 = s:DEF_WRN
 let s:default_errlevel.EVL206 = s:DEF_NON
 let s:default_errlevel.EVL207 = s:DEF_NON
+let s:default_errlevel.EVL301 = s:DEF_WRN
 let s:default_errlevel.EVL901 = s:DEF_WRN
 let s:default_errlevel.EVL902 = s:DEF_WRN
 let s:def_var_name = ':'
@@ -130,7 +131,7 @@ function! s:extend_errlevel(param) abort " {{{
   for key in keys(s:default_errlevel)
 "   echo "param[" . key . "]"
     if !has_key(param, key)
-      call s:set_param(param, key, s:DEF_ERR, s:def_var_name)
+      call s:set_param(param, key, key[3] == '3' ? s:DEF_WRN : s:DEF_ERR, s:def_var_name)
     elseif type(param[key]) == type(0)
       call s:set_param(param, key, param[key], s:def_var_name)
     elseif type(param[key]) != type({})
@@ -1670,7 +1671,15 @@ function s:VimlLint.compile_subtract(node, ...) abort
 endfunction
 
 function s:VimlLint.compile_concat(node, ...) abort
-  return self.compile_op2(a:node, '.')
+  let r = self.compile_op2(a:node, '.')
+  " google style guide. use spaces around operators
+  let line = self.lines[r.pos.lnum - 1]
+  if line[r.pos.col - 2] !~# '\s' || len(line) > r.pos.col && line[r.pos.col] !~# '\s'
+    if self.filename !=# ''
+      call self.error_mes(r, 'EVL301', 'use space around operator `.`', r)
+    endif
+  endif
+  return r
 endfunction
 
 function s:VimlLint.compile_multiply(node, ...) abort
@@ -1736,6 +1745,7 @@ function s:VimlLint.parse_string(str, node, cmd, ref) abort "{{{
       " @TODO 今は変数の中身は参照していないので適当に代入可能
     endif
     let r = s:vlp.StringReader.new(lines)
+    let c.lines = lines
     call c.compile(p.parse(r), 1)
   catch
     call self.error_mes(a:node, 'EVL203', 'parse error in `' . a:cmd . '`', 1)
@@ -1948,9 +1958,12 @@ function! s:vimlint_file(filename, param, progress) abort " {{{
     if a:param.type ==# 'string'
         let r = s:vlp.StringReader.new(vimfile)
         let c.filename = ''
+        let c.lines = split(vimfile, "\n")
     else
-        let r = s:vlp.StringReader.new(readfile(vimfile))
+        let l = readfile(vimfile)
+        let r = s:vlp.StringReader.new(l)
         let c.filename = vimfile
+        let c.lines = l
     endif
 
 

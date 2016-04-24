@@ -344,6 +344,11 @@ EVL206: `v` can be used for `x`					*EVL206*
 
 EVL207: statement with no effect				*EVL207*
 
+
+style
+EVL301: use space around operator `x`				EVL301
+
+
 system error
 EVL901: unknown type `t`					*EVL901*
 EVL902: assert error `t`					*EVL902*
