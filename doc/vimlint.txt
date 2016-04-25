@@ -346,7 +346,9 @@ EVL207: statement with no effect				*EVL207*
 
 
 style
-EVL301: use space around operator `x`				EVL301
+EVL301: use space around operator `x`				*EVL301*
+								*EVL302*
+EVL302: use the full command name `x` instead of the abbreviation
 
 
 system error

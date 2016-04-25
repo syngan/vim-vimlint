@@ -71,7 +71,8 @@ let s:default_errlevel.EVL204 = s:DEF_NON
 let s:default_errlevel.EVL205 = s:DEF_WRN
 let s:default_errlevel.EVL206 = s:DEF_NON
 let s:default_errlevel.EVL207 = s:DEF_NON
-let s:default_errlevel.EVL301 = s:DEF_WRN
+let s:default_errlevel.EVL301 = s:DEF_NON
+let s:default_errlevel.EVL302 = s:DEF_NON
 let s:default_errlevel.EVL901 = s:DEF_WRN
 let s:default_errlevel.EVL902 = s:DEF_WRN
 let s:def_var_name = ':'
@@ -843,6 +844,40 @@ function! s:reconstruct_varstack_st(self, env, p) abort " {{{
 endfunction " }}}
 " @vimlint(EVL103, 0, a:self)
 
+function! s:VimlLint.abbrev_if(vl, node) abort " {{{
+  for node in a:node.elseif
+    call a:vl.abbrev_common(node)
+  endfor
+  if a:node.else isnot s:vlp.NIL
+    call a:vl.abbrev_common(a:node.else)
+  endif
+  call a:vl.abbrev_common(a:node.endif)
+endfunction " }}}
+function! s:VimlLint.abbrev_for(vl, node) abort " {{{
+  call a:vl.abbrev_common(a:node.endfor)
+endfunction " }}}
+function! s:VimlLint.abbrev_while(vl, node) abort " {{{
+  call a:vl.abbrev_common(a:node.endwhile)
+endfunction " }}}
+function! s:VimlLint.abbrev_try(vl, node) abort " {{{
+  for node in a:node.catch
+    call a:vl.abbrev_common(node)
+  endfor
+  if a:node.finally isnot s:vlp.NIL
+    call a:vl.abbrev_common(a:node.finally)
+  endif
+  call a:vl.abbrev_common(a:node.endtry)
+endfunction " }}}
+function! s:VimlLint.abbrev_func(vl, node) abort " {{{
+  call a:vl.abbrev_common(a:node.endfunction)
+endfunction " }}}
+function! s:VimlLint.abbrev_common(node) abort " {{{
+  let line = self.lines[a:node.pos.lnum - 1]
+  if match(line, '^' . a:node.ea.cmd.name . '\>', a:node.pos.col - 1) < 0
+      call self.error_mes(a:node, 'EVL302', 'use the full command name `' . a:node.ea.cmd.name . '` instead of the abbreviation', a:node)
+  endif
+endfunction " }}}
+
 function s:VimlLint.compile(node, refchk) abort " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
     if a:node.type != 2 && g:vimlint#debug > 2 || g:vimlint#debug >= 5
@@ -860,6 +895,14 @@ function s:VimlLint.compile(node, refchk) abort " {{{
   "   echo a:node
   "   throw "stop"
   " endtry
+  if has_key(a:node, 'ea')
+    if has_key(self.excmd_abbrev, a:node.type)
+      call self.excmd_abbrev[a:node.type](self, a:node)
+    elseif has_key(a:node.ea.cmd, 'name')
+      call self.abbrev_common(a:node)
+    endif
+  endif
+
 
   return call(self.compile_funcs[a:node.type], [a:node, a:refchk], self)
 
@@ -2231,6 +2274,13 @@ let s:VimlLint.compile_funcs[s:vlp.NODE_IDENTIFIER] = s:VimlLint.compile_identif
 let s:VimlLint.compile_funcs[s:vlp.NODE_CURLYNAME] = s:VimlLint.compile_curlyname
 let s:VimlLint.compile_funcs[s:vlp.NODE_ENV] = s:VimlLint.compile_env
 let s:VimlLint.compile_funcs[s:vlp.NODE_REG] = s:VimlLint.compile_reg
+
+let s:VimlLint.excmd_abbrev = {}
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_IF] = s:VimlLint.abbrev_if
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_FOR] = s:VimlLint.abbrev_for
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_WHILE] = s:VimlLint.abbrev_while
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_TRY] = s:VimlLint.abbrev_try
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_FUNCTION] = s:VimlLint.abbrev_func
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
