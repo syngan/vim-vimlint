@@ -34,7 +34,7 @@ VOPT="-c 'set rtp+=`pwd`'"
 echo "call has_key(g:, \"vimlint#config\") | let g:vimlint#config = {}" > ${VF}
 echo "let g:vimlint#config.quiet = 1" >> ${VF}
 ERRGREP='Error|Warning'
-while getopts 'hl:p:ue:vc:E' OPT; do
+while getopts 'hl:p:ue:vc:EX' OPT; do
 	case "$OPT" in
 	p)
 		if [ ! -f "${OPTARG}/autoload/vimlparser.vim" ]; then
@@ -52,6 +52,8 @@ while getopts 'hl:p:ue:vc:E' OPT; do
 		VOPT="$VOPT -u NONE -i NONE" ;;
 	E)
 		ERRGREP='Error' ;;
+	X)
+		ERRGREP='vimlint#vimlint' ;;  # Exception
 	e)
 		if [ `echo ${OPTARG} | grep '^EVL[0-9]\+=[135]$' | wc -l` = 1 ]; then
 			E=`echo ${OPTARG} | sed 's/=.*//'`

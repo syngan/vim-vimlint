@@ -4,6 +4,16 @@ before_script:
     - git clone https://github.com/thinca/vim-themis --branch v1.4 --depth 1 /tmp/vim-themis
     - vim --version
 
+    - git clone https://github.com/vim-jp/vital.vim.git /tmp/vital.vim
+    - git clone https://github.com/thinca/vim-quickrun.git /tmp/quickrun
+    - git clone https://github.com/Shougo/neocomplete.vim.git /tmp/neocom
+    - git clone https://github.com/easymotion/vim-easymotion.git /tmp/em
+    - git clone https://github.com/tpope/vim-fugitive /tmp/fug
+    - git clone https://github.com/scrooloose/syntastic /tmp/syntastic
+    - git clone https://github.com/itchyny/lightline.vim.git /tmp/ll
+    - git clone https://github.com/ctrlpvim/ctrlp.vim /tmp/cp
+    - git clone https://github.com/vim-airline/vim-airline.git /tmp/al
+
 script:
     - rm -f /tmp/vimlint_test.log
     - vim -c 'set rtp+=.,/tmp/vimlparser' -c 'source test/vimlint-test.vim' -c 'call Vimlint_test("test", "/tmp/vimlint_test.log")' -c 'qall!'
@@ -13,3 +23,16 @@ script:
     - sh ./bin/vimlint.sh -p /tmp/vimlparser -v autoload
     - sh ./test/err.sh -p /tmp/vimlparser test/test-ok.vim test/test-ng.vim
     - /tmp/vim-themis/bin/themis themis
+
+
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 -c func_abort=1 /tmp/vital.vim/autoload
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 -c func_abort=1 /tmp/quickrun/autoload
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 -c func_abort=1 /tmp/neocom/autoload
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 -c func_abort=1 /tmp/em/autoload
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 /tmp/fug/plugin
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 /tmp/syntastic/autoload /tmp/syntastic/plugin
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 -c func_abort=1 /tmp/ll/autoload
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 /tmp/cp/autoload /tmp/cp/plugin
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 /tmp/al/autoload /tmp/al/plugin
+
+
