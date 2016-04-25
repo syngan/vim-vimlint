@@ -4,6 +4,7 @@ before_script:
     - git clone https://github.com/thinca/vim-themis --branch v1.4 --depth 1 /tmp/vim-themis
     - vim --version
 
+    - git clone https://github.com/vim/vim.git /tmp/vim
     - git clone https://github.com/vim-jp/vital.vim.git /tmp/vital.vim
     - git clone https://github.com/thinca/vim-quickrun.git /tmp/quickrun
     - git clone https://github.com/Shougo/neocomplete.vim.git /tmp/neocom
@@ -24,7 +25,7 @@ script:
     - sh ./test/err.sh -p /tmp/vimlparser test/test-ok.vim test/test-ng.vim
     - /tmp/vim-themis/bin/themis themis
 
-
+    - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 /tmp/vim/runtime/autoload /tmp/vim/runtime/plugin
     - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 -c func_abort=1 /tmp/vital.vim/autoload
     - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 -c func_abort=1 /tmp/quickrun/autoload
     - sh ./bin/vimlint.sh -X -p /tmp/vimlparser  -e EVL103=1 -e EVL102.l:_=1 -c func_abort=1 /tmp/neocom/autoload
