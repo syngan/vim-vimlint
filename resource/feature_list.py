@@ -11,7 +11,7 @@ import sys
 # }}}
 
 if len(sys.argv) < 2:
-  print 'Usage: feature-list.py eval.c'
+  print 'Usage: feature-list.py evalfunc.c'
   sys.exit(2)
 
 fp = open(sys.argv[1])
