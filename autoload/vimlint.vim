@@ -409,13 +409,11 @@ function! s:VimlLint.append_var(env, var, val, pos) abort
   let ret = {}
 
   if a:var.type == s:vlp.NODE_IDENTIFIER || a:var.type == s:vlp.NODE_SLICE
-    if a:var.type == s:vlp.NODE_IDENTIFIER
-      let node = a:var
-      let v = a:var.value
-    else
-      let node = a:var.left
-      let v = a:var.left.value
-    endif
+    let node = a:var
+    while node.type != s:vlp.NODE_IDENTIFIER
+      let node = node.left
+    endwhile
+    let v = node.value
     if v =~# '^[0-9]*$'
       echo 'in append_var: invalid input: type=' . type(a:var) . ',pos=' . a:pos
       echo a:var
