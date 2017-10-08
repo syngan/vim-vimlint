@@ -25,6 +25,9 @@ EOF
 	exit 1
 }
 
+if [ "$#" = 0 ]; then
+	usage
+fi
 
 VF=$( mktemp -t "${0##*/}"-$$.XXXXXXXX ) || exit 1
 trap 'rm -f "$TF"' EXIT HUP INT QUIT TERM
