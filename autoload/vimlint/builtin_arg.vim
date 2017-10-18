@@ -207,7 +207,7 @@ function! s:funcs.has(vl, fname, node) " {{{
           \ str !~# 'patch-[0-9]\+\.[0-9]\+\.[0-9]\+' &&
           \ str !~# 'nvim-[0-9]\+\.[0-9]\+\.[0-9]\+' &&
           \ !has_key(s:feature_list, tolower(str))
-      call s:EVL108(a:vl, a:node, 1, a:fname, 'a feature. see :h feature-list')
+      call s:EVL108(a:vl, a:node, 1, a:fname, 'a feature ('.str.'). See :h feature-list.')
     endif
   endif
 endfunction " }}}
