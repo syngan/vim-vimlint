@@ -147,4 +147,4 @@ call has('win64unix')
 call has('win95')
 call has('xim')
 call has('xterm_clipboard')
-
+call has('nvim-0.2.0')
