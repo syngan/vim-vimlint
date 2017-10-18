@@ -90,10 +90,11 @@ trap 'rm -f "$TF"' EXIT HUP INT QUIT TERM
 
 RET=0
 VOPT="${VOPT} -c 'source ${VF}'"
+VIMLINT_VIM=${VIMLINT_VIM:-vim}
 while [ $# -gt 0 ]; do
 	if [ -n "$1" -a \( -f "$1" -o -d "$1" \) ]; then
 		cat /dev/null >"$TF" || exit 1
-		VIM="vim $VOPT -N -c 'call vimlint#vimlint(\"$1\", {\"output\": \"${TF}\"})' -c 'qall!'"
+		VIM="$VIMLINT_VIM $VOPT -N -c 'call vimlint#vimlint(\"$1\", {\"output\": \"${TF}\"})' -c 'qall!'"
 		eval ${VIM} > /dev/null 2>&1
 		if [ ${VERBOSE} = 0 ]; then
 			egrep -a -w "${ERRGREP}" "$TF" && RET=2
