@@ -1859,7 +1859,7 @@ endfunction " }}}
 
 function! s:readonly_var(var) abort " {{{
   if a:var.type == s:vlp.NODE_IDENTIFIER
-    if a:var.value =~# '^a:.*'
+    if a:var.value =~# '^a:'
       return 1
     endif
 
