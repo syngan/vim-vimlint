@@ -9,27 +9,31 @@ argidx()			Number	current index in the argument list
 arglistid([{winnr} [, {tabnr}]]) Number	argument list id
 argv({nr})			String	{nr} entry of the argument list
 argv()				List	the argument list
+assert_beeps({cmd})		Number	assert {cmd} causes a beep
 assert_equal({exp}, {act} [, {msg}])
-				none	assert {exp} is equal to {act}
+				Number	assert {exp} is equal to {act}
+assert_equalfile({fname-one}, {fname-two})
+				Number	assert file contents is equal
 assert_exception({error} [, {msg}])
-				none	assert {error} is in v:exception
-assert_fails({cmd} [, {error}])	none	assert {cmd} fails
+				Number	assert {error} is in v:exception
+assert_fails({cmd} [, {error}])	Number	assert {cmd} fails
 assert_false({actual} [, {msg}])
-				none	assert {actual} is false
+				Number	assert {actual} is false
 assert_inrange({lower}, {upper}, {actual} [, {msg}])
-				none	assert {actual} is inside the range
+				Number	assert {actual} is inside the range
 assert_match({pat}, {text} [, {msg}])
-				none	assert {pat} matches {text}
+				Number	assert {pat} matches {text}
 assert_notequal({exp}, {act} [, {msg}])
-				none	assert {exp} is not equal {act}
+				Number	assert {exp} is not equal {act}
 assert_notmatch({pat}, {text} [, {msg}])
-				none	assert {pat} not matches {text}
-assert_report({msg})		none	report a test failure
-assert_true({actual} [, {msg}])	none	assert {actual} is true
+				Number	assert {pat} not matches {text}
+assert_report({msg})		Number	report a test failure
+assert_true({actual} [, {msg}])	Number	assert {actual} is true
 asin({expr})			Float	arc sine of {expr}
 atan({expr})			Float	arc tangent of {expr}
 atan2({expr1}, {expr2})		Float	arc tangent of {expr1} / {expr2}
-balloon_show({msg})		none	show {msg} inside the balloon
+balloon_show({expr})		none	show {expr} inside the balloon
+balloon_split({msg})		List	split {msg} as used for a balloon
 browse({save}, {title}, {initdir}, {default})
 				String	put up a file requester
 browsedir({title}, {initdir})	String	put up a directory requester
@@ -72,7 +76,7 @@ ch_setoptions({handle}, {options})
 ch_status({handle} [, {options}])
 				String	status of channel {handle}
 changenr()			Number	current change number
-char2nr({expr}[, {utf8}])	Number	ASCII/UTF8 value of first char in {expr}
+char2nr({expr} [, {utf8}])	Number	ASCII/UTF8 value of first char in {expr}
 cindent({lnum})			Number	C indent for line {lnum}
 clearmatches()			none	clear all matches
 col({expr})			Number	column nr of cursor or mark
@@ -91,8 +95,11 @@ cscope_connection([{num}, {dbpath} [, {prepend}]])
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
 cursor({list})			Number	move cursor to position in {list}
+debugbreak({pid})		Number  interrupt process being debugged
 deepcopy({expr} [, {noref}])	any	make a full copy of {expr}
 delete({fname} [, {flags}])	Number	delete the file or directory {fname}
+deletebufline({expr}, {first}[, {last}])
+				Number	delete lines from buffer {expr}
 did_filetype()			Number	|TRUE| if FileType autocmd event used
 diff_filler({lnum})		Number	diff filler lines about {lnum}
 diff_hlID({lnum}, {col})	Number	diff highlighting at {lnum}/{col}
@@ -114,9 +121,9 @@ filereadable({file})		Number	|TRUE| if {file} is a readable file
 filewritable({file})		Number	|TRUE| if {file} is a writable file
 filter({expr1}, {expr2})	List/Dict  remove items from {expr1} where
 					{expr2} is 0
-finddir({name}[, {path}[, {count}]])
+finddir({name} [, {path} [, {count}]])
 				String	find directory {name} in {path}
-findfile({name}[, {path}[, {count}]])
+findfile({name} [, {path} [, {count}]])
 				String	find file {name} in {path}
 float2nr({expr})		Number	convert Float {expr} to a Number
 floor({expr})			Float	round {expr} down
@@ -142,6 +149,7 @@ getbufline({expr}, {lnum} [, {end}])
 				List	lines {lnum} to {end} of buffer {expr}
 getbufvar({expr}, {varname} [, {def}])
 				any	variable {varname} in buffer {expr}
+getchangelist({expr})		List	list of change list items
 getchar([expr])			Number	get one character from the user
 getcharmod()			Number	modifiers for the last typed character
 getcharsearch()			Dict	last character search
@@ -158,9 +166,11 @@ getfperm({fname})		String	file permissions of file {fname}
 getfsize({fname})		Number	size in bytes of file {fname}
 getftime({fname})		Number	last modification time of file
 getftype({fname})		String	description of type of file {fname}
+getjumplist([{winnr} [, {tabnr}]])
+				List	list of jump list items
 getline({lnum})			String	line {lnum} of current buffer
 getline({lnum}, {end})		List	lines {lnum} to {end} of current buffer
-getloclist({nr}[, {what}])	List	list of location list items
+getloclist({nr} [, {what}])	List	list of location list items
 getmatches()			List	list of current matches
 getpid()			Number	process ID of Vim
 getpos({expr})			List	position of cursor, mark, etc.
@@ -174,8 +184,9 @@ gettabvar({nr}, {varname} [, {def}])
 gettabwinvar({tabnr}, {winnr}, {name} [, {def}])
 				any	{name} in {winnr} in tab page {tabnr}
 getwininfo([{winid}])		List	list of windows
-getwinposx()			Number	X coord in pixels of GUI Vim window
-getwinposy()			Number	Y coord in pixels of GUI Vim window
+getwinpos([{timeout}])		List	X and Y coord in pixels of the Vim window
+getwinposx()			Number	X coord in pixels of the Vim window
+getwinposy()			Number	Y coord in pixels of the Vim window
 getwinvar({nr}, {varname} [, {def}])
 				any	variable {varname} in window {nr}
 glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])
@@ -215,7 +226,7 @@ islocked({expr})		Number	|TRUE| if {expr} is locked
 isnan({expr})			Number	|TRUE| if {expr} is NaN
 items({dict})			List	key-value pairs in {dict}
 job_getchannel({job})		Channel	get the channel handle for {job}
-job_info({job})			Dict	get information about {job}
+job_info([{job}])		Dict	get information about {job}
 job_setoptions({job}, {options}) none	set options for {job}
 job_start({command} [, {options}])
 				Job	start a job
@@ -236,28 +247,28 @@ lispindent({lnum})		Number	Lisp indent for line {lnum}
 localtime()			Number	current time
 log({expr})			Float	natural logarithm (base e) of {expr}
 log10({expr})			Float	logarithm of Float {expr} to base 10
-luaeval({expr}[, {expr}])	any	evaluate |Lua| expression
+luaeval({expr} [, {expr}])	any	evaluate |Lua| expression
 map({expr1}, {expr2})		List/Dict  change each item in {expr1} to {expr}
-maparg({name}[, {mode} [, {abbr} [, {dict}]]])
+maparg({name} [, {mode} [, {abbr} [, {dict}]]])
 				String or Dict
 					rhs of mapping {name} in mode {mode}
-mapcheck({name}[, {mode} [, {abbr}]])
+mapcheck({name} [, {mode} [, {abbr}]])
 				String	check for mappings matching {name}
-match({expr}, {pat}[, {start}[, {count}]])
+match({expr}, {pat} [, {start} [, {count}]])
 				Number	position where {pat} matches in {expr}
-matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
+matchadd({group}, {pattern} [, {priority} [, {id} [, {dict}]]])
 				Number	highlight {pattern} with {group}
-matchaddpos({group}, {pos}[, {priority}[, {id}[, {dict}]]])
+matchaddpos({group}, {pos} [, {priority} [, {id} [, {dict}]]])
 				Number	highlight positions with {group}
 matcharg({nr})			List	arguments of |:match|
 matchdelete({id})		Number	delete match identified by {id}
-matchend({expr}, {pat}[, {start}[, {count}]])
+matchend({expr}, {pat} [, {start} [, {count}]])
 				Number	position where {pat} ends in {expr}
-matchlist({expr}, {pat}[, {start}[, {count}]])
+matchlist({expr}, {pat} [, {start} [, {count}]])
 				List	match and submatches of {pat} in {expr}
-matchstr({expr}, {pat}[, {start}[, {count}]])
+matchstr({expr}, {pat} [, {start} [, {count}]])
 				String	{count}'th match of {pat} in {expr}
-matchstrpos({expr}, {pat}[, {start}[, {count}]])
+matchstrpos({expr}, {pat} [, {start} [, {count}]])
 				List	{count}'th match of {pat} in {expr}
 max({expr})			Number	maximum value of items in {expr}
 min({expr})			Number	minimum value of items in {expr}
@@ -266,13 +277,17 @@ mkdir({name} [, {path} [, {prot}]])
 mode([expr])			String	current editing mode
 mzeval({expr})			any	evaluate |MzScheme| expression
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
-nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
+nr2char({expr} [, {utf8}])	String	single char with ASCII/UTF8 value {expr}
 or({expr}, {expr})		Number	bitwise OR
 pathshorten({expr})		String	shorten directory names in a path
 perleval({expr})		any	evaluate |Perl| expression
 pow({x}, {y})			Float	{x} to the power of {y}
 prevnonblank({lnum})		Number	line nr of non-blank line <= {lnum}
 printf({fmt}, {expr1}...)	String	format text
+prompt_addtext({buf}, {expr})	none	add text to a prompt buffer
+prompt_setcallback({buf}, {expr}) none	set prompt callback function
+prompt_setinterrupt({buf}, {text}) none	set prompt interrupt function
+prompt_setprompt({buf}, {text}) none	set prompt text
 pumvisible()			Number	whether popup menu is visible
 pyeval({expr})			any	evaluate |Python| expression
 py3eval({expr})			any	evaluate |python3| expression
@@ -281,6 +296,8 @@ range({expr} [, {max} [, {stride}]])
 				List	items from {expr} to {max}
 readfile({fname} [, {binary} [, {max}]])
 				List	get list of lines from file {fname}
+reg_executing()			String	get the executing register name
+reg_recording()			String	get the recording register name
 reltime([{start} [, {end}]])	List	get time value
 reltimefloat({time})		Float	turn the time value into a Float
 reltimestr({time})		String	turn time value into a String
@@ -319,7 +336,7 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout}]]])
 server2client({clientid}, {string})
 				Number	send reply string
 serverlist()			String	get a list of available servers
-setbufline( {expr}, {lnum}, {line})
+setbufline({expr}, {lnum}, {line})
 				Number	set line {lnum} to {line} in buffer
 					{expr}
 setbufvar({expr}, {varname}, {val})
@@ -328,13 +345,13 @@ setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
 setfperm({fname}, {mode})	Number	set {fname} file permissions to {mode}
 setline({lnum}, {line})		Number	set line {lnum} to {line}
-setloclist({nr}, {list}[, {action}[, {what}]])
+setloclist({nr}, {list} [, {action} [, {what}]])
 				Number	modify location list using {list}
 setmatches({list})		Number	restore a list of matches
 setpos({expr}, {list})		Number	set the {expr} position to {list}
-setqflist({list}[, {action}[, {what}]])
+setqflist({list} [, {action} [, {what}]])
 				Number	modify quickfix list using {list}
-setreg({n}, {v}[, {opt}])	Number	set register to value and type
+setreg({n}, {v} [, {opt}])	Number	set register to value and type
 settabvar({nr}, {varname}, {val}) none	set {varname} in tab page {nr} to {val}
 settabwinvar({tabnr}, {winnr}, {varname}, {val})
 				none	set {varname} in window {winnr} in tab
@@ -360,22 +377,22 @@ sqrt({expr})			Float	square root of {expr}
 str2float({expr})		Float	convert String to Float
 str2nr({expr} [, {base}])	Number	convert String to Number
 strchars({expr} [, {skipcc}])	Number	character length of the String {expr}
-strcharpart({str}, {start}[, {len}])
+strcharpart({str}, {start} [, {len}])
 				String	{len} characters of {str} at {start}
 strdisplaywidth({expr} [, {col}]) Number display length of the String {expr}
-strftime({format}[, {time}])	String	time in specified format
+strftime({format} [, {time}])	String	time in specified format
 strgetchar({str}, {index})	Number	get char {index} from {str}
-stridx({haystack}, {needle}[, {start}])
+stridx({haystack}, {needle} [, {start}])
 				Number	index of {needle} in {haystack}
 string({expr})			String	String representation of {expr} value
 strlen({expr})			Number	length of the String {expr}
-strpart({str}, {start}[, {len}])
+strpart({str}, {start} [, {len}])
 				String	{len} characters of {str} at {start}
 strridx({haystack}, {needle} [, {start}])
 				Number	last index of {needle} in {haystack}
 strtrans({expr})		String	translate string to make it printable
 strwidth({expr})		Number	display cell length of the String {expr}
-submatch({nr}[, {list}])	String or List
+submatch({nr} [, {list}])	String or List
 					specific match in ":s" or substitute()
 substitute({expr}, {pat}, {sub}, {flags})
 				String	all {pat} in {expr} replaced with {sub}
@@ -389,13 +406,20 @@ system({expr} [, {input}])	String	output of shell command/filter {expr}
 systemlist({expr} [, {input}])	List	output of shell command/filter {expr}
 tabpagebuflist([{arg}])		List	list of buffer numbers in tab page
 tabpagenr([{arg}])		Number	number of current or last tab page
-tabpagewinnr({tabarg}[, {arg}]) Number	number of current window in tab page
-taglist({expr}[, {filename}])	List	list of tags matching {expr}
+tabpagewinnr({tabarg} [, {arg}]) Number	number of current window in tab page
+taglist({expr} [, {filename}])	List	list of tags matching {expr}
 tagfiles()			List	tags files used
 tan({expr})			Float	tangent of {expr}
 tanh({expr})			Float	hyperbolic tangent of {expr}
 tempname()			String	name for a temporary file
+term_dumpdiff({filename}, {filename} [, {options}])
+				Number  display difference between two dumps
+term_dumpload({filename} [, {options}])
+				Number	displaying a screen dump
+term_dumpwrite({buf}, {filename} [, {options}])
+				none	dump terminal window contents
 term_getaltscreen({buf})	Number	get the alternate screen flag
+term_getansicolors({buf})	List	get ANSI palette in GUI color mode
 term_getattr({attr}, {what})	Number	get the value of attribute {what}
 term_getcursor({buf})		List	get the cursor position of a terminal
 term_getjob({buf})		Job	get the job associated with a terminal
@@ -404,10 +428,16 @@ term_getscrolled({buf})		Number	get the scroll count of a terminal
 term_getsize({buf})		List	get the size of a terminal
 term_getstatus({buf})		String	get the status of a terminal
 term_gettitle({buf})		String	get the title of a terminal
-term_getttty({buf}, [{input}])	String	get the tty name of a terminal
+term_gettty({buf}, [{input}])	String	get the tty name of a terminal
 term_list()			List	get the list of terminal buffers
 term_scrape({buf}, {row})	List	get row of a terminal screen
 term_sendkeys({buf}, {keys})	none	send keystrokes to a terminal
+term_setansicolors({buf}, {colors})
+				none	set ANSI palette in GUI color mode
+term_setkill({buf}, {how})	none	set signal to stop job in terminal
+term_setrestore({buf}, {command}) none	set command to restore terminal
+term_setsize({buf}, {rows}, {cols})
+				none	set the size of a terminal
 term_start({cmd}, {options})	Job	open a terminal window and run a job
 term_wait({buf} [, {time}])	Number  wait for screen to be updated
 test_alloc_fail({id}, {countdown}, {repeat})
@@ -434,6 +464,7 @@ tolower({expr})			String	the String {expr} switched to lowercase
 toupper({expr})			String	the String {expr} switched to uppercase
 tr({src}, {fromstr}, {tostr})	String	translate chars of {src} in {fromstr}
 					to chars in {tostr}
+trim({text}[, {mask}])		String	trim characters in {mask} from {text}
 trunc({expr})			Float	truncate Float {expr}
 type({name})			Number	type of variable {name}
 undofile({name})		String	undo file name for {name}
@@ -449,6 +480,7 @@ win_getid([{win} [, {tab}]])	Number	get window ID for {win} in {tab}
 win_gotoid({expr})		Number	go to window with ID {expr}
 win_id2tabwin({expr})		List	get tab and window nr from window ID
 win_id2win({expr})		Number	get window nr from window ID
+win_screenpos({nr})		List	get screen position of window {nr}
 winbufnr({nr})			Number	buffer number of window {nr}
 wincol()			Number	window column of the cursor
 winheight({nr})			Number	height of window {nr}
