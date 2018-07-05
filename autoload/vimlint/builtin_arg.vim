@@ -48,6 +48,25 @@ endfunction " }}}
 "   endif
 " endfunction " }}}
 
+function! s:funcs.delete(vl, fname, node) " {{{
+  let rlist = a:node.rlist
+  for i in range(len(rlist))
+    if vimlint#util#notstr_type(rlist[i])
+        call s:EVL108(a:vl, a:node, i+1, a:fname, 'a string')
+        return
+    endif
+  endfor
+  if len(rlist) >= 2
+    if vimlint#util#isstr_type(rlist[1])
+      let str = vimlint#util#str_value(rlist[1])
+      if str !=# 'd' && str !=# 'rf'
+        call s:EVL108(a:vl, a:node, 2, a:fname, '"d" or "rf"')
+        return
+      endif
+    endif
+  endif
+endfunction " }}}
+
 function! s:funcs.eval(vl, fname, node) " {{{
   call s:eval_test(a:vl, a:fname, a:node, 0)
 endfunction " }}}

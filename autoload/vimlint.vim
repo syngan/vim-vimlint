@@ -1872,7 +1872,7 @@ endfunction " }}}
 function! s:reserved_name(name, is_dic_func) abort " {{{
   if a:name =~# '^\(a:\d\|[gbwtsla]:$\)' ||
   \  a:name ==# 'v:val' || a:name ==# 's:' ||
-  \  (a:name ==# 'self' && a:is_dic_func)
+  \  (a:name =~# '\(l:\)\?self' && a:is_dic_func)
     " @TODO 'self' if a function is defined with the "dict" attribute
     return 1
   endif
