@@ -97,8 +97,8 @@ VIMLINT_VIM=${VIMLINT_VIM:-vim}
 while [ $# -gt 0 ]; do
 	if [ -n "$1" -a \( -f "$1" -o -d "$1" \) ]; then
 		cat /dev/null >"$TF" || exit 1
-		VIM="$VIMLINT_VIM $VOPT -N -c 'call vimlint#vimlint(\"$1\", {\"output\": \"${TF}\"})' -c 'qall!'"
-		eval ${VIM} > /dev/null 2>&1
+		VIM="$VIMLINT_VIM $VOPT -es -N -c 'call vimlint#vimlint(\"$1\", {\"output\": \"${TF}\"})' -c 'qall!'"
+		eval "${VIM}" || exit
 		if [ ${VERBOSE} = 0 ]; then
 			egrep -a -w "${ERRGREP}" "$TF" && RET=2
 		else
