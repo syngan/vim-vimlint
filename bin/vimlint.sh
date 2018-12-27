@@ -25,12 +25,16 @@ EOF
 	exit 1
 }
 
+cleanup() {
+  rm -f "$VF" "$TF"
+}
+
 if [ "$#" = 0 ]; then
 	usage
 fi
 
 VF=$( mktemp -t "${0##*/}"-$$.XXXXXXXX ) || exit 1
-trap 'rm -f "$TF"' EXIT HUP INT QUIT TERM
+trap cleanup EXIT HUP INT QUIT TERM
 
 VERBOSE=0
 VOPT="-c 'set rtp+=`pwd`'"
@@ -89,7 +93,6 @@ while getopts 'hl:p:ue:vc:E' OPT; do
 done
 
 TF=$( mktemp -t "${0##*/}"-$$.XXXXXXXX ) || exit 1
-trap 'rm -f "$TF"' EXIT HUP INT QUIT TERM
 
 RET=0
 VOPT="${VOPT} -c 'source ${VF}'"
