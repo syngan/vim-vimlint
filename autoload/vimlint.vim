@@ -71,6 +71,8 @@ let s:default_errlevel.EVL204 = s:DEF_NON
 let s:default_errlevel.EVL205 = s:DEF_WRN
 let s:default_errlevel.EVL206 = s:DEF_NON
 let s:default_errlevel.EVL207 = s:DEF_NON
+let s:default_errlevel.EVL301 = s:DEF_NON
+let s:default_errlevel.EVL302 = s:DEF_NON
 let s:default_errlevel.EVL901 = s:DEF_WRN
 let s:default_errlevel.EVL902 = s:DEF_WRN
 let s:def_var_name = ':'
@@ -130,7 +132,7 @@ function! s:extend_errlevel(param) abort " {{{
   for key in keys(s:default_errlevel)
 "   echo "param[" . key . "]"
     if !has_key(param, key)
-      call s:set_param(param, key, s:DEF_ERR, s:def_var_name)
+      call s:set_param(param, key, key[3] == '3' ? s:DEF_WRN : s:DEF_ERR, s:def_var_name)
     elseif type(param[key]) == type(0)
       call s:set_param(param, key, param[key], s:def_var_name)
     elseif type(param[key]) != type({})
@@ -655,7 +657,7 @@ function! s:reconstruct_varstack_rt(self, env, pos, brk_cont, nop) abort " {{{
         if v.type ==# 'append' && v.v.ref == 0 && a:env.global.fins == 0
           " 変数を追加したが参照していない
           " かつ,  finally 句がない場合
-          call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var. '`', v.var)
+          call a:self.error_mes(v.node, 'EVL102', 'unused variable2 `' . v.var . '`', v.var)
         endif
         let a:env.varstack[j] = nop
       endfor
@@ -840,6 +842,40 @@ function! s:reconstruct_varstack_st(self, env, p) abort " {{{
 endfunction " }}}
 " @vimlint(EVL103, 0, a:self)
 
+function! s:VimlLint.abbrev_if(vl, node) abort " {{{
+  for node in a:node.elseif
+    call a:vl.abbrev_common(node)
+  endfor
+  if a:node.else isnot s:vlp.NIL
+    call a:vl.abbrev_common(a:node.else)
+  endif
+  call a:vl.abbrev_common(a:node.endif)
+endfunction " }}}
+function! s:VimlLint.abbrev_for(vl, node) abort " {{{
+  call a:vl.abbrev_common(a:node.endfor)
+endfunction " }}}
+function! s:VimlLint.abbrev_while(vl, node) abort " {{{
+  call a:vl.abbrev_common(a:node.endwhile)
+endfunction " }}}
+function! s:VimlLint.abbrev_try(vl, node) abort " {{{
+  for node in a:node.catch
+    call a:vl.abbrev_common(node)
+  endfor
+  if a:node.finally isnot s:vlp.NIL
+    call a:vl.abbrev_common(a:node.finally)
+  endif
+  call a:vl.abbrev_common(a:node.endtry)
+endfunction " }}}
+function! s:VimlLint.abbrev_func(vl, node) abort " {{{
+  call a:vl.abbrev_common(a:node.endfunction)
+endfunction " }}}
+function! s:VimlLint.abbrev_common(node) abort " {{{
+  let line = self.lines[a:node.pos.lnum - 1]
+  if match(line, '^' . a:node.ea.cmd.name . '\>', a:node.pos.col - 1) < 0
+      call self.error_mes(a:node, 'EVL302', 'use the full command name `' . a:node.ea.cmd.name . '` instead of the abbreviation', a:node)
+  endif
+endfunction " }}}
+
 function s:VimlLint.compile(node, refchk) abort " {{{
   if type(a:node) ==# type({}) && has_key(a:node, 'type')
     if a:node.type != 2 && g:vimlint#debug > 2 || g:vimlint#debug >= 5
@@ -857,6 +893,14 @@ function s:VimlLint.compile(node, refchk) abort " {{{
   "   echo a:node
   "   throw "stop"
   " endtry
+  if has_key(a:node, 'ea')
+    if has_key(self.excmd_abbrev, a:node.type)
+      call self.excmd_abbrev[a:node.type](self, a:node)
+    elseif has_key(a:node.ea.cmd, 'name')
+      call self.abbrev_common(a:node)
+    endif
+  endif
+
 
   return call(self.compile_funcs[a:node.type], [a:node, a:refchk], self)
 
@@ -1668,7 +1712,15 @@ function s:VimlLint.compile_subtract(node, ...) abort
 endfunction
 
 function s:VimlLint.compile_concat(node, ...) abort
-  return self.compile_op2(a:node, '.')
+  let r = self.compile_op2(a:node, '.')
+  " google style guide. use spaces around operators
+  let line = self.lines[r.pos.lnum - 1]
+  if line[r.pos.col - 2] !~# '\s' || len(line) > r.pos.col && line[r.pos.col] !~# '\s'
+    if self.filename !=# ''
+      call self.error_mes(r, 'EVL301', 'use space around operator `.`', r)
+    endif
+  endif
+  return r
 endfunction
 
 function s:VimlLint.compile_multiply(node, ...) abort
@@ -1734,6 +1786,7 @@ function s:VimlLint.parse_string(str, node, cmd, ref) abort "{{{
       " @TODO 今は変数の中身は参照していないので適当に代入可能
     endif
     let r = s:vlp.StringReader.new(lines)
+    let c.lines = lines
     call c.compile(p.parse(r), 1)
   catch
     call self.error_mes(a:node, 'EVL203', 'parse error in `' . a:cmd . '`', 1)
@@ -1946,9 +1999,12 @@ function! s:vimlint_file(filename, param, progress) abort " {{{
     if a:param.type ==# 'string'
         let r = s:vlp.StringReader.new(vimfile)
         let c.filename = ''
+        let c.lines = split(vimfile, "\n")
     else
-        let r = s:vlp.StringReader.new(readfile(vimfile))
+        let l = readfile(vimfile)
+        let r = s:vlp.StringReader.new(l)
         let c.filename = vimfile
+        let c.lines = l
     endif
 
 
@@ -2216,6 +2272,13 @@ let s:VimlLint.compile_funcs[s:vlp.NODE_IDENTIFIER] = s:VimlLint.compile_identif
 let s:VimlLint.compile_funcs[s:vlp.NODE_CURLYNAME] = s:VimlLint.compile_curlyname
 let s:VimlLint.compile_funcs[s:vlp.NODE_ENV] = s:VimlLint.compile_env
 let s:VimlLint.compile_funcs[s:vlp.NODE_REG] = s:VimlLint.compile_reg
+
+let s:VimlLint.excmd_abbrev = {}
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_IF] = s:VimlLint.abbrev_if
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_FOR] = s:VimlLint.abbrev_for
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_WHILE] = s:VimlLint.abbrev_while
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_TRY] = s:VimlLint.abbrev_try
+let s:VimlLint.excmd_abbrev[s:vlp.NODE_FUNCTION] = s:VimlLint.abbrev_func
 
 let &cpo = s:save_cpo
 unlet s:save_cpo
