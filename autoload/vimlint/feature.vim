@@ -220,6 +220,7 @@ function! s:init() abort " {{{
   let dict['gui_kde'] = 1
   let dict['gui_qt'] = 1
   let dict['nvim'] = 1
+  let dict['tablineat'] = 1
 
   return dict
 endfunction " }}}
