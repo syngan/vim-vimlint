@@ -103,10 +103,10 @@ while [ $# -gt 0 ]; do
 		VIM="$VIMLINT_VIM $VOPT -es -N -c 'call vimlint#vimlint(\"$1\", {\"output\": \"${TF}\"})' -c 'qall!'"
 		eval "${VIM}" || exit
 		if [ ${VERBOSE} = 0 ]; then
-			egrep -a -w "${ERRGREP}" "$TF" && RET=2
+			grep -E -a -w "${ERRGREP}" "$TF" && RET=2
 		else
 			cat "${TF}"
-			egrep -a -w "${ERRGREP}" "$TF" > /dev/null 2>&1
+			grep -E -a -w "${ERRGREP}" "$TF" > /dev/null 2>&1
 			if [ $? = 0 ]; then
 				RET=2
 			fi
